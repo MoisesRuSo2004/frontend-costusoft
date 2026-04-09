@@ -23,7 +23,7 @@ function inp(err?: boolean): React.CSSProperties {
   return { width: "100%", padding: "11px 14px", border: `1.5px solid ${err ? "#fca5a5" : "#e5e7eb"}`, borderRadius: 10, fontSize: 14, fontFamily: "'Poppins', sans-serif", color: "#111827", outline: "none", backgroundColor: "#fff", boxSizing: "border-box", transition: "border-color 0.2s" };
 }
 
-export default function AgregarSalidaForm() {
+export default function AgregarSalidaForm({ returnPath = "/salidas" }: { returnPath?: string }) {
   const router = useRouter();
   const { colegios } = useColegios();
   const [fecha, setFecha] = useState("");
@@ -98,7 +98,7 @@ export default function AgregarSalidaForm() {
         detalles: lineas.map(l => ({ insumoId: l.insumoId, cantidad: l.cantidad })),
       });
       setSuccess(true);
-      setTimeout(() => router.push("/salidas"), 1800);
+      setTimeout(() => router.push(returnPath), 1800);
     } catch (err) {
       setApiError(err instanceof Error ? err.message : "Error al registrar la salida.");
     } finally {
@@ -110,7 +110,7 @@ export default function AgregarSalidaForm() {
     <section className="flex flex-col gap-6 pb-10">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2">
-        <Link href="/salidas" className="inline-flex items-center gap-1.5 text-sm font-medium transition"
+        <Link href={returnPath} className="inline-flex items-center gap-1.5 text-sm font-medium transition"
           style={{ color: "#667085", fontFamily: "'Poppins', sans-serif" }}
           onMouseEnter={e => (e.currentTarget.style.color = "#b45309")} onMouseLeave={e => (e.currentTarget.style.color = "#667085")}>
           <ArrowLeft size={15} /> Salidas

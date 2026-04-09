@@ -1,4 +1,5 @@
 import { SidebarProvider } from "@/app/context/SidebarContext";
+import { NotificacionesProvider } from "@/app/context/NotificacionesContext";
 import UserSidebar from "@/app/components/user/layout/UserSidebar";
 import UserTopbar from "@/app/components/user/layout/UserTopbar";
 
@@ -8,6 +9,7 @@ export default function UserLayout({
   children: React.ReactNode;
 }) {
   return (
+    <NotificacionesProvider>
     <SidebarProvider>
       <div className="flex h-screen overflow-hidden" style={{ backgroundColor: "#f5f7fb" }}>
         <UserSidebar />
@@ -30,5 +32,6 @@ export default function UserLayout({
         </div>
       </div>
     </SidebarProvider>
+    </NotificacionesProvider>
   );
 }

@@ -1,22 +1,29 @@
 "use client";
 
 import RoleTopbar from "@/app/components/shared/layout/RoleTopbar";
+import { useNotificaciones } from "@/app/context/NotificacionesContext";
 
 const PAGE_TITLES: Record<string, string> = {
-  "/bodega": "Panel Bodega",
+  "/bodega":        "Dashboard",
+  "/bodega/perfil": "Mi Perfil",
 };
 
 export default function BodegaTopbar() {
+  const { items, total, loading, refetch } = useNotificaciones();
+
   return (
     <RoleTopbar
       pageTitles={PAGE_TITLES}
       fallbackTitle="Panel Bodega"
       accentColor="#15803d"
       accentSoft="#f0fdf4"
-      userName="Operador Bodega"
-      userRoleLabel="Rol BODEGA"
-      userEmail="jorge.bodega@costusoft.com"
+      profileHref="/bodega/perfil"
       showLogout
+      notifItems={items}
+      notifTotal={total}
+      notifLoading={loading}
+      onNotifRefetch={refetch}
+      notifHref="/bodega"
     />
   );
 }

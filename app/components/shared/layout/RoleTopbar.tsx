@@ -3,11 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bell, ChevronDown, LogOut, Menu, UserCircle } from "lucide-react";
+import {
+  Bell, ChevronDown, LogOut, Menu, UserCircle,
+  ShoppingCart, ArrowDownToLine, ArrowUpFromLine,
+  RefreshCw, Inbox,
+} from "lucide-react";
 import { useSidebar } from "@/app/context/SidebarContext";
 import { useAuth } from "@/app/context/AuthContext";
+import type { NotifItem } from "@/app/context/NotificacionesContext";
 
 interface RoleTopbarProps {
   pageTitles: Record<string, string>;
@@ -20,6 +25,11 @@ interface RoleTopbarProps {
   userEmail?: string;
   profileHref?: string;
   showLogout?: boolean;
+  notifItems?: NotifItem[];
+  notifTotal?: number;
+  notifLoading?: boolean;
+  onNotifRefetch?: () => void;
+  notifHref?: string;
 }
 
 const DROPDOWN_VARIANTS = {
@@ -33,6 +43,16 @@ const ROLE_LABELS: Record<string, string> = {
   BODEGA: "Operador Bodega",
 };
 
+// ── Config de tipos de notificación ──────────────────────────────────────────
+
+const NOTIF_CONFIG = {
+  pedido:  { color: "#1d4ed8", bg: "#eff6ff",  icon: ShoppingCart,    label: "Pedido"  },
+  entrada: { color: "#16a34a", bg: "#f0fdf4",  icon: ArrowDownToLine, label: "Entrada" },
+  salida:  { color: "#d97706", bg: "#fef3c7",  icon: ArrowUpFromLine, label: "Salida"  },
+} as const;
+
+// ── Componente ────────────────────────────────────────────────────────────────
+
 export default function RoleTopbar({
   pageTitles,
   fallbackTitle,
@@ -43,15 +63,22 @@ export default function RoleTopbar({
   userEmail = "",
   profileHref,
   showLogout = false,
+  notifItems = [],
+  notifTotal = 0,
+  notifLoading = false,
+  onNotifRefetch,
+  notifHref = "/solicitudes",
 }: RoleTopbarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { toggleMobile } = useSidebar();
   const { user, logout } = useAuth();
   const [userOpen, setUserOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
-  const [alertCount] = useState(0);
   const userRef = useRef<HTMLDivElement>(null);
   const bellRef = useRef<HTMLDivElement>(null);
+
+  const alertCount = notifTotal;
 
   // Datos reales del usuario autenticado, con fallback a los props
   const displayName = user?.username ?? userName;
@@ -114,7 +141,7 @@ export default function RoleTopbar({
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Campana */}
+        {/* ── Campana de notificaciones ── */}
         <div ref={bellRef} className="relative">
           <button
             type="button"
@@ -126,13 +153,20 @@ export default function RoleTopbar({
               color: bellOpen ? accentColor : "#6b7280",
             }}
           >
+            {/* Animación pulse cuando hay pendientes */}
+            {alertCount > 0 && !bellOpen && (
+              <span
+                className="absolute inset-0 rounded-2xl animate-ping"
+                style={{ backgroundColor: accentColor, opacity: 0.15 }}
+              />
+            )}
             <Bell size={16} />
             {alertCount > 0 && (
               <span
-                className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                style={{ backgroundColor: "#ef4444" }}
+                className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
+                style={{ backgroundColor: "#ef4444", lineHeight: 1 }}
               >
-                {alertCount}
+                {alertCount > 99 ? "99+" : alertCount}
               </span>
             )}
           </button>
@@ -145,18 +179,115 @@ export default function RoleTopbar({
                 animate="visible"
                 exit="hidden"
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 top-12 w-72 overflow-hidden rounded-2xl border"
-                style={{ borderColor: "#f0f0f4", backgroundColor: "#ffffff", boxShadow: "0 16px 40px rgba(0,0,0,0.12)" }}
+                className="absolute right-0 top-12 w-80 overflow-hidden rounded-2xl border"
+                style={{
+                  borderColor: "#f0f0f4",
+                  backgroundColor: "#ffffff",
+                  boxShadow: "0 20px 48px rgba(0,0,0,0.14)",
+                  zIndex: 50,
+                }}
               >
-                <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "#f0f0f4" }}>
-                  <span className="text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: accentColor, fontFamily: "var(--font-poppins), sans-serif" }}>
-                    Alertas
-                  </span>
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3.5" style={{ borderBottom: "1px solid #f3f4f6" }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-[0.14em]"
+                      style={{ color: accentColor, fontFamily: "var(--font-poppins), sans-serif" }}>
+                      Solicitudes pendientes
+                    </span>
+                    {alertCount > 0 && (
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white"
+                        style={{ backgroundColor: "#ef4444" }}>
+                        {alertCount}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => { onNotifRefetch?.(); }}
+                    disabled={notifLoading}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg transition"
+                    style={{ color: "#9ca3af", cursor: "pointer" }}
+                    title="Actualizar"
+                  >
+                    <RefreshCw size={13} className={notifLoading ? "animate-spin" : ""} />
+                  </button>
                 </div>
-                <div className="px-4 py-6 text-center">
-                  <p className="text-sm" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
-                    Sin alertas por el momento
-                  </p>
+
+                {/* Lista */}
+                {notifItems.length === 0 ? (
+                  <div className="flex flex-col items-center gap-3 py-8">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl"
+                      style={{ backgroundColor: "#f9fafb" }}>
+                      <Inbox size={20} style={{ color: "#d1d5db" }} />
+                    </div>
+                    <p className="text-sm" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
+                      Todo al día
+                    </p>
+                    <p className="text-xs" style={{ color: "#d1d5db", fontFamily: "var(--font-poppins), sans-serif" }}>
+                      Sin solicitudes pendientes
+                    </p>
+                  </div>
+                ) : (
+                  <div className="max-h-72 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
+                    {notifItems.map((item, i) => {
+                      const cfg = NOTIF_CONFIG[item.tipo];
+                      const Icn = cfg.icon;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setBellOpen(false);
+                            router.push(notifHref);
+                          }}
+                          className="flex w-full items-start gap-3 px-4 py-3 text-left transition"
+                          style={{
+                            borderTop: i > 0 ? "1px solid #f9fafb" : undefined,
+                            fontFamily: "var(--font-poppins), sans-serif",
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#f9fafb"; }}
+                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                        >
+                          <div
+                            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl"
+                            style={{ backgroundColor: cfg.bg }}
+                          >
+                            <Icn size={14} style={{ color: cfg.color }} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold"
+                              style={{ color: "#101828" }}>
+                              {item.titulo}
+                            </p>
+                            <p className="truncate text-xs"
+                              style={{ color: "#9ca3af" }}>
+                              {item.subtitulo}
+                            </p>
+                          </div>
+                          <span className="flex-shrink-0 mt-0.5 h-2 w-2 rounded-full" style={{ backgroundColor: cfg.color }} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Footer → ir a solicitudes */}
+                <div style={{ borderTop: "1px solid #f3f4f6" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBellOpen(false);
+                      router.push(notifHref);
+                    }}
+                    className="flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold transition"
+                    style={{ color: accentColor, fontFamily: "var(--font-poppins), sans-serif", cursor: "pointer" }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = accentSoft; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                  >
+                    Ver todas las solicitudes
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </button>
                 </div>
               </motion.div>
             )}

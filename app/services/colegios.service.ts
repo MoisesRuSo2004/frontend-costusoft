@@ -1,71 +1,53 @@
-import type { Colegio, CreateColegioPayload } from "@/app/types/colegio";
+import { apiFetch, buildQuery } from "@/app/lib/api";
+import type {
+  ColegioRequest,
+  ColegioResponse,
+  ColegioConUniformes,
+  PageColegios,
+} from "@/app/types/colegio";
 
-const MOCK_COLEGIOS: Colegio[] = [
-  {
-    id: "col-001",
-    nombre: "Colegio San Martin",
-    ciudad: "Bogota",
-    departamento: "Cundinamarca",
-    contacto: "Laura Perez",
-    telefono: "3104567890",
-    estado: "ACTIVO",
-    createdAt: "2026-03-20T08:00:00.000Z",
+const BASE = "/api/colegios";
+
+export const colegiosService = {
+  /** Listar colegios paginados */
+  async listar(params?: {
+    page?: number;
+    size?: number;
+    sortBy?: string;
+    sortDir?: "asc" | "desc";
+  }): Promise<PageColegios> {
+    const q = buildQuery({
+      page: params?.page ?? 0,
+      size: params?.size ?? 10,
+      sortBy: params?.sortBy ?? "nombre",
+      sortDir: params?.sortDir ?? "asc",
+    });
+    return apiFetch<PageColegios>(`${BASE}${q}`);
   },
-  {
-    id: "col-002",
-    nombre: "Instituto Nueva Esperanza",
-    ciudad: "Medellin",
-    departamento: "Antioquia",
-    contacto: "Carlos Ruiz",
-    telefono: "3205551122",
-    estado: "ACTIVO",
-    createdAt: "2026-03-18T10:30:00.000Z",
+
+  /** Obtener colegio por ID con sus uniformes */
+  async obtenerPorId(id: number): Promise<ColegioConUniformes> {
+    return apiFetch<ColegioConUniformes>(`${BASE}/${id}`);
   },
-  {
-    id: "col-003",
-    nombre: "Liceo Horizonte",
-    ciudad: "Cali",
-    departamento: "Valle del Cauca",
-    contacto: "Diana Gomez",
-    telefono: "3009988776",
-    estado: "INACTIVO",
-    createdAt: "2026-03-15T14:15:00.000Z",
+
+  /** Crear nuevo colegio */
+  async crear(data: ColegioRequest): Promise<ColegioResponse> {
+    return apiFetch<ColegioResponse>(BASE, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
   },
-];
 
-let colegiosStore = [...MOCK_COLEGIOS];
+  /** Actualizar colegio */
+  async actualizar(id: number, data: ColegioRequest): Promise<ColegioResponse> {
+    return apiFetch<ColegioResponse>(`${BASE}/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
 
-async function simulateNetwork<T>(data: T): Promise<T> {
-  await new Promise((resolve) => setTimeout(resolve, 350));
-  return data;
-}
-
-export async function getColegiosList(): Promise<Colegio[]> {
-  // TODO: reemplazar por GET /api/colegios cuando integremos backend real.
-  return simulateNetwork(
-    [...colegiosStore].sort(
-      (left, right) =>
-        new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
-    ),
-  );
-}
-
-export async function createColegio(
-  payload: CreateColegioPayload,
-): Promise<Colegio> {
-  // TODO: reemplazar por POST /api/colegios cuando integremos backend real.
-  const nextColegio: Colegio = {
-    id: `col-${String(colegiosStore.length + 1).padStart(3, "0")}`,
-    nombre: payload.nombre,
-    ciudad: payload.ciudad,
-    departamento: payload.departamento,
-    contacto: payload.contacto,
-    telefono: payload.telefono,
-    estado: "ACTIVO",
-    createdAt: new Date().toISOString(),
-  };
-
-  colegiosStore = [nextColegio, ...colegiosStore];
-
-  return simulateNetwork(nextColegio);
-}
+  /** Eliminar colegio (solo ADMIN) */
+  async eliminar(id: number): Promise<void> {
+    return apiFetch<void>(`${BASE}/${id}`, { method: "DELETE" });
+  },
+};

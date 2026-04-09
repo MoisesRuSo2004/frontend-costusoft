@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import ColegiosView from "@/app/modules/colegios/ColegiosView";
+import ColegiosClient from "@/app/components/admin/colegios/ColegiosClient";
 
 export const metadata: Metadata = {
-  title: "Colegios",
+  title: "Colegios — CostuSoft",
 };
 
-export default function AdminColegiosPage() {
-  return <ColegiosView />;
+export default function ColegiosPage() {
+  return <ColegiosClient />;
 }

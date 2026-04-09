@@ -1,153 +1,117 @@
+import { apiFetch } from "@/app/lib/api";
 import type {
-  CalculadoraFormValues,
-  CalculadoraResultado,
-  CalculadoraResultadoItem,
-  ColegioOption,
-  SolicitudSalidaPayload,
-  UniformOption,
+  CalculadoraVerificarRequest,
+  CalculadoraVerificarResponse,
+  CalculadoraPedidoRequest,
+  CalculadoraPedidoResponse,
 } from "@/app/types/calculadora";
 
-class ApiError extends Error {
-  constructor(message: string, public status?: number) {
-    super(message);
-    this.name = "ApiError";
-  }
-}
+const BASE = "/api/calculadora";
 
-function normalizeCollection(payload: unknown): unknown[] {
-  if (Array.isArray(payload)) {
-    return payload;
-  }
+/**
+ * Servicio del módulo Calculadora de Disponibilidad.
+ *
+ * ──────────────────────────────────────────────────────────────────────────
+ * ENDPOINTS DEL BACKEND
+ * ──────────────────────────────────────────────────────────────────────────
+ *
+ * 1. POST /api/calculadora/verificar
+ *    → Verificar disponibilidad de UNA prenda en una talla específica.
+ *    Body: { uniformeId: number, cantidad: number, talla: string }
+ *
+ * 2. GET /api/calculadora/verificar/{uniformeId}?cantidad=X&talla=Y
+ *    → Igual que POST pero sin body. Útil para pruebas.
+ *
+ * 3. POST /api/calculadora/pedido
+ *    → Calcular disponibilidad de un pedido con MÚLTIPLES prendas.
+ *    Modo A: { colegioId: number, cantidad: number, talla: string }
+ *    Modo B: { prendas: [{ uniformeId, cantidad, talla }, ...] }
+ *
+ * Todos los endpoints son SOLO LECTURA — no modifican el inventario.
+ * ──────────────────────────────────────────────────────────────────────────
+ */
+export const calculadoraService = {
+  // ── 1. Verificar disponibilidad de una sola prenda (POST) ─────────────
 
-  if (payload && typeof payload === "object") {
-    const objectPayload = payload as Record<string, unknown>;
+  /**
+   * Verifica si se puede fabricar N unidades de una prenda en talla específica.
+   *
+   * Evalúa cada insumo requerido (tela, botones, cremallera, etc.) y retorna:
+   * - disponible: true solo si TODOS los insumos cubren la cantidad solicitada
+   * - cantidadMaximaFabricable: máximo fabricable con el stock actual
+   * - detalles: estado por insumo (Disponible / Insuficiente / Sin stock)
+   *
+   * @param request Datos de la verificación (uniformeId, cantidad, talla)
+   * @returns Response con disponibilidad y detalles por insumo
+   */
+  async verificar(
+    request: CalculadoraVerificarRequest,
+  ): Promise<CalculadoraVerificarResponse> {
+    return apiFetch<CalculadoraVerificarResponse>(`${BASE}/verificar`, {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  },
 
-    if (Array.isArray(objectPayload.data)) {
-      return objectPayload.data;
-    }
+  /**
+   * Verifica disponibilidad vía GET (sin body).
+   * Útil para pruebas rápidas desde navegador o Swagger.
+   *
+   * @param uniformeId ID del uniforme a verificar
+   * @param cantidad Cantidad de unidades a fabricar
+   * @param talla Talla a fabricar (ej: S, M, L, XL, 06-08)
+   * @returns Response con disponibilidad y detalles por insumo
+   */
+  async verificarGet(
+    uniformeId: number,
+    cantidad: number,
+    talla: string,
+  ): Promise<CalculadoraVerificarResponse> {
+    const params = new URLSearchParams({
+      cantidad: String(cantidad),
+      talla,
+    });
+    return apiFetch<CalculadoraVerificarResponse>(
+      `${BASE}/verificar/${uniformeId}?${params.toString()}`,
+    );
+  },
 
-    if (Array.isArray(objectPayload.items)) {
-      return objectPayload.items;
-    }
-  }
+  // ── 2. Calcular pedido completo (múltiples prendas + tallas) ───────────
 
-  return [];
-}
+  /**
+   * Calcula si hay stock para completar un pedido con múltiples (prenda, talla).
+   *
+   * Consolida insumos compartidos entre prendas: si "Tela lacoste blanco"
+   * la usan Suéter-M y Suéter-XL, se suma el total necesario y se compara
+   * contra el stock real.
+   *
+   * Modo A — Todas las prendas de un colegio con la misma talla y cantidad:
+   *   { colegioId: 1, cantidad: 50, talla: "M" }
+   *
+   * Modo B — Lista explícita con talla y cantidad individual por prenda:
+   *   { prendas: [
+   *       { uniformeId: 1, cantidad: 50, talla: "M" },
+   *       { uniformeId: 2, cantidad: 50, talla: "06-08" }
+   *   ]}
+   *
+   * @param request Datos del pedido (modo A o modo B)
+   * @returns Response con disponibilidad completa, factor de cumplimiento,
+   *          insumo limitante, y resumen consolidado de insumos
+   */
+  async calcularPedido(
+    request: CalculadoraPedidoRequest,
+  ): Promise<CalculadoraPedidoResponse> {
+    return apiFetch<CalculadoraPedidoResponse>(`${BASE}/pedido`, {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  },
+};
 
-function normalizeUniforms(payload: unknown): UniformOption[] {
-  return normalizeCollection(payload).map((item, index) => {
-    const uniform = item as Record<string, unknown>;
-    return {
-      id: String(uniform.id ?? uniform.uniformeId ?? index),
-      nombre: String(uniform.nombre ?? uniform.name ?? uniform.descripcion ?? `Uniforme ${index + 1}`),
-    };
-  });
-}
-
-function normalizeColegios(payload: unknown): ColegioOption[] {
-  return normalizeCollection(payload).map((item, index) => {
-    const colegio = item as Record<string, unknown>;
-
-    return {
-      id: String(colegio.id ?? colegio.colegioId ?? index),
-      nombre: String(colegio.nombre ?? colegio.name ?? colegio.colegio ?? `Colegio ${index + 1}`),
-      uniformes: normalizeUniforms(colegio.uniformes ?? colegio.uniforms ?? colegio.catalogoUniformes),
-    };
-  });
-}
-
-function normalizeResultadoItems(payload: unknown): CalculadoraResultadoItem[] {
-  return normalizeCollection(payload).map((item, index) => {
-    const insumo = item as Record<string, unknown>;
-    const cantidadRequerida = Number(insumo.cantidadRequerida ?? insumo.cantidad ?? insumo.requiredQuantity ?? 0);
-    const stockDisponible = Number(insumo.stockDisponible ?? insumo.stock ?? insumo.availableStock ?? 0);
-
-    return {
-      id: String(insumo.id ?? insumo.insumoId ?? index),
-      nombre: String(insumo.nombre ?? insumo.name ?? insumo.insumo ?? `Insumo ${index + 1}`),
-      unidad: String(insumo.unidad ?? insumo.unit ?? "und"),
-      cantidadRequerida,
-      stockDisponible,
-      suficiente:
-        typeof insumo.suficiente === "boolean"
-          ? insumo.suficiente
-          : stockDisponible >= cantidadRequerida,
-    };
-  });
-}
-
-async function parseResponse<T>(response: Response): Promise<T> {
-  const payload = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const message =
-      (payload as Record<string, unknown> | null)?.message ||
-      (payload as Record<string, unknown> | null)?.error ||
-      "No fue posible procesar la solicitud.";
-    throw new ApiError(String(message), response.status);
-  }
-
-  return payload as T;
-}
-
-export async function getColegios(): Promise<ColegioOption[]> {
-  const response = await fetch("/api/colegios", {
-    method: "GET",
-    headers: { "Content-Type": "application/json" },
-    cache: "no-store",
-  });
-
-  const payload = await parseResponse<unknown>(response);
-  return normalizeColegios(payload);
-}
-
-export async function verificarCalculadora(
-  values: CalculadoraFormValues,
-): Promise<CalculadoraResultado> {
-  const response = await fetch("/api/calculadora/verificar", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      colegioId: values.colegioId,
-      uniformeId: values.uniformeId,
-      cantidad: values.cantidad,
-    }),
-  });
-
-  const payload = await parseResponse<unknown>(response);
-  const payloadObject = (payload ?? {}) as Record<string, unknown>;
-  const items = normalizeResultadoItems(
-    payloadObject.items ?? payloadObject.insumos ?? payloadObject.resultado,
-  );
-  const suficiente =
-    typeof payloadObject.suficiente === "boolean"
-      ? payloadObject.suficiente
-      : items.every((item) => item.suficiente);
-
-  return {
-    items,
-    suficiente,
-    mensaje:
-      typeof payloadObject.mensaje === "string"
-        ? payloadObject.mensaje
-        : undefined,
-    raw: payload,
-  };
-}
-
-export async function generarSolicitudDesdeCalculadora(
-  payload: SolicitudSalidaPayload,
-) {
-  const response = await fetch("/api/salidas", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      colegioId: payload.colegioId,
-      uniformeId: payload.uniformeId,
-      cantidad: payload.cantidad,
-      items: payload.items,
-    }),
-  });
-
-  return parseResponse<unknown>(response);
-}
+// Re-exportar tipos para conveniencia
+export type {
+  CalculadoraVerificarRequest,
+  CalculadoraVerificarResponse,
+  CalculadoraPedidoRequest,
+  CalculadoraPedidoResponse,
+};

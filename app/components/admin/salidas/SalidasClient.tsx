@@ -107,10 +107,10 @@ function DetalleModal({ salida, onClose }: { salida: SalidaResponse; onClose: ()
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ backgroundColor: "rgba(245,158,11,0.10)" }}>
                     <Package size={12} style={{ color: "#b45309" }} />
                   </div>
-                  <span className="text-sm font-medium" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>{d.insumo.nombre}</span>
+                  <span className="text-sm font-medium" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>{d.nombreInsumo}</span>
                 </div>
                 <span className="text-sm font-semibold" style={{ color: "#b45309", fontFamily: "var(--font-poppins), sans-serif" }}>
-                  -{d.cantidad} {d.insumo.unidad}
+                  -{d.cantidad} {d.unidadMedida}
                 </span>
               </div>
             ))}

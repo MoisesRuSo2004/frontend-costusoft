@@ -1,4 +1,5 @@
 import { SidebarProvider } from "@/app/context/SidebarContext";
+import { NotificacionesProvider } from "@/app/context/NotificacionesContext";
 import Sidebar from "@/app/components/admin/layout/Sidebar";
 import Topbar from "@/app/components/admin/layout/Topbar";
 
@@ -8,6 +9,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
+    <NotificacionesProvider>
     <SidebarProvider>
       <div
         className="flex h-screen overflow-hidden"
@@ -49,5 +51,6 @@ export default function AdminLayout({
         </div>
       </div>
     </SidebarProvider>
+    </NotificacionesProvider>
   );
 }

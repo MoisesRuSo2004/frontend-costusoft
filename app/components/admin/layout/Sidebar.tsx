@@ -8,48 +8,60 @@ import {
   Building2,
   Calculator,
   ClipboardCheck,
+  ClipboardList,
   LayoutDashboard,
+  Shirt,
   TrendingUp,
   Truck,
   Users,
 } from "lucide-react";
 import RoleSidebar, { type SidebarNavGroup } from "@/app/components/shared/layout/RoleSidebar";
-
-const NAV: SidebarNavGroup[] = [
-  {
-    heading: "Operaciones",
-    items: [
-      { label: "Calculadora", href: "/admin/calculadora", icon: Calculator },
-      { label: "Solicitudes", href: "/admin", icon: ClipboardCheck },
-    ],
-  },
-  {
-    heading: "Inventario",
-    items: [
-      { label: "Insumos", href: "/inventario", icon: Archive },
-      { label: "Entradas", href: "/entradas", icon: ArrowDownToLine },
-      { label: "Salidas", href: "/salidas", icon: ArrowUpFromLine },
-    ],
-  },
-  {
-    heading: "Analitica",
-    items: [
-      { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-      { label: "Reportes", href: "/reporte", icon: BarChart2 },
-      { label: "Prediccion", href: "/prediccion", icon: TrendingUp },
-    ],
-  },
-  {
-    heading: "Gestion",
-    items: [
-      { label: "Colegios", href: "/admin/colegios", icon: Building2 },
-      { label: "Usuarios", href: "/usuarios", icon: Users },
-      { label: "Proveedores", href: "/proveedores", icon: Truck },
-    ],
-  },
-];
+import { useNotificaciones } from "@/app/context/NotificacionesContext";
 
 export default function Sidebar() {
+  const { total } = useNotificaciones();
+
+  const NAV: SidebarNavGroup[] = [
+    {
+      heading: "Principal",
+      items: [
+        { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+        { label: "Solicitudes", href: "/solicitudes", icon: ClipboardCheck, badge: total > 0 ? total : undefined },
+      ],
+    },
+    {
+      heading: "Operaciones",
+      items: [
+        { label: "Calculadora", href: "/admin/calculadora", icon: Calculator },
+        { label: "Pedidos", href: "/admin/pedidos", icon: ClipboardList },
+      ],
+    },
+    {
+      heading: "Inventario",
+      items: [
+        { label: "Insumos", href: "/inventario", icon: Archive },
+        { label: "Entradas", href: "/entradas", icon: ArrowDownToLine },
+        { label: "Salidas", href: "/salidas", icon: ArrowUpFromLine },
+      ],
+    },
+    {
+      heading: "Analitica",
+      items: [
+        { label: "Reportes", href: "/reporte", icon: BarChart2 },
+        { label: "Prediccion", href: "/prediccion", icon: TrendingUp },
+      ],
+    },
+    {
+      heading: "Gestion",
+      items: [
+        { label: "Colegios", href: "/admin/colegios", icon: Building2 },
+        { label: "Uniformes", href: "/admin/uniformes", icon: Shirt },
+        { label: "Usuarios", href: "/usuarios", icon: Users },
+        { label: "Proveedores", href: "/proveedores", icon: Truck },
+      ],
+    },
+  ];
+
   return (
     <RoleSidebar
       nav={NAV}

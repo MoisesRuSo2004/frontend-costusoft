@@ -7,7 +7,7 @@ import { ArrowDownToLine, ArrowLeft, Plus, Trash2, Save, RotateCcw, CheckCircle2
 import { useRouter } from "next/navigation";
 import { insumoService } from "@/app/services/insumo.service";
 import { entradaService } from "@/app/services/entrada.service";
-import { useColegios } from "@/app/hooks/useColegios";
+import { useProveedores } from "@/app/hooks/useProveedores";
 import type { InsumoOption } from "@/app/types/insumo";
 
 interface Linea {
@@ -22,9 +22,9 @@ function inp(err?: boolean): React.CSSProperties {
   return { width: "100%", padding: "11px 14px", border: `1.5px solid ${err ? "#fca5a5" : "#e5e7eb"}`, borderRadius: 10, fontSize: 14, fontFamily: "'Poppins', sans-serif", color: "#111827", outline: "none", backgroundColor: "#fff", boxSizing: "border-box", transition: "border-color 0.2s" };
 }
 
-export default function AgregarEntradaForm() {
+export default function AgregarEntradaForm({ returnPath = "/entradas" }: { returnPath?: string }) {
   const router = useRouter();
-  const { colegios } = useColegios();
+  const { proveedores } = useProveedores();
   const [fecha, setFecha] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [proveedorId, setProveedorId] = useState<number | "">();
@@ -95,7 +95,7 @@ export default function AgregarEntradaForm() {
         detalles: lineas.map(l => ({ insumoId: l.insumoId, cantidad: l.cantidad })),
       });
       setSuccess(true);
-      setTimeout(() => router.push("/entradas"), 1800);
+      setTimeout(() => router.push(returnPath), 1800);
     } catch (err) {
       setApiError(err instanceof Error ? err.message : "Error al registrar la entrada.");
     } finally {
@@ -107,7 +107,7 @@ export default function AgregarEntradaForm() {
     <section className="flex flex-col gap-6 pb-10">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2">
-        <Link href="/entradas" className="inline-flex items-center gap-1.5 text-sm font-medium transition"
+        <Link href={returnPath} className="inline-flex items-center gap-1.5 text-sm font-medium transition"
           style={{ color: "#667085", fontFamily: "'Poppins', sans-serif" }}
           onMouseEnter={e => (e.currentTarget.style.color = "#0b3d91")} onMouseLeave={e => (e.currentTarget.style.color = "#667085")}>
           <ArrowLeft size={15} /> Entradas
@@ -178,8 +178,8 @@ export default function AgregarEntradaForm() {
             <label style={lbl}>Proveedor (opcional)</label>
             <select value={proveedorId ?? ""} onChange={e => setProveedorId(e.target.value ? Number(e.target.value) : "")} style={{ ...inp(), cursor: "pointer" }}>
               <option value="">-- Sin proveedor específico --</option>
-              {colegios.map(c => (
-                <option key={c.id} value={c.id}>{c.nombre}</option>
+              {proveedores.map(p => (
+                <option key={p.id} value={p.id}>{p.nombre} — {p.nit}</option>
               ))}
             </select>
           </div>

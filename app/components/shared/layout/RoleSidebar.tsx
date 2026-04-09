@@ -13,6 +13,8 @@ export interface SidebarNavItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  /** Número que aparece como badge (ej: solicitudes pendientes) */
+  badge?: number;
 }
 
 export interface SidebarNavGroup {
@@ -104,7 +106,10 @@ export default function RoleSidebar({
           </AnimatePresence>
         </div>
 
-        <nav className="relative flex-1 overflow-y-auto px-3 py-4" style={{ scrollbarWidth: "thin" }}>
+        <nav
+          className="relative flex-1 overflow-y-auto px-3 py-4 scrollbar-minimal"
+          style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.15) transparent" }}
+        >
           {nav.map((group, groupIndex) => (
             <div key={`${group.heading ?? "group"}-${groupIndex}`} className="mb-3">
               {group.heading ? (
@@ -120,7 +125,7 @@ export default function RoleSidebar({
               ) : null}
 
               <div className="space-y-1">
-                {group.items.map(({ label, href, icon: Icon }) => {
+                {group.items.map(({ label, href, icon: Icon, badge }) => {
                   const active = isActive(href);
 
                   return (
@@ -152,14 +157,26 @@ export default function RoleSidebar({
                           style={{ backgroundColor: activeIndicator }}
                         />
                       ) : null}
-                      <Icon
-                        size={18}
-                        strokeWidth={active ? 2.2 : 1.8}
-                        style={{
-                          flexShrink: 0,
-                          color: active ? activeText : "rgba(255,255,255,0.62)",
-                        }}
-                      />
+
+                      {/* Icono + punto badge cuando está colapsado */}
+                      <span className="relative flex-shrink-0">
+                        <Icon
+                          size={18}
+                          strokeWidth={active ? 2.2 : 1.8}
+                          style={{
+                            color: active ? activeText : "rgba(255,255,255,0.62)",
+                          }}
+                        />
+                        {badge && !showText ? (
+                          <span
+                            className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[9px] font-bold text-white"
+                            style={{ backgroundColor: "#ef4444", lineHeight: 1 }}
+                          >
+                            {badge > 99 ? "99+" : badge}
+                          </span>
+                        ) : null}
+                      </span>
+
                       <AnimatePresence initial={false}>
                         {showText ? (
                           <motion.span
@@ -167,7 +184,7 @@ export default function RoleSidebar({
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -6 }}
                             transition={{ duration: 0.16 }}
-                            className="truncate text-sm"
+                            className="flex flex-1 items-center justify-between truncate text-sm"
                             style={{
                               color: active ? activeText : "rgba(255,255,255,0.78)",
                               fontWeight: active ? 600 : 500,
@@ -175,6 +192,14 @@ export default function RoleSidebar({
                             }}
                           >
                             {label}
+                            {badge ? (
+                              <span
+                                className="ml-2 flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white"
+                                style={{ backgroundColor: "#ef4444", flexShrink: 0 }}
+                              >
+                                {badge > 99 ? "99+" : badge}
+                              </span>
+                            ) : null}
                           </motion.span>
                         ) : null}
                       </AnimatePresence>
@@ -208,6 +233,43 @@ export default function RoleSidebar({
           </button>
         </div>
       </aside>
+
+      {/* Estilos minimalistas para el scrollbar */}
+      <style jsx>{`
+        .scrollbar-minimal {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255,255,255,0.15) transparent;
+        }
+        .scrollbar-minimal::-webkit-scrollbar {
+          width: 4px;
+        }
+        .scrollbar-minimal::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .scrollbar-minimal::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0.15);
+          border-radius: 4px;
+        }
+        .scrollbar-minimal::-webkit-scrollbar-thumb:hover {
+          background: rgba(255,255,255,0.3);
+        }
+        /* Ocultar scrollbar cuando no hay hover (opcional - descomentar si se quiere)
+        @media (hover: hover) {
+          .scrollbar-minimal {
+            scrollbar-width: none;
+          }
+          .scrollbar-minimal::-webkit-scrollbar {
+            width: 0;
+          }
+          .scrollbar-minimal:hover {
+            scrollbar-width: thin;
+          }
+          .scrollbar-minimal:hover::-webkit-scrollbar {
+            width: 4px;
+          }
+        }
+        */
+      `}</style>
     </>
   );
 }

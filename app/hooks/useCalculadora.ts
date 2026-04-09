@@ -1,49 +1,72 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  generarSolicitudDesdeCalculadora,
-  getColegios,
-  verificarCalculadora,
-} from "@/app/services/calculadora.service";
+import { calculadoraService } from "@/app/services/calculadora.service";
+import { colegiosService } from "@/app/services/colegios.service";
+import { uniformeService } from "@/app/services/uniforme.service";
 import type {
-  CalculadoraFormValues,
-  CalculadoraResultado,
   ColegioOption,
-  UniformOption,
+  CalculadoraVerificarRequest,
+  CalculadoraVerificarResponse,
+  UniformeOption,
 } from "@/app/types/calculadora";
+import type { ColegioResponse, UniformeResumen } from "@/app/types/colegio";
 
-const INITIAL_VALUES: CalculadoraFormValues = {
-  colegioId: "",
-  uniformeId: "",
+interface CalculadoraFormState {
+  colegioId: number | null;
+  uniformeId: number | null;
+  cantidad: number;
+  talla: string;
+}
+
+const INITIAL_FORM: CalculadoraFormState = {
+  colegioId: null,
+  uniformeId: null,
   cantidad: 1,
+  talla: "",
 };
 
+/**
+ * Hook para el módulo Calculadora de Disponibilidad.
+ *
+ * Permite verificar si hay stock suficiente para fabricar unidades de
+ * uniformes en tallas específicas. La talla es OBLIGATORIA porque los
+ * insumos varían por talla (UniformeInsumo).
+ */
 export function useCalculadora() {
+  // ── State ─────────────────────────────────────────────────────────────
+
   const [colegios, setColegios] = useState<ColegioOption[]>([]);
-  const [formValues, setFormValues] = useState<CalculadoraFormValues>(INITIAL_VALUES);
-  const [resultado, setResultado] = useState<CalculadoraResultado | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [uniformes, setUniformes] = useState<UniformeOption[]>([]);
+  const [tallasDisponibles, setTallasDisponibles] = useState<string[]>([]);
+  const [form, setForm] = useState<CalculadoraFormState>(INITIAL_FORM);
+  const [resultado, setResultado] = useState<CalculadoraVerificarResponse | null>(null);
+
+  const [loadingColegios, setLoadingColegios] = useState(true);
+  const [loadingUniformes, setLoadingUniformes] = useState(false);
+  const [loadingTallas, setLoadingTallas] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // ── Cargar colegios ─────────────────────────────────────────────────
+
   const loadColegios = useCallback(async () => {
-    setLoading(true);
+    setLoadingColegios(true);
     setError(null);
 
     try {
-      const data = await getColegios();
-      setColegios(data);
+      const response = await colegiosService.listar({ size: 1000 });
+      const options: ColegioOption[] = response.content.map((c: ColegioResponse) => ({
+        id: String(c.id),
+        nombre: c.nombre,
+      }));
+      setColegios(options);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "No fue posible cargar los colegios.",
-      );
+      const msg = err instanceof Error ? err.message : "No fue posible cargar los colegios.";
+      setError(msg);
     } finally {
-      setLoading(false);
+      setLoadingColegios(false);
     }
   }, []);
 
@@ -51,41 +74,118 @@ export function useCalculadora() {
     void loadColegios();
   }, [loadColegios]);
 
-  const colegioSeleccionado = useMemo(
-    () => colegios.find((colegio) => colegio.id === formValues.colegioId) ?? null,
-    [colegios, formValues.colegioId],
-  );
+  // ── Cargar uniformes cuando cambia el colegio ────────────────────────
 
-  const uniformes = useMemo<UniformOption[]>(
-    () => colegioSeleccionado?.uniformes ?? [],
-    [colegioSeleccionado],
-  );
+  const loadUniformes = useCallback(async (colegioId: number) => {
+    setLoadingUniformes(true);
+    setError(null);
 
-  const setColegio = useCallback((colegioId: string) => {
-    setFormValues((current) => ({
-      ...current,
+    try {
+      const colegio = await colegiosService.obtenerPorId(colegioId);
+      const options: UniformeOption[] = colegio.uniformes.map((u: UniformeResumen) => ({
+        id: u.id,
+        prenda: u.prenda,
+        talla: u.talla,
+        genero: u.genero,
+      }));
+      setUniformes(options);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "No fue posible cargar los uniformes.";
+      setError(msg);
+      setUniformes([]);
+    } finally {
+      setLoadingUniformes(false);
+    }
+  }, []);
+
+  // ── Cargar tallas cuando se selecciona un uniforme ───────────────────
+
+  const loadTallas = useCallback(async (uniformeId: number) => {
+    setLoadingTallas(true);
+    setError(null);
+
+    try {
+      const tallas = await uniformeService.listarTallas(uniformeId);
+      setTallasDisponibles(tallas);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "No fue posible cargar las tallas.";
+      setError(msg);
+      setTallasDisponibles([]);
+    } finally {
+      setLoadingTallas(false);
+    }
+  }, []);
+
+  // ── Handlers de formulario ──────────────────────────────────────────
+
+  const setColegio = useCallback((colegioIdStr: string) => {
+    const colegioId = colegioIdStr ? Number(colegioIdStr) : null;
+
+    setForm((prev) => ({
+      ...prev,
       colegioId,
-      uniformeId: "",
+      uniformeId: null,
+      talla: "",
     }));
     setResultado(null);
     setError(null);
-  }, []);
+    setSuccessMessage(null);
+    setUniformes([]);
+    setTallasDisponibles([]);
+    setLoadingTallas(false);
 
-  const setUniforme = useCallback((uniformeId: string) => {
-    setFormValues((current) => ({ ...current, uniformeId }));
+    if (colegioId) {
+      void loadUniformes(colegioId);
+    }
+  }, [loadUniformes]);
+
+  const setUniforme = useCallback((uniformeIdStr: string) => {
+    const uniformeId = uniformeIdStr ? Number(uniformeIdStr) : null;
+
+    setForm((prev) => ({
+      ...prev,
+      uniformeId,
+      talla: "",
+    }));
+    setResultado(null);
+    setError(null);
+    setTallasDisponibles([]);
+
+    if (uniformeId) {
+      void loadTallas(uniformeId);
+    }
+  }, [loadTallas]);
+
+  const setTalla = useCallback((talla: string) => {
+    setForm((prev) => ({ ...prev, talla }));
     setResultado(null);
     setError(null);
   }, []);
 
   const setCantidad = useCallback((cantidad: number) => {
-    setFormValues((current) => ({ ...current, cantidad }));
+    setForm((prev) => ({ ...prev, cantidad: Math.max(1, cantidad) }));
     setResultado(null);
     setError(null);
   }, []);
 
+  // ── Verificar disponibilidad ─────────────────────────────────────────
+
   const verify = useCallback(async () => {
-    if (!formValues.colegioId || !formValues.uniformeId || formValues.cantidad <= 0) {
-      setError("Selecciona colegio, uniforme y una cantidad valida.");
+    // Validaciones
+    if (!form.colegioId) {
+      setError("Selecciona un colegio.");
+      return;
+    }
+    if (!form.uniformeId) {
+      setError("Selecciona un uniforme.");
+      return;
+    }
+    if (!form.talla) {
+      setError("Selecciona una talla.");
+      return;
+    }
+    if (!form.cantidad || form.cantidad < 1) {
+      setError("La cantidad debe ser al menos 1.");
       return;
     }
 
@@ -94,69 +194,92 @@ export function useCalculadora() {
     setSuccessMessage(null);
 
     try {
-      const data = await verificarCalculadora(formValues);
+      const request: CalculadoraVerificarRequest = {
+        uniformeId: form.uniformeId,
+        cantidad: form.cantidad,
+        talla: form.talla,
+      };
+
+      const data = await calculadoraService.verificar(request);
       setResultado(data);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "No fue posible verificar los insumos.",
-      );
+      const msg = err instanceof Error ? err.message : "No fue posible verificar los insumos.";
+      setError(msg);
     } finally {
       setVerifying(false);
     }
-  }, [formValues]);
+  }, [form]);
 
-  const createRequest = useCallback(async () => {
-    if (!resultado) {
-      setError("Primero calcula los insumos requeridos.");
-      return;
-    }
+  // ── Clear messages ─────────────────────────────────────────────────
 
-    setCreating(true);
+  const clearMessages = useCallback(() => {
     setError(null);
     setSuccessMessage(null);
+  }, []);
 
-    try {
-      await generarSolicitudDesdeCalculadora({
-        colegioId: formValues.colegioId,
-        uniformeId: formValues.uniformeId,
-        cantidad: formValues.cantidad,
-        items: resultado.items,
-      });
+  // ── Datos computados para la UI ──────────────────────────────────────
 
-      setSuccessMessage("Solicitud de salida generada correctamente.");
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "No fue posible generar la solicitud.",
-      );
-    } finally {
-      setCreating(false);
-    }
-  }, [formValues, resultado]);
+  const colegioSeleccionado = useMemo(
+    () => colegios.find((c) => Number(c.id) === form.colegioId) ?? null,
+    [colegios, form.colegioId]
+  );
+
+  const uniformeSeleccionado = useMemo(
+    () => uniformes.find((u) => u.id === form.uniformeId) ?? null,
+    [uniformes, form.uniformeId]
+
+  );
+
+  const uniformesUnicos = useMemo(() => {
+    const map = new Map<number, UniformeOption>();
+    uniformes.forEach((u) => {
+      if (!map.has(u.id)) {
+        map.set(u.id, u);
+      }
+    });
+    return Array.from(map.values());
+  }, [uniformes]);
+
+  const isFormValid = useMemo(
+    () => form.colegioId !== null && form.uniformeId !== null && form.talla !== "" && form.cantidad >= 1,
+    [form]
+  );
+
+  const loading = loadingColegios || loadingTallas;
+
+  // ── Return ───────────────────────────────────────────────────────────
 
   return {
+    // Datos
     colegios,
-    uniformes,
+    uniformes: uniformesUnicos,
+    tallasDisponibles,
     colegioSeleccionado,
-    formValues,
+    uniformeSeleccionado,
+    formValues: {
+      colegioId: form.colegioId ? String(form.colegioId) : "",
+      uniformeId: form.uniformeId ? String(form.uniformeId) : "",
+      cantidad: form.cantidad,
+      talla: form.talla,
+    },
     resultado,
+
+    // Estados
     loading,
+    loadingUniformes,
+    loadingTallas,
     verifying,
-    creating,
     error,
     successMessage,
-    clearMessages: () => {
-      setError(null);
-      setSuccessMessage(null);
-    },
-    reload: loadColegios,
+    isFormValid,
+
+    // Acciones
     setColegio,
     setUniforme,
+    setTalla,
     setCantidad,
     verify,
-    createRequest,
+    clearMessages,
+    reload: loadColegios,
   };
 }

@@ -1,1350 +1,718 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  TrendingUp,
-  ArrowLeft,
-  AlertTriangle,
-  CheckCircle,
-  Search,
-  RefreshCw,
-  AlertCircle,
-  Package,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  BarChart2,
-  Activity,
-  Zap,
-  ShieldCheck,
+  Brain, AlertTriangle, CheckCircle2, Loader2, RefreshCw, TrendingDown,
+  Package, CalendarX, Zap, ShieldAlert, Activity, ArrowRight, X,
+  BarChart2, Target, ChevronDown, ChevronUp, Cpu, Wifi, WifiOff,
+  SlidersHorizontal, Info,
 } from "lucide-react";
+import {
+  usePrediccionMasiva,
+  usePrediccionIndividual,
+  useEntrenamiento,
+} from "@/app/hooks/usePrediccion";
+import type { PrediccionResponse } from "@/app/types/prediccion";
+import { useAuth } from "@/app/context/AuthContext";
 
-// ─────────────────────────────────────────────
-// TIPOS
-// ─────────────────────────────────────────────
-type Prediccion = "si" | "no";
-type Riesgo = "CRÍTICO" | "ALTO" | "MEDIO" | "ESTABLE";
-
-interface PrediccionItem {
-  id: number;
-  nombreInsumo: string;
-  stockActual: number;
-  unidad: string;
-  consumoPromedio3m: number; // unidades promedio por mes en últimos 3 meses
-  prediccion: Prediccion;
-  diasRestantes: number; // días estimados hasta agotamiento
-  tendencia: "subiendo" | "estable" | "bajando";
-}
-
-// ─────────────────────────────────────────────
-// MOCK
-// ─────────────────────────────────────────────
-const MOCK: PrediccionItem[] = [
-  {
-    id: 1,
-    nombreInsumo: "Hilo 40/2 Blanco",
-    stockActual: 850,
-    unidad: "Cono",
-    consumoPromedio3m: 107,
-    prediccion: "no",
-    diasRestantes: 238,
-    tendencia: "estable",
-  },
-  {
-    id: 2,
-    nombreInsumo: "Tela Popelina Azul",
-    stockActual: 45,
-    unidad: "Metro",
-    consumoPromedio3m: 28,
-    prediccion: "si",
-    diasRestantes: 48,
-    tendencia: "bajando",
-  },
-  {
-    id: 3,
-    nombreInsumo: "Botones 15mm Negros",
-    stockActual: 1200,
-    unidad: "Unidad",
-    consumoPromedio3m: 267,
-    prediccion: "no",
-    diasRestantes: 135,
-    tendencia: "estable",
-  },
-  {
-    id: 4,
-    nombreInsumo: "Cierre Invisible 60cm",
-    stockActual: 0,
-    unidad: "Unidad",
-    consumoPromedio3m: 67,
-    prediccion: "si",
-    diasRestantes: 0,
-    tendencia: "bajando",
-  },
-  {
-    id: 5,
-    nombreInsumo: "Elástico 2cm Natural",
-    stockActual: 320,
-    unidad: "Metro",
-    consumoPromedio3m: 67,
-    prediccion: "no",
-    diasRestantes: 143,
-    tendencia: "subiendo",
-  },
-  {
-    id: 6,
-    nombreInsumo: "Entretela Termoadhesiva",
-    stockActual: 18,
-    unidad: "Metro",
-    consumoPromedio3m: 15,
-    prediccion: "si",
-    diasRestantes: 36,
-    tendencia: "bajando",
-  },
-  {
-    id: 7,
-    nombreInsumo: "Hilo 20/2 Negro",
-    stockActual: 600,
-    unidad: "Cono",
-    consumoPromedio3m: 7,
-    prediccion: "no",
-    diasRestantes: 257,
-    tendencia: "estable",
-  },
-  {
-    id: 8,
-    nombreInsumo: "Aguja Industrial #14",
-    stockActual: 0,
-    unidad: "Unidad",
-    consumoPromedio3m: 4,
-    prediccion: "si",
-    diasRestantes: 0,
-    tendencia: "bajando",
-  },
-  {
-    id: 9,
-    nombreInsumo: "Tela Lino Beige",
-    stockActual: 92,
-    unidad: "Metro",
-    consumoPromedio3m: 18,
-    prediccion: "no",
-    diasRestantes: 153,
-    tendencia: "subiendo",
-  },
-  {
-    id: 10,
-    nombreInsumo: "Ribete Dorado 1cm",
-    stockActual: 410,
-    unidad: "Metro",
-    consumoPromedio3m: 60,
-    prediccion: "no",
-    diasRestantes: 205,
-    tendencia: "estable",
-  },
-  {
-    id: 11,
-    nombreInsumo: "Hilo 40/2 Rojo",
-    stockActual: 130,
-    unidad: "Cono",
-    consumoPromedio3m: 83,
-    prediccion: "si",
-    diasRestantes: 47,
-    tendencia: "bajando",
-  },
-  {
-    id: 12,
-    nombreInsumo: "Botones 10mm Blancos",
-    stockActual: 350,
-    unidad: "Unidad",
-    consumoPromedio3m: 50,
-    prediccion: "no",
-    diasRestantes: 210,
-    tendencia: "estable",
-  },
-];
-
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
-// ─────────────────────────────────────────────
-function getRiesgo(item: PrediccionItem): Riesgo {
-  if (item.stockActual === 0) return "CRÍTICO";
-  if (item.diasRestantes <= 45) return "ALTO";
-  if (item.diasRestantes <= 90) return "MEDIO";
+// ─────────────────────────────────────────────────────────────────────────────
+
+function nivelRiesgo(p: PrediccionResponse): "CRITICO" | "ALTO" | "MEDIO" | "ESTABLE" {
+  const xg = p.xgboost?.nivel_riesgo?.toUpperCase();
+  if (xg === "CRITICO" || p.stock_actual === 0) return "CRITICO";
+  if (xg === "ALTO" || (p.prophet?.dias_hasta_cero !== null && (p.prophet?.dias_hasta_cero ?? 999) <= 30)) return "ALTO";
+  if (xg === "MEDIO" || (p.prophet?.dias_hasta_cero !== null && (p.prophet?.dias_hasta_cero ?? 999) <= 60)) return "MEDIO";
   return "ESTABLE";
 }
 
-const RIESGO_STYLE: Record<
-  Riesgo,
-  { bg: string; color: string; border: string; label: string }
-> = {
-  CRÍTICO: {
-    bg: "#dc262618",
-    color: "#dc2626",
-    border: "#fca5a5",
-    label: "Crítico",
-  },
-  ALTO: { bg: "#f59e0b18", color: "#b45309", border: "#fcd34d", label: "Alto" },
-  MEDIO: {
-    bg: "#3b82f618",
-    color: "#1d4ed8",
-    border: "#93c5fd",
-    label: "Medio",
-  },
-  ESTABLE: {
-    bg: "#49c21b18",
-    color: "#2a9912",
-    border: "#86efac",
-    label: "Estable",
-  },
+const RIESGO_CONFIG = {
+  CRITICO: { bg: "#fef2f2", border: "#fecaca", text: "#991b1b", badge: "#dc2626", label: "Crítico", icon: <ShieldAlert size={14} /> },
+  ALTO:    { bg: "#fff7ed", border: "#fed7aa", text: "#9a3412", badge: "#ea580c", label: "Alto",    icon: <AlertTriangle size={14} /> },
+  MEDIO:   { bg: "#fefce8", border: "#fef08a", text: "#854d0e", badge: "#ca8a04", label: "Medio",   icon: <Activity size={14} /> },
+  ESTABLE: { bg: "#f0fdf4", border: "#bbf7d0", text: "#14532d", badge: "#16a34a", label: "Estable", icon: <CheckCircle2 size={14} /> },
 };
 
-const RIESGO_ICON: Record<Riesgo, React.ReactNode> = {
-  CRÍTICO: <AlertTriangle size={12} />,
-  ALTO: <AlertCircle size={12} />,
-  MEDIO: <Activity size={12} />,
-  ESTABLE: <CheckCircle size={12} />,
-};
-
-const TENDENCIA_STYLE = {
-  subiendo: { label: "↑ Subiendo", color: "#dc2626" },
-  estable: { label: "→ Estable", color: "#6b7280" },
-  bajando: { label: "↓ Bajando", color: "#49c21b" },
-};
-
-// Porcentaje de días hasta 1 año (max 100%)
-function pctDias(dias: number) {
-  return Math.min(Math.round((dias / 365) * 100), 100);
+function pct(val: number | null | undefined): string {
+  if (val == null) return "—";
+  return (val * 100).toFixed(0) + "%";
 }
 
-// ─────────────────────────────────────────────
-// GAUGE SVG – arco semicircular de riesgo
-// ─────────────────────────────────────────────
-function RiesgoGauge({ dias, riesgo }: { dias: number; riesgo: Riesgo }) {
-  const pct = pctDias(dias);
-  const angle = (pct / 100) * 180; // 0° = izquierda, 180° = derecha
-  const R = 54;
-  const cx = 70;
-  const cy = 70;
-
-  // Punto en el arco
-  const rad = ((angle - 180) * Math.PI) / 180;
-  const nx = cx + R * Math.cos(rad);
-  const ny = cy + R * Math.sin(rad);
-
-  // Color del arco según riesgo
-  const trackColor = RIESGO_STYLE[riesgo].color;
-  const bgArc = "#f0f0f4";
-
-  // Arco de fondo (semicírculo)
-  const bgPath = `M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`;
-
-  // Arco de progreso
-  const progressAngle = Math.min(angle, 180);
-  const radP = ((progressAngle - 180) * Math.PI) / 180;
-  const px = cx + R * Math.cos(radP);
-  const py = cy + R * Math.sin(radP);
-  const large = progressAngle > 90 ? 1 : 0;
-  const progressPath = `M ${cx - R} ${cy} A ${R} ${R} 0 ${large} 1 ${px} ${py}`;
-
-  return (
-    <svg width={140} height={80} viewBox="0 0 140 80">
-      {/* Track */}
-      <path
-        d={bgPath}
-        fill="none"
-        stroke={bgArc}
-        strokeWidth={10}
-        strokeLinecap="round"
-      />
-      {/* Progress */}
-      {pct > 0 && (
-        <path
-          d={progressPath}
-          fill="none"
-          stroke={trackColor}
-          strokeWidth={10}
-          strokeLinecap="round"
-          opacity={0.8}
-        />
-      )}
-      {/* Aguja */}
-      <circle cx={nx} cy={ny} r={5} fill={trackColor} />
-      {/* Valor */}
-      <text
-        x={cx}
-        y={cy + 10}
-        textAnchor="middle"
-        fontSize={16}
-        fontWeight={700}
-        fill={trackColor}
-        fontFamily="'Poppins', sans-serif"
-      >
-        {dias === 0 ? "0d" : `${dias}d`}
-      </text>
-      <text
-        x={cx}
-        y={cy + 26}
-        textAnchor="middle"
-        fontSize={9}
-        fill="#9ca3af"
-        fontFamily="'Poppins', sans-serif"
-      >
-        días estimados
-      </text>
-    </svg>
-  );
+function fmtFecha(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Date(iso + "T00:00:00").toLocaleDateString("es-CO", {
+    day: "2-digit", month: "short", year: "numeric",
+  });
 }
 
-// ─────────────────────────────────────────────
-// MODAL ANÁLISIS
-// ─────────────────────────────────────────────
-function AnalisisModal({
-  item,
-  onClose,
-}: {
-  item: PrediccionItem;
-  onClose: () => void;
-}) {
-  const riesgo = getRiesgo(item);
-  const rs = RIESGO_STYLE[riesgo];
-  const tend = TENDENCIA_STYLE[item.tendencia];
-  const consumoPct = Math.min(
-    Math.round((item.consumoPromedio3m / Math.max(item.stockActual, 1)) * 100),
-    100,
-  );
+function diasLabel(dias: number | null | undefined): string {
+  if (dias == null) return "—";
+  if (dias === 0) return "Hoy";
+  if (dias < 0) return "Agotado";
+  return `${dias} días`;
+}
 
-  const interpretacion =
-    item.stockActual === 0
-      ? "El insumo está completamente agotado. Se requiere reposición inmediata para no detener la producción."
-      : item.prediccion === "si"
-        ? `Con el consumo promedio actual de ${item.consumoPromedio3m} ${item.unidad}/mes, el stock se agotará en aproximadamente ${item.diasRestantes} días. Se recomienda generar una orden de reposición a la brevedad.`
-        : `El stock actual es suficiente para cubrir aproximadamente ${item.diasRestantes} días de operación. No se requiere acción inmediata, pero conviene monitorear la tendencia de consumo.`;
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPONENTE PRINCIPAL
+// ─────────────────────────────────────────────────────────────────────────────
+
+export default function PrediccionClient() {
+  const { user } = useAuth();
+  const { data, loading, error, servicioActivo, recargar } = usePrediccionMasiva();
+  const individual = usePrediccionIndividual();
+  const entrenamiento = useEntrenamiento();
+  const [filtroRiesgo, setFiltroRiesgo] = useState<string>("TODOS");
+  const [busqueda, setBusqueda] = useState("");
+  const [detalleAbierto, setDetalleAbierto] = useState<PrediccionResponse | null>(null);
+  const [showEntrenar, setShowEntrenar] = useState(false);
+
+  const esAdmin = user?.rol === "ADMIN";
+
+  const predicciones = data?.predicciones ?? [];
+
+  const filtradas = predicciones.filter((p) => {
+    const nivel = nivelRiesgo(p);
+    const matchFiltro = filtroRiesgo === "TODOS" || nivel === filtroRiesgo;
+    const matchBusqueda = p.nombre.toLowerCase().includes(busqueda.toLowerCase());
+    return matchFiltro && matchBusqueda;
+  });
+
+  // KPIs
+  const criticos = predicciones.filter(p => nivelRiesgo(p) === "CRITICO").length;
+  const altos    = predicciones.filter(p => nivelRiesgo(p) === "ALTO").length;
+  const medios   = predicciones.filter(p => nivelRiesgo(p) === "MEDIO").length;
+  const estables = predicciones.filter(p => nivelRiesgo(p) === "ESTABLE").length;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center"
-        style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.94, opacity: 0, y: 16 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.94, opacity: 0 }}
-          transition={{ duration: 0.22 }}
-          className="relative w-full mx-4 overflow-hidden"
-          style={{
-            maxWidth: 520,
-            backgroundColor: "#fff",
-            borderRadius: 22,
-            boxShadow: "0 28px 80px rgba(0,0,0,0.22)",
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div
-            className="px-6 py-5 flex items-center justify-between"
-            style={{
-              background: `linear-gradient(135deg, ${riesgo === "CRÍTICO" || riesgo === "ALTO" ? "#0b3d91" : "#0b3d91"} 0%, #041d47 100%)`,
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className="flex items-center justify-center rounded-xl flex-shrink-0"
-                style={{
-                  width: 42,
-                  height: 42,
-                  backgroundColor: rs.color + "30",
-                }}
-              >
-                <TrendingUp size={20} style={{ color: rs.color }} />
-              </div>
-              <div>
-                <p
-                  className="text-xs"
-                  style={{
-                    color: "rgba(255,255,255,0.5)",
-                    fontFamily: "'Poppins', sans-serif",
-                  }}
-                >
-                  Análisis de predicción
-                </p>
-                <h3
-                  className="text-sm font-semibold text-white"
-                  style={{ fontFamily: "'Poppins', sans-serif", maxWidth: 280 }}
-                >
-                  {item.nombreInsumo}
-                </h3>
-              </div>
+    <div className="flex flex-col gap-6 pb-12">
+
+      {/* ── HEADER ─────────────────────────────────────────────────────── */}
+      <div className="rounded-[28px] border px-6 py-5"
+        style={{ borderColor: "#dbe4ff", background: "linear-gradient(135deg, rgba(11,61,145,0.07) 0%, rgba(139,92,246,0.07) 100%)" }}>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl"
+              style={{ backgroundColor: "rgba(139,92,246,0.12)" }}>
+              <Brain size={24} style={{ color: "#8b5cf6" }} />
             </div>
-            <button
-              onClick={onClose}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "rgba(255,255,255,0.5)",
-                padding: 4,
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = "rgba(255,255,255,0.5)")
-              }
-            >
-              <X size={18} />
-            </button>
+            <div>
+              <h1 className="text-xl font-semibold" style={{ color: "#101828", fontFamily: "'Poppins', sans-serif" }}>
+                Predicción de Insumos
+              </h1>
+              <p className="text-sm mt-0.5" style={{ color: "#667085", fontFamily: "'Poppins', sans-serif" }}>
+                Motor ML: Prophet + XGBoost · Microservicio Python
+              </p>
+            </div>
           </div>
 
-          {/* Body */}
-          <div className="px-6 py-5 flex flex-col gap-5">
-            {/* Gauge + estado */}
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex flex-col items-center">
-                <RiesgoGauge dias={item.diasRestantes} riesgo={riesgo} />
+          <div className="flex items-center gap-3">
+            {/* Indicador de estado del servicio */}
+            <ServiceStatusBadge activo={servicioActivo} />
+
+            {/* Botón reentrenar (solo ADMIN) */}
+            {esAdmin && (
+              <button
+                onClick={() => setShowEntrenar(true)}
+                className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all"
+                style={{ backgroundColor: "#8b5cf6", color: "#fff", border: "none", fontFamily: "'Poppins', sans-serif", cursor: "pointer" }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#7c3aed")}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#8b5cf6")}
+              >
+                <Cpu size={14} /> Reentrenar Modelo
+              </button>
+            )}
+
+            {/* Refrescar */}
+            <button
+              onClick={recargar} disabled={loading}
+              className="flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all"
+              style={{ borderColor: "#d0d5dd", backgroundColor: "#fff", color: "#374151", fontFamily: "'Poppins', sans-serif", cursor: loading ? "not-allowed" : "pointer" }}
+              onMouseEnter={e => { if (!loading) { e.currentTarget.style.borderColor = "#0b3d91"; e.currentTarget.style.color = "#0b3d91"; } }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "#d0d5dd"; e.currentTarget.style.color = "#374151"; }}
+            >
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              Actualizar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── ESTADO DE CARGA / ERROR ─────────────────────────────────────── */}
+      <AnimatePresence>
+        {loading && (
+          <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="flex flex-col items-center justify-center gap-4 py-16">
+            <div className="relative flex h-16 w-16 items-center justify-center">
+              <div className="absolute inset-0 rounded-full" style={{ border: "3px solid #ede9fe" }} />
+              <div className="absolute inset-0 animate-spin rounded-full" style={{ border: "3px solid transparent", borderTopColor: "#8b5cf6" }} />
+              <Brain size={24} style={{ color: "#8b5cf6" }} />
+            </div>
+            <p className="text-sm font-medium" style={{ color: "#6b7280", fontFamily: "'Poppins', sans-serif" }}>
+              Consultando modelos Prophet + XGBoost…
+            </p>
+          </motion.div>
+        )}
+
+        {!loading && error && (
+          <motion.div key="error" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="flex items-start gap-3 rounded-2xl border px-5 py-4"
+            style={{ borderColor: "#fecaca", backgroundColor: "#fef2f2" }}>
+            <AlertTriangle size={18} style={{ color: "#dc2626", flexShrink: 0, marginTop: 2 }} />
+            <div>
+              <p className="text-sm font-semibold" style={{ color: "#991b1b", fontFamily: "'Poppins', sans-serif" }}>
+                Error al cargar predicciones
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: "#b42318", fontFamily: "'Poppins', sans-serif" }}>{error}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── KPI CARDS ──────────────────────────────────────────────────── */}
+      {!loading && data && (
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: "Críticos",  value: criticos, ...RIESGO_CONFIG.CRITICO },
+            { label: "Alto Riesgo", value: altos,  ...RIESGO_CONFIG.ALTO    },
+            { label: "Medio Riesgo", value: medios, ...RIESGO_CONFIG.MEDIO  },
+            { label: "Estables",  value: estables, ...RIESGO_CONFIG.ESTABLE },
+          ].map(({ label, value, badge, bg, icon }, i) => (
+            <motion.div key={label}
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.07 }}
+              onClick={() => setFiltroRiesgo(label === "Críticos" ? "CRITICO" : label === "Alto Riesgo" ? "ALTO" : label === "Medio Riesgo" ? "MEDIO" : "ESTABLE")}
+              className="flex items-center gap-4 rounded-2xl px-5 py-4 cursor-pointer transition-transform hover:scale-[1.02]"
+              style={{ backgroundColor: "#fff", boxShadow: "0 1px 12px rgba(0,0,0,0.07)", borderLeft: `4px solid ${badge}` }}>
+              <div className="flex items-center justify-center rounded-xl flex-shrink-0"
+                style={{ width: 42, height: 42, backgroundColor: bg }}>
+                <span style={{ color: badge }}>{React.cloneElement(icon as React.ReactElement, { size: 20 })}</span>
               </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide" style={{ color: badge, fontFamily: "'Poppins', sans-serif" }}>{label}</p>
+                <p className="text-2xl font-bold" style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}>{value}</p>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
 
-              <div className="flex-1 flex flex-col gap-3">
-                {/* Badge predicción */}
-                <div className="flex items-center gap-2">
-                  <span
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+      {/* ── TABLA DE PREDICCIONES ──────────────────────────────────────── */}
+      {!loading && data && (
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          {/* Barra de filtros */}
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <div className="relative flex-1 min-w-[200px]">
+              <Package size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
+              <input
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+                placeholder="Buscar insumo…"
+                style={{ width: "100%", padding: "9px 14px 9px 36px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontFamily: "'Poppins', sans-serif", color: "#374151", outline: "none", backgroundColor: "#fff", boxSizing: "border-box" }}
+                onFocus={e => { e.currentTarget.style.borderColor = "#8b5cf6"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(139,92,246,0.1)"; }}
+                onBlur={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.boxShadow = "none"; }}
+              />
+            </div>
+
+            {/* Filtro por nivel */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {(["TODOS", "CRITICO", "ALTO", "MEDIO", "ESTABLE"] as const).map(nivel => {
+                const cfg = nivel !== "TODOS" ? RIESGO_CONFIG[nivel] : null;
+                const active = filtroRiesgo === nivel;
+                return (
+                  <button key={nivel} onClick={() => setFiltroRiesgo(nivel)}
+                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all"
                     style={{
-                      backgroundColor: rs.bg,
-                      color: rs.color,
-                      border: `1px solid ${rs.border}`,
-                      fontFamily: "'Poppins', sans-serif",
-                    }}
-                  >
-                    {RIESGO_ICON[riesgo]}
-                    {item.prediccion === "si" ? "Se agotará" : "Stock estable"}
-                  </span>
-                  <span
-                    className="text-xs font-semibold px-2 py-1 rounded-lg"
-                    style={{
-                      backgroundColor: "#f5f6fa",
-                      color: tend.color,
-                      fontFamily: "'Poppins', sans-serif",
-                    }}
-                  >
-                    {tend.label}
-                  </span>
+                      backgroundColor: active ? (cfg?.badge ?? "#0b3d91") : "#f3f4f6",
+                      color: active ? "#fff" : "#6b7280",
+                      border: "none",
+                      cursor: "pointer",
+                    }}>
+                    {cfg?.icon && <span>{cfg.icon}</span>}
+                    {nivel === "TODOS" ? "Todos" : cfg?.label}
+                    <span className="ml-0.5 opacity-75">
+                      ({nivel === "TODOS" ? predicciones.length
+                        : nivel === "CRITICO" ? criticos
+                        : nivel === "ALTO" ? altos
+                        : nivel === "MEDIO" ? medios
+                        : estables})
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Tabla */}
+          <div className="rounded-2xl border overflow-hidden"
+            style={{ borderColor: "#eaecf0", backgroundColor: "#fff", boxShadow: "0 1px 12px rgba(0,0,0,0.06)" }}>
+            <div className="overflow-x-auto">
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
+                <thead>
+                  <tr style={{ backgroundColor: "#f9fafb" }}>
+                    {["Insumo", "Stock Actual", "Agotamiento (Prophet)", "Días hasta cero", "XGBoost", "Confianza", "Acciones"].map(h => (
+                      <th key={h} className="px-5 py-3 text-left text-xs font-semibold uppercase"
+                        style={{ color: "#6b7280", fontFamily: "'Poppins', sans-serif", borderBottom: "1px solid #eaecf0", whiteSpace: "nowrap" }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtradas.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-5 py-10 text-center text-sm"
+                        style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
+                        No se encontraron insumos con ese filtro.
+                      </td>
+                    </tr>
+                  ) : (
+                    filtradas.map((p, i) => {
+                      const nivel = nivelRiesgo(p);
+                      const cfg = RIESGO_CONFIG[nivel];
+                      return (
+                        <motion.tr key={p.insumo_id}
+                          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
+                          style={{ borderBottom: "1px solid #f3f4f6" }}
+                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#fafafa")}
+                          onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}>
+
+                          {/* Insumo */}
+                          <td className="px-5 py-3.5">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center justify-center rounded-lg flex-shrink-0"
+                                style={{ width: 32, height: 32, backgroundColor: cfg.bg }}>
+                                <Package size={14} style={{ color: cfg.badge }} />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium" style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}>
+                                  {p.nombre}
+                                </p>
+                                {p.alerta && (
+                                  <p className="text-xs" style={{ color: cfg.text, fontFamily: "'Poppins', sans-serif" }}>
+                                    {p.mensaje}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Stock actual */}
+                          <td className="px-5 py-3.5">
+                            <div>
+                              <p className="text-sm font-semibold" style={{ color: p.stock_actual === 0 ? "#dc2626" : "#111827" }}>
+                                {(p.stock_actual ?? 0).toLocaleString()} {p.unidad_medida}
+                              </p>
+                              <p className="text-xs" style={{ color: "#9ca3af" }}>
+                                Mín: {p.stock_minimo}
+                              </p>
+                            </div>
+                          </td>
+
+                          {/* Fecha agotamiento */}
+                          <td className="px-5 py-3.5">
+                            <div className="flex items-center gap-1.5">
+                              <CalendarX size={13} style={{ color: p.prophet?.fecha_agotamiento_estimada ? cfg.badge : "#9ca3af" }} />
+                              <span className="text-sm font-medium" style={{ color: p.prophet?.fecha_agotamiento_estimada ? cfg.text : "#9ca3af" }}>
+                                {fmtFecha(p.prophet?.fecha_agotamiento_estimada)}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Días hasta cero */}
+                          <td className="px-5 py-3.5">
+                            <DiasBadge dias={p.prophet?.dias_hasta_cero} />
+                          </td>
+
+                          {/* XGBoost */}
+                          <td className="px-5 py-3.5">
+                            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
+                              style={{ backgroundColor: cfg.bg, color: cfg.text, border: `1px solid ${cfg.border}` }}>
+                              {cfg.icon}
+                              {nivel}
+                            </span>
+                          </td>
+
+                          {/* Confianza */}
+                          <td className="px-5 py-3.5">
+                            <ConfianzaBar valor={p.prophet?.confianza} />
+                          </td>
+
+                          {/* Acciones */}
+                          <td className="px-5 py-3.5">
+                            <button
+                              onClick={() => setDetalleAbierto(p)}
+                              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all"
+                              style={{ backgroundColor: "#f5f3ff", color: "#7c3aed", border: "none", cursor: "pointer" }}
+                              onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#ede9fe")}
+                              onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#f5f3ff")}>
+                              <BarChart2 size={12} /> Ver detalle
+                            </button>
+                          </td>
+                        </motion.tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Footer tabla */}
+            <div className="px-5 py-3 flex items-center justify-between"
+              style={{ borderTop: "1px solid #f3f4f6", backgroundColor: "#fafafa" }}>
+              <p className="text-xs" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
+                Mostrando {filtradas.length} de {predicciones.length} insumos
+              </p>
+              {(data.en_riesgo ?? 0) > 0 && (
+                <p className="text-xs font-semibold" style={{ color: "#dc2626", fontFamily: "'Poppins', sans-serif" }}>
+                  ⚠ {data.en_riesgo} insumo(s) en riesgo requieren atención
+                </p>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ── MODAL DETALLE ──────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {detalleAbierto && (
+          <DetalleModal prediccion={detalleAbierto} onClose={() => setDetalleAbierto(null)} />
+        )}
+      </AnimatePresence>
+
+      {/* ── MODAL REENTRENAR ───────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showEntrenar && (
+          <EntrenarModal
+            entrenamiento={entrenamiento}
+            onClose={() => { setShowEntrenar(false); entrenamiento.resultado && recargar(); }}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUB-COMPONENTES
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ServiceStatusBadge({ activo }: { activo: boolean | null }) {
+  if (activo === null) return null;
+  return (
+    <div className="flex items-center gap-2 rounded-xl px-3 py-2"
+      style={{ backgroundColor: activo ? "#f0fdf4" : "#fef2f2", border: `1px solid ${activo ? "#bbf7d0" : "#fecaca"}` }}>
+      {activo
+        ? <Wifi size={13} style={{ color: "#16a34a" }} />
+        : <WifiOff size={13} style={{ color: "#dc2626" }} />}
+      <span className="text-xs font-semibold" style={{ color: activo ? "#166534" : "#991b1b", fontFamily: "'Poppins', sans-serif" }}>
+        {activo ? "ML Activo" : "ML Inactivo"}
+      </span>
+    </div>
+  );
+}
+
+function DiasBadge({ dias }: { dias: number | null | undefined }) {
+  if (dias == null) return <span className="text-sm" style={{ color: "#9ca3af" }}>—</span>;
+
+  let bg = "#dcfce7", color = "#166534";
+  if (dias === 0 || dias < 0) { bg = "#fef2f2"; color = "#991b1b"; }
+  else if (dias <= 30) { bg = "#fecaca"; color = "#991b1b"; }
+  else if (dias <= 60) { bg = "#fed7aa"; color = "#9a3412"; }
+  else if (dias <= 90) { bg = "#fef9c3"; color = "#854d0e"; }
+
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
+      style={{ backgroundColor: bg, color }}>
+      {dias <= 0 ? "Agotado" : `${dias}d`}
+    </span>
+  );
+}
+
+function ConfianzaBar({ valor }: { valor: number | null | undefined }) {
+  if (valor == null) return <span className="text-xs" style={{ color: "#9ca3af" }}>—</span>;
+  const pct = Math.round(valor * 100);
+  const color = pct >= 80 ? "#16a34a" : pct >= 60 ? "#ca8a04" : "#dc2626";
+  return (
+    <div>
+      <div className="flex items-center gap-2">
+        <div className="relative h-1.5 w-20 overflow-hidden rounded-full" style={{ backgroundColor: "#f3f4f6" }}>
+          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
+        </div>
+        <span className="text-xs font-semibold" style={{ color, fontFamily: "'Poppins', sans-serif" }}>{pct}%</span>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODAL DETALLE
+// ─────────────────────────────────────────────────────────────────────────────
+
+function DetalleModal({ prediccion: p, onClose }: { prediccion: PrediccionResponse; onClose: () => void }) {
+  const nivel = nivelRiesgo(p);
+  const cfg = RIESGO_CONFIG[nivel];
+
+  return (
+    <motion.div
+      key="overlay"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 24 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.94, y: 24 }}
+        className="w-full max-w-2xl overflow-hidden rounded-3xl"
+        style={{ backgroundColor: "#fff", boxShadow: "0 25px 80px rgba(0,0,0,0.2)" }}>
+
+        {/* Header modal */}
+        <div className="flex items-center justify-between px-6 py-5"
+          style={{ background: `linear-gradient(135deg, ${cfg.bg} 0%, #fff 100%)`, borderBottom: "1px solid #f0f0f4" }}>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl"
+              style={{ backgroundColor: cfg.bg, border: `1px solid ${cfg.border}` }}>
+              <Package size={18} style={{ color: cfg.badge }} />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold" style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}>
+                {p.nombre}
+              </h2>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold" style={{ color: cfg.text }}>
+                {cfg.icon} Riesgo {cfg.label}
+              </span>
+            </div>
+          </div>
+          <button onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full transition-all"
+            style={{ backgroundColor: "#f3f4f6", border: "none", cursor: "pointer" }}
+            onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#fecaca")}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#f3f4f6")}>
+            <X size={15} style={{ color: "#374151" }} />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto max-h-[70vh]">
+          <div className="px-6 py-5 flex flex-col gap-5">
+
+            {/* Stock info */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: "Stock Actual", value: `${(p.stock_actual ?? 0).toLocaleString()} ${p.unidad_medida}`, color: (p.stock_actual ?? 0) === 0 ? "#dc2626" : "#111827" },
+                { label: "Stock Mínimo", value: `${p.stock_minimo} ${p.unidad_medida}`, color: "#6b7280" },
+                { label: "Consumo Diario", value: p.prophet?.consumo_diario_promedio != null ? `${p.prophet.consumo_diario_promedio.toFixed(2)} u/día` : "—", color: "#6b7280" },
+              ].map(({ label, value, color }) => (
+                <div key={label} className="rounded-2xl border px-4 py-3" style={{ borderColor: "#f0f0f4", backgroundColor: "#fafafa" }}>
+                  <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>{label}</p>
+                  <p className="mt-1 text-base font-bold" style={{ color, fontFamily: "'Poppins', sans-serif" }}>{value}</p>
                 </div>
+              ))}
+            </div>
 
-                {/* Datos clave */}
+            {/* Prophet */}
+            <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "#e0e7ff" }}>
+              <div className="flex items-center gap-2 px-4 py-3" style={{ backgroundColor: "#eef2ff", borderBottom: "1px solid #e0e7ff" }}>
+                <TrendingDown size={14} style={{ color: "#6366f1" }} />
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#4338ca", fontFamily: "'Poppins', sans-serif" }}>
+                  Modelo Prophet — Serie Temporal
+                </p>
+                {p.prophet?.metodo && (
+                  <span className="ml-auto text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: "#e0e7ff", color: "#6366f1" }}>
+                    {p.prophet.metodo}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-0 divide-x divide-y" style={{ divideColor: "#f0f0f4" }}>
                 {[
-                  {
-                    label: "Stock actual",
-                    value: `${item.stockActual.toLocaleString()} ${item.unidad}`,
-                  },
-                  {
-                    label: "Consumo prom. 3 meses",
-                    value: `${item.consumoPromedio3m} ${item.unidad}/mes`,
-                  },
-                  {
-                    label: "Días hasta agotamiento",
-                    value:
-                      item.diasRestantes === 0
-                        ? "Agotado"
-                        : `~${item.diasRestantes} días`,
-                  },
+                  { label: "Alerta estimada",        value: fmtFecha(p.prophet?.fecha_alerta_estimada) },
+                  { label: "Agotamiento estimado",   value: fmtFecha(p.prophet?.fecha_agotamiento_estimada) },
+                  { label: "Días hasta stock mín.",  value: diasLabel(p.prophet?.dias_hasta_stock_minimo) },
+                  { label: "Días hasta cero",        value: diasLabel(p.prophet?.dias_hasta_cero) },
+                  { label: "Confianza",              value: pct(p.prophet?.confianza) },
+                  { label: "Historial suficiente",   value: p.prophet?.suficiente_historial == null ? "—" : p.prophet.suficiente_historial ? "Sí" : "No" },
                 ].map(({ label, value }) => (
-                  <div
-                    key={label}
-                    className="flex items-center justify-between"
-                  >
-                    <span
-                      className="text-xs"
-                      style={{
-                        color: "#9ca3af",
-                        fontFamily: "'Poppins', sans-serif",
-                      }}
-                    >
-                      {label}
-                    </span>
-                    <span
-                      className="text-xs font-semibold"
-                      style={{
-                        color: "#111827",
-                        fontFamily: "'Poppins', sans-serif",
-                      }}
-                    >
-                      {value}
-                    </span>
+                  <div key={label} className="px-4 py-3" style={{ borderBottom: "1px solid #f3f4f6", borderRight: "1px solid #f3f4f6" }}>
+                    <p className="text-xs" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>{label}</p>
+                    <p className="mt-0.5 text-sm font-semibold" style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}>{value}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Barra de consumo vs stock */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span
-                  className="text-xs font-medium"
-                  style={{
-                    color: "#374151",
-                    fontFamily: "'Poppins', sans-serif",
-                  }}
-                >
-                  Tasa de consumo mensual vs stock
-                </span>
-                <span className="text-xs font-bold" style={{ color: rs.color }}>
-                  {consumoPct}%
-                </span>
+            {/* XGBoost */}
+            {p.xgboost && (
+              <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "#fde68a" }}>
+                <div className="flex items-center gap-2 px-4 py-3" style={{ backgroundColor: "#fefce8", borderBottom: "1px solid #fde68a" }}>
+                  <Zap size={14} style={{ color: "#ca8a04" }} />
+                  <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#92400e", fontFamily: "'Poppins', sans-serif" }}>
+                    Modelo XGBoost — Clasificación de Riesgo
+                  </p>
+                </div>
+                <div className="px-4 py-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-sm font-medium" style={{ color: "#6b7280" }}>Nivel de riesgo:</span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold"
+                      style={{ backgroundColor: cfg.bg, color: cfg.text, border: `1px solid ${cfg.border}` }}>
+                      {cfg.icon} {p.xgboost.nivel_riesgo}
+                    </span>
+                  </div>
+                  {p.xgboost.probabilidades && Object.keys(p.xgboost.probabilidades).length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
+                        Probabilidades por clase
+                      </p>
+                      {Object.entries(p.xgboost.probabilidades).map(([clase, prob]) => (
+                        <div key={clase} className="flex items-center gap-3">
+                          <span className="w-20 text-xs font-medium text-right" style={{ color: "#6b7280" }}>{clase}</span>
+                          <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: "#f3f4f6" }}>
+                            <div className="h-full rounded-full" style={{ width: `${Math.round(prob * 100)}%`, backgroundColor: "#8b5cf6" }} />
+                          </div>
+                          <span className="text-xs font-bold w-10 text-right" style={{ color: "#7c3aed" }}>{(prob * 100).toFixed(1)}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div
-                className="rounded-full overflow-hidden"
-                style={{ height: 8, backgroundColor: "#f0f0f4" }}
-              >
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${consumoPct}%` }}
-                  transition={{ duration: 0.7, ease: "easeOut" }}
-                  className="h-full rounded-full"
-                  style={{ backgroundColor: rs.color }}
-                />
-              </div>
-              <p
-                className="text-[10px] mt-1"
-                style={{
-                  color: "#9ca3af",
-                  fontFamily: "'Poppins', sans-serif",
-                }}
-              >
-                Cada mes se consume el {consumoPct}% del stock disponible actual
-              </p>
-            </div>
+            )}
 
-            {/* Separador */}
-            <div style={{ borderTop: "1px solid #f0f0f4" }} />
-
-            {/* Interpretación */}
-            <div
-              className="flex items-start gap-3 px-4 py-3 rounded-xl"
-              style={{
-                backgroundColor: rs.bg,
-                border: `1px solid ${rs.border}`,
-              }}
-            >
-              <div className="flex-shrink-0 mt-0.5">
-                {item.prediccion === "si" ? (
-                  <AlertTriangle size={16} style={{ color: rs.color }} />
-                ) : (
-                  <ShieldCheck size={16} style={{ color: rs.color }} />
-                )}
+            {/* Recomendación */}
+            {p.recomendacion && (
+              <div className="flex items-start gap-3 rounded-2xl border px-4 py-4"
+                style={{ borderColor: "#bfdbfe", backgroundColor: "#eff6ff" }}>
+                <Info size={16} style={{ color: "#2563eb", flexShrink: 0, marginTop: 1 }} />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#1d4ed8" }}>Recomendación</p>
+                  <p className="text-sm" style={{ color: "#1e40af", fontFamily: "'Poppins', sans-serif" }}>{p.recomendacion}</p>
+                </div>
               </div>
-              <div>
-                <p
-                  className="text-xs font-semibold mb-0.5"
-                  style={{
-                    color: rs.color,
-                    fontFamily: "'Poppins', sans-serif",
-                  }}
-                >
-                  Interpretación automática
-                </p>
-                <p
-                  className="text-xs leading-relaxed"
-                  style={{
-                    color: "#374151",
-                    fontFamily: "'Poppins', sans-serif",
-                  }}
-                >
-                  {interpretacion}
-                </p>
-              </div>
-            </div>
+            )}
           </div>
-
-          {/* Footer */}
-          <div className="px-6 pb-5 flex gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 py-2.5 text-sm rounded-xl transition-all"
-              style={{
-                border: "1.5px solid #e5e7eb",
-                backgroundColor: "transparent",
-                color: "#6b7280",
-                fontFamily: "'Poppins', sans-serif",
-                cursor: "pointer",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.borderColor = "#9ca3af")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.borderColor = "#e5e7eb")
-              }
-            >
-              Cerrar
-            </button>
-            <Link
-              href="/inventario"
-              className="flex-1 py-2.5 text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-all"
-              style={{
-                backgroundColor: "#0b3d91",
-                color: "#fff",
-                textDecoration: "none",
-                fontFamily: "'Poppins', sans-serif",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.backgroundColor = "#49c21b")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.backgroundColor = "#0b3d91")
-              }
-            >
-              <Package size={14} /> Ir a inventario
-            </Link>
-          </div>
-        </motion.div>
+        </div>
       </motion.div>
-    </AnimatePresence>
+    </motion.div>
   );
 }
 
-// ─────────────────────────────────────────────
-// MAIN
-// ─────────────────────────────────────────────
-export default function PrediccionClient() {
-  const [items, setItems] = useState<PrediccionItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// ─────────────────────────────────────────────────────────────────────────────
+// MODAL REENTRENAR
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const [query, setQuery] = useState("");
-  const [riesgoFilter, setRiesgoFilter] = useState("");
-  const [analisisItem, setAnalisisItem] = useState<PrediccionItem | null>(null);
-
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
-
-  // ── Load ──
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // TODO: reemplazar con → const data = await getPredicciones();
-      await new Promise((r) => setTimeout(r, 600));
-      setItems(MOCK);
-    } catch {
-      setError("No se pudo cargar las predicciones.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  // ── Filtrado ──
-  const filtered = items.filter((item) => {
-    const matchQ = item.nombreInsumo
-      .toLowerCase()
-      .includes(query.toLowerCase());
-    const matchR = riesgoFilter ? getRiesgo(item) === riesgoFilter : true;
-    return matchQ && matchR;
-  });
-
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const start = (page - 1) * perPage;
-  const paged = filtered.slice(start, start + perPage);
-
-  // ── Stats ──
-  const criticos = items.filter((i) => getRiesgo(i) === "CRÍTICO").length;
-  const altos = items.filter((i) => getRiesgo(i) === "ALTO").length;
-  const medios = items.filter((i) => getRiesgo(i) === "MEDIO").length;
-  const estables = items.filter((i) => getRiesgo(i) === "ESTABLE").length;
-
-  const buildPages = (total: number, current: number) =>
-    Array.from({ length: total }, (_, i) => i + 1)
-      .filter((p) => p === 1 || p === total || Math.abs(p - current) <= 1)
-      .reduce<(number | "…")[]>((acc, p, idx, arr) => {
-        if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("…");
-        acc.push(p);
-        return acc;
-      }, []);
+function EntrenarModal({
+  entrenamiento,
+  onClose,
+}: {
+  entrenamiento: ReturnType<typeof useEntrenamiento>;
+  onClose: () => void;
+}) {
+  const { resultado, loading, error, entrenar } = entrenamiento;
 
   return (
-    <>
-      <div className="flex flex-col gap-6 pb-7">
-        {/* ── Heading ── */}
-        <motion.div
-          initial={{ opacity: 0, x: -12 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4 }}
-          className="flex flex-wrap items-start justify-between gap-4"
-        >
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+      onClick={e => { if (e.target === e.currentTarget && !loading) onClose(); }}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 24 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.94, y: 24 }}
+        className="w-full max-w-md rounded-3xl overflow-hidden"
+        style={{ backgroundColor: "#fff", boxShadow: "0 25px 80px rgba(0,0,0,0.2)" }}>
+
+        {/* Header */}
+        <div className="flex items-center gap-3 px-6 py-5"
+          style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", borderBottom: "1px solid #ddd6fe" }}>
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl" style={{ backgroundColor: "#ede9fe" }}>
+            <Cpu size={20} style={{ color: "#7c3aed" }} />
+          </div>
           <div>
-            <h1
-              className="text-xl font-semibold"
-              style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}
-            >
-              Predicción de Agotamiento
-            </h1>
-            <p
-              className="text-sm mt-0.5"
-              style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}
-            >
-              Modelo de predicción basado en el consumo promedio de los últimos
-              3 meses.
+            <h2 className="text-base font-semibold" style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}>
+              Reentrenar Modelo ML
+            </h2>
+            <p className="text-xs" style={{ color: "#7c3aed", fontFamily: "'Poppins', sans-serif" }}>
+              Prophet + XGBoost
             </p>
           </div>
-          <Link
-            href="/inventario"
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl transition-all"
-            style={{
-              border: "1.5px solid #e5e7eb",
-              backgroundColor: "#fff",
-              color: "#374151",
-              textDecoration: "none",
-              fontFamily: "'Poppins', sans-serif",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#0b3d91";
-              e.currentTarget.style.color = "#0b3d91";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#e5e7eb";
-              e.currentTarget.style.color = "#374151";
-            }}
-          >
-            <ArrowLeft size={14} /> Volver al inventario
-          </Link>
-        </motion.div>
+        </div>
 
-        {/* ── Stat cards de riesgo ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.07 }}
-          className="grid grid-cols-2 xl:grid-cols-4 gap-4"
-        >
-          {[
-            {
-              label: "Crítico",
-              value: criticos,
-              color: "#dc2626",
-              icon: AlertTriangle,
-              riesgo: "CRÍTICO" as Riesgo,
-            },
-            {
-              label: "Alto",
-              value: altos,
-              color: "#b45309",
-              icon: AlertCircle,
-              riesgo: "ALTO" as Riesgo,
-            },
-            {
-              label: "Medio",
-              value: medios,
-              color: "#1d4ed8",
-              icon: Activity,
-              riesgo: "MEDIO" as Riesgo,
-            },
-            {
-              label: "Estable",
-              value: estables,
-              color: "#2a9912",
-              icon: CheckCircle,
-              riesgo: "ESTABLE" as Riesgo,
-            },
-          ].map(({ label, value, color, icon: Icon, riesgo }, i) => (
-            <motion.div
-              key={label}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.1 + i * 0.07 }}
-              className="flex items-center gap-3 rounded-2xl px-4 py-4 cursor-pointer transition-all"
-              style={{
-                backgroundColor:
-                  riesgoFilter === riesgo ? color + "10" : "#fff",
-                boxShadow:
-                  riesgoFilter === riesgo
-                    ? `0 0 0 2px ${color}`
-                    : "0 1px 10px rgba(0,0,0,0.06)",
-                borderLeft: `4px solid ${color}`,
-              }}
-              onClick={() => {
-                setRiesgoFilter(riesgoFilter === riesgo ? "" : riesgo);
-                setPage(1);
-              }}
-            >
-              <div
-                className="flex items-center justify-center rounded-xl flex-shrink-0"
-                style={{ width: 40, height: 40, backgroundColor: color + "18" }}
-              >
-                <Icon size={18} style={{ color }} />
+        <div className="px-6 py-6 flex flex-col gap-5">
+          {!resultado && !loading && !error && (
+            <div>
+              <p className="text-sm" style={{ color: "#374151", fontFamily: "'Poppins', sans-serif" }}>
+                Se reentrenarán los modelos Prophet y XGBoost con todos los datos históricos de movimientos.
+                Este proceso puede tomar unos segundos.
+              </p>
+              <div className="mt-4 flex items-start gap-2 rounded-xl border px-4 py-3"
+                style={{ borderColor: "#fde68a", backgroundColor: "#fefce8" }}>
+                <AlertTriangle size={14} style={{ color: "#ca8a04", marginTop: 1, flexShrink: 0 }} />
+                <p className="text-xs" style={{ color: "#92400e", fontFamily: "'Poppins', sans-serif" }}>
+                  Solo disponible para administradores. El modelo se actualizará con los movimientos más recientes.
+                </p>
               </div>
+            </div>
+          )}
+
+          {loading && (
+            <div className="flex flex-col items-center gap-4 py-6">
+              <div className="relative flex h-14 w-14 items-center justify-center">
+                <div className="absolute inset-0 animate-spin rounded-full" style={{ border: "3px solid transparent", borderTopColor: "#8b5cf6" }} />
+                <Cpu size={22} style={{ color: "#8b5cf6" }} />
+              </div>
+              <p className="text-sm font-medium" style={{ color: "#7c3aed", fontFamily: "'Poppins', sans-serif" }}>
+                Reentrenando modelos…
+              </p>
+            </div>
+          )}
+
+          {resultado && (
+            <div className={`flex items-start gap-3 rounded-2xl border px-4 py-4`}
+              style={{ borderColor: resultado.exito ? "#bbf7d0" : "#fecaca", backgroundColor: resultado.exito ? "#f0fdf4" : "#fef2f2" }}>
+              {resultado.exito
+                ? <CheckCircle2 size={18} style={{ color: "#16a34a", flexShrink: 0 }} />
+                : <AlertTriangle size={18} style={{ color: "#dc2626", flexShrink: 0 }} />}
               <div>
-                <p
-                  className="text-xs font-medium uppercase tracking-wide"
-                  style={{ color, fontFamily: "'Poppins', sans-serif" }}
-                >
-                  {label}
+                <p className="text-sm font-semibold" style={{ color: resultado.exito ? "#15803d" : "#991b1b", fontFamily: "'Poppins', sans-serif" }}>
+                  {resultado.exito ? "Entrenamiento completado" : "Error en entrenamiento"}
                 </p>
-                <p
-                  className="text-2xl font-bold"
-                  style={{
-                    color: "#111827",
-                    fontFamily: "'Poppins', sans-serif",
-                  }}
-                >
-                  {value}
+                <p className="text-xs mt-0.5" style={{ color: resultado.exito ? "#16a34a" : "#b42318", fontFamily: "'Poppins', sans-serif" }}>
+                  {resultado.mensaje}
+                  {resultado.registros != null && ` · ${resultado.registros} registros procesados`}
                 </p>
               </div>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* ── Alerta si hay críticos ── */}
-        <AnimatePresence>
-          {criticos > 0 && !riesgoFilter && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center gap-3 px-5 py-3.5 rounded-2xl"
-              style={{
-                backgroundColor: "#fee2e2",
-                border: "1px solid #fca5a5",
-              }}
-            >
-              <Zap size={17} style={{ color: "#dc2626", flexShrink: 0 }} />
-              <p
-                className="text-sm font-medium"
-                style={{
-                  color: "#dc2626",
-                  fontFamily: "'Poppins', sans-serif",
-                }}
-              >
-                Hay <strong>{criticos}</strong> insumo{criticos > 1 ? "s" : ""}{" "}
-                completamente agotado{criticos > 1 ? "s" : ""}. Se requiere
-                reposición inmediata.
-              </p>
-              <Link
-                href="/entradas-add"
-                className="ml-auto text-xs font-semibold px-3 py-1.5 rounded-xl transition-all flex-shrink-0"
-                style={{
-                  backgroundColor: "#dc2626",
-                  color: "#fff",
-                  textDecoration: "none",
-                  fontFamily: "'Poppins', sans-serif",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#b91c1c")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#dc2626")
-                }
-              >
-                Nueva entrada →
-              </Link>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── Tabla card ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.2 }}
-          className="rounded-2xl overflow-hidden"
-          style={{
-            backgroundColor: "#fff",
-            boxShadow: "0 1px 12px rgba(0,0,0,0.07)",
-            border: "1px solid #f0f0f4",
-          }}
-        >
-          {/* Toolbar */}
-          <div
-            className="flex flex-wrap items-center justify-between gap-3 px-6 py-4"
-            style={{ borderBottom: "1px solid #f0f0f4" }}
-          >
-            <div className="flex items-center gap-2">
-              <BarChart2 size={16} style={{ color: "#0b3d91" }} />
-              <p
-                className="text-sm font-semibold"
-                style={{
-                  color: "#111827",
-                  fontFamily: "'Poppins', sans-serif",
-                }}
-              >
-                Resultados de Predicción
-              </p>
-              {riesgoFilter && (
-                <span
-                  className="px-2 py-0.5 rounded-full text-xs font-medium"
-                  style={{
-                    backgroundColor: RIESGO_STYLE[riesgoFilter as Riesgo].bg,
-                    color: RIESGO_STYLE[riesgoFilter as Riesgo].color,
-                    fontFamily: "'Poppins', sans-serif",
-                  }}
-                >
-                  {riesgoFilter}
-                </span>
-              )}
             </div>
+          )}
 
-            <div className="flex items-center gap-2">
-              {/* Limpiar filtro */}
-              {riesgoFilter && (
-                <button
-                  onClick={() => {
-                    setRiesgoFilter("");
-                    setPage(1);
-                  }}
-                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs"
-                  style={{
-                    border: "1.5px solid #fca5a5",
-                    backgroundColor: "#fee2e2",
-                    color: "#dc2626",
-                    cursor: "pointer",
-                    fontFamily: "'Poppins', sans-serif",
-                  }}
-                >
-                  <X size={11} /> Limpiar
-                </button>
-              )}
+          {error && (
+            <div className="flex items-start gap-3 rounded-2xl border px-4 py-4"
+              style={{ borderColor: "#fecaca", backgroundColor: "#fef2f2" }}>
+              <AlertTriangle size={18} style={{ color: "#dc2626", flexShrink: 0 }} />
+              <p className="text-sm" style={{ color: "#991b1b", fontFamily: "'Poppins', sans-serif" }}>{error}</p>
+            </div>
+          )}
 
-              {/* Buscador */}
-              <div className="relative">
-                <Search
-                  size={13}
-                  style={{
-                    position: "absolute",
-                    left: 11,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "#9ca3af",
-                    pointerEvents: "none",
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Buscar insumo..."
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setPage(1);
-                  }}
-                  style={{
-                    paddingLeft: 32,
-                    paddingRight: 12,
-                    paddingTop: 8,
-                    paddingBottom: 8,
-                    border: "1.5px solid #e5e7eb",
-                    borderRadius: 10,
-                    fontSize: 13,
-                    fontFamily: "'Poppins', sans-serif",
-                    outline: "none",
-                    width: 190,
-                    color: "#374151",
-                  }}
-                  onFocus={(e) =>
-                    (e.currentTarget.style.borderColor = "#0b3d91")
-                  }
-                  onBlur={(e) =>
-                    (e.currentTarget.style.borderColor = "#e5e7eb")
-                  }
-                />
-              </div>
-
-              {/* Refresh */}
-              <button
-                onClick={load}
-                className="flex items-center justify-center rounded-xl"
-                style={{
-                  width: 36,
-                  height: 36,
-                  border: "1.5px solid #e5e7eb",
-                  backgroundColor: "transparent",
-                  color: "#6b7280",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#0b3d91";
-                  e.currentTarget.style.color = "#0b3d91";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "#e5e7eb";
-                  e.currentTarget.style.color = "#6b7280";
-                }}
-              >
-                <RefreshCw size={14} />
+          {/* Acciones */}
+          <div className="flex gap-3 pt-2">
+            <button onClick={onClose} disabled={loading}
+              className="flex-1 rounded-xl border py-2.5 text-sm font-medium transition-all"
+              style={{ borderColor: "#d0d5dd", color: "#374151", backgroundColor: "#fff", fontFamily: "'Poppins', sans-serif", cursor: loading ? "not-allowed" : "pointer" }}>
+              {resultado ? "Cerrar" : "Cancelar"}
+            </button>
+            {!resultado && (
+              <button onClick={entrenar} disabled={loading}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white transition-all"
+                style={{ backgroundColor: loading ? "#7c3aed" : "#8b5cf6", border: "none", fontFamily: "'Poppins', sans-serif", cursor: loading ? "not-allowed" : "pointer" }}
+                onMouseEnter={e => { if (!loading) e.currentTarget.style.backgroundColor = "#7c3aed"; }}
+                onMouseLeave={e => { if (!loading) e.currentTarget.style.backgroundColor = "#8b5cf6"; }}>
+                {loading ? <><Loader2 size={14} className="animate-spin" /> Entrenando…</> : <><Cpu size={14} /> Iniciar Entrenamiento</>}
               </button>
-            </div>
+            )}
           </div>
-
-          {/* Tabla */}
-          <div className="overflow-x-auto">
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                minWidth: 700,
-              }}
-            >
-              <thead>
-                <tr style={{ backgroundColor: "#fafafa" }}>
-                  {[
-                    "Insumo",
-                    "Stock actual",
-                    "Consumo prom./mes",
-                    "Días estimados",
-                    "Nivel de riesgo",
-                    "Tendencia",
-                    "Análisis",
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider"
-                      style={{
-                        color: "#9ca3af",
-                        fontFamily: "'Poppins', sans-serif",
-                        borderBottom: "1px solid #f0f0f4",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-
-              <tbody>
-                {loading ? (
-                  [...Array(6)].map((_, i) => (
-                    <tr key={i} style={{ borderBottom: "1px solid #f7f7f9" }}>
-                      {[...Array(7)].map((_, j) => (
-                        <td key={j} className="px-5 py-4">
-                          <div
-                            className="animate-pulse rounded"
-                            style={{
-                              height: 13,
-                              width: j === 0 ? 160 : 70,
-                              backgroundColor: "#f3f4f6",
-                            }}
-                          />
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                ) : error ? (
-                  <tr>
-                    <td colSpan={7} className="px-5 py-10 text-center">
-                      <div
-                        className="flex items-center justify-center gap-2 text-sm"
-                        style={{ color: "#dc2626" }}
-                      >
-                        <AlertCircle size={16} />
-                        {error}
-                      </div>
-                    </td>
-                  </tr>
-                ) : paged.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-5 py-14 text-center">
-                      <TrendingUp
-                        size={32}
-                        style={{ color: "#d1d5db", margin: "0 auto 8px" }}
-                      />
-                      <p
-                        className="text-sm"
-                        style={{
-                          color: "#9ca3af",
-                          fontFamily: "'Poppins', sans-serif",
-                        }}
-                      >
-                        Sin resultados
-                      </p>
-                    </td>
-                  </tr>
-                ) : (
-                  paged.map((item, i) => {
-                    const riesgo = getRiesgo(item);
-                    const rs = RIESGO_STYLE[riesgo];
-                    const tend = TENDENCIA_STYLE[item.tendencia];
-                    const pct = pctDias(item.diasRestantes);
-
-                    return (
-                      <tr
-                        key={item.id}
-                        style={{
-                          borderBottom:
-                            i < paged.length - 1 ? "1px solid #f7f7f9" : "none",
-                          transition: "background-color 0.12s",
-                        }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.backgroundColor = "#fafbff")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.backgroundColor =
-                            "transparent")
-                        }
-                      >
-                        {/* Insumo */}
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-2.5">
-                            <div
-                              className="flex items-center justify-center rounded-lg flex-shrink-0"
-                              style={{
-                                width: 34,
-                                height: 34,
-                                backgroundColor: rs.bg,
-                              }}
-                            >
-                              <Package size={15} style={{ color: rs.color }} />
-                            </div>
-                            <span
-                              className="text-sm font-medium"
-                              style={{
-                                color: "#111827",
-                                fontFamily: "'Poppins', sans-serif",
-                              }}
-                            >
-                              {item.nombreInsumo}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Stock actual */}
-                        <td className="px-5 py-3.5">
-                          <span
-                            className="text-sm font-bold"
-                            style={{
-                              color:
-                                item.stockActual === 0 ? "#dc2626" : "#374151",
-                              fontFamily: "'Poppins', sans-serif",
-                            }}
-                          >
-                            {item.stockActual.toLocaleString()} {item.unidad}
-                          </span>
-                        </td>
-
-                        {/* Consumo */}
-                        <td className="px-5 py-3.5">
-                          <span
-                            className="text-sm"
-                            style={{
-                              color: "#6b7280",
-                              fontFamily: "'Poppins', sans-serif",
-                            }}
-                          >
-                            {item.consumoPromedio3m} {item.unidad}/mes
-                          </span>
-                        </td>
-
-                        {/* Días + minibarra */}
-                        <td className="px-5 py-3.5" style={{ minWidth: 120 }}>
-                          <div>
-                            <span
-                              className="text-sm font-semibold block"
-                              style={{
-                                color: rs.color,
-                                fontFamily: "'Poppins', sans-serif",
-                              }}
-                            >
-                              {item.diasRestantes === 0
-                                ? "Agotado"
-                                : `~${item.diasRestantes} días`}
-                            </span>
-                            <div
-                              className="rounded-full mt-1 overflow-hidden"
-                              style={{
-                                height: 4,
-                                width: 100,
-                                backgroundColor: "#f0f0f4",
-                              }}
-                            >
-                              <div
-                                className="h-full rounded-full"
-                                style={{
-                                  width: `${pct}%`,
-                                  backgroundColor: rs.color,
-                                  transition: "width 0.6s ease",
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Riesgo badge */}
-                        <td className="px-5 py-3.5">
-                          <span
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-                            style={{
-                              backgroundColor: rs.bg,
-                              color: rs.color,
-                              border: `1px solid ${rs.border}`,
-                              fontFamily: "'Poppins', sans-serif",
-                            }}
-                          >
-                            {RIESGO_ICON[riesgo]}
-                            {rs.label}
-                          </span>
-                        </td>
-
-                        {/* Tendencia */}
-                        <td className="px-5 py-3.5">
-                          <span
-                            className="text-xs font-semibold"
-                            style={{
-                              color: tend.color,
-                              fontFamily: "'Poppins', sans-serif",
-                            }}
-                          >
-                            {tend.label}
-                          </span>
-                        </td>
-
-                        {/* Acción */}
-                        <td className="px-5 py-3.5">
-                          <button
-                            onClick={() => setAnalisisItem(item)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition-all"
-                            style={{
-                              backgroundColor: "#0b3d91",
-                              color: "#fff",
-                              border: "none",
-                              fontFamily: "'Poppins', sans-serif",
-                              cursor: "pointer",
-                            }}
-                            onMouseEnter={(e) =>
-                              (e.currentTarget.style.backgroundColor =
-                                "#49c21b")
-                            }
-                            onMouseLeave={(e) =>
-                              (e.currentTarget.style.backgroundColor =
-                                "#0b3d91")
-                            }
-                          >
-                            <TrendingUp size={12} /> Ver análisis
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {!loading && !error && filtered.length > 0 && (
-            <div
-              className="flex flex-wrap items-center justify-between gap-3 px-6 py-4"
-              style={{ borderTop: "1px solid #f0f0f4" }}
-            >
-              <span
-                className="text-xs"
-                style={{
-                  color: "#9ca3af",
-                  fontFamily: "'Poppins', sans-serif",
-                }}
-              >
-                Mostrando {start + 1}–
-                {Math.min(start + perPage, filtered.length)} de{" "}
-                {filtered.length} insumos
-              </span>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                  disabled={page === 1}
-                  className="flex items-center justify-center rounded-lg"
-                  style={{
-                    width: 32,
-                    height: 32,
-                    border: "1.5px solid #e5e7eb",
-                    backgroundColor: "transparent",
-                    color: page === 1 ? "#d1d5db" : "#374151",
-                    cursor: page === 1 ? "not-allowed" : "pointer",
-                  }}
-                >
-                  <ChevronLeft size={14} />
-                </button>
-                {buildPages(totalPages, page).map((p, i) =>
-                  p === "…" ? (
-                    <span
-                      key={`e${i}`}
-                      className="px-1 text-xs"
-                      style={{ color: "#9ca3af" }}
-                    >
-                      …
-                    </span>
-                  ) : (
-                    <button
-                      key={p}
-                      onClick={() => setPage(p as number)}
-                      className="flex items-center justify-center rounded-lg text-xs font-medium"
-                      style={{
-                        width: 32,
-                        height: 32,
-                        border: `1.5px solid ${page === p ? "#0b3d91" : "#e5e7eb"}`,
-                        backgroundColor: page === p ? "#0b3d91" : "transparent",
-                        color: page === p ? "#fff" : "#374151",
-                        cursor: "pointer",
-                        fontFamily: "'Poppins', sans-serif",
-                      }}
-                    >
-                      {p}
-                    </button>
-                  ),
-                )}
-                <button
-                  onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                  disabled={page === totalPages}
-                  className="flex items-center justify-center rounded-lg"
-                  style={{
-                    width: 32,
-                    height: 32,
-                    border: "1.5px solid #e5e7eb",
-                    backgroundColor: "transparent",
-                    color: page === totalPages ? "#d1d5db" : "#374151",
-                    cursor: page === totalPages ? "not-allowed" : "pointer",
-                  }}
-                >
-                  <ChevronRight size={14} />
-                </button>
-              </div>
-              <select
-                value={perPage}
-                onChange={(e) => {
-                  setPerPage(Number(e.target.value));
-                  setPage(1);
-                }}
-                style={{
-                  padding: "4px 10px",
-                  border: "1.5px solid #e5e7eb",
-                  borderRadius: 8,
-                  fontSize: 12,
-                  fontFamily: "'Poppins', sans-serif",
-                  color: "#374151",
-                  outline: "none",
-                  cursor: "pointer",
-                  backgroundColor: "#fff",
-                }}
-              >
-                {[5, 10, 25].map((n) => (
-                  <option key={n} value={n}>
-                    {n} / pág
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-        </motion.div>
-      </div>
-
-      {/* Modal análisis */}
-      {analisisItem && (
-        <AnalisisModal
-          item={analisisItem}
-          onClose={() => setAnalisisItem(null)}
-        />
-      )}
-    </>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }

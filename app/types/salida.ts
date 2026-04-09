@@ -4,8 +4,10 @@ export type { EstadoMovimiento };
 
 export interface SalidaDetalleResponse {
   id: number;
-  insumo: { id: number; nombre: string; unidad: string };
+  insumoId: number;
+  nombreInsumo: string;
   cantidad: number;
+  unidadMedida: string;
 }
 
 export interface SalidaResponse {

@@ -1,145 +1,128 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  confirmWarehouseRequest,
-  getWarehouseDashboard,
-  rejectWarehouseRequest,
-} from "@/app/services/bodega.service";
-import type {
-  WarehouseDashboardResponse,
-  WarehouseRequest,
-  WarehouseSummary,
-} from "@/app/types/bodega-request";
-
-const EMPTY_SUMMARY: WarehouseSummary = {
-  total: 0,
-  pending: 0,
-  confirmed: 0,
-  rejected: 0,
-};
-
-function buildSummary(requests: WarehouseRequest[]): WarehouseSummary {
-  return {
-    total: requests.length,
-    pending: requests.filter((request) => request.status === "PENDIENTE").length,
-    confirmed: requests.filter((request) => request.status === "CONFIRMADA").length,
-    rejected: requests.filter((request) => request.status === "RECHAZADA").length,
-  };
-}
+import { entradaService } from "@/app/services/entrada.service";
+import { salidaService } from "@/app/services/salida.service";
+import type { EntradaResponse } from "@/app/types/entrada";
+import type { SalidaResponse } from "@/app/types/salida";
 
 export function useWarehouseRequests() {
-  const [dashboard, setDashboard] = useState<WarehouseDashboardResponse | null>(null);
+  const [entradas, setEntradas] = useState<EntradaResponse[]>([]);
+  const [salidas, setSalidas] = useState<SalidaResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [actionId, setActionId] = useState<string | null>(null);
+  const [actionKey, setActionKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const syncDashboard = useCallback((payload: WarehouseDashboardResponse) => {
-    setDashboard(payload);
-  }, []);
-
-  const load = useCallback(async () => {
+  const cargar = useCallback(async () => {
     setLoading(true);
     setError(null);
-
     try {
-      const payload = await getWarehouseDashboard();
-      syncDashboard(payload);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "No se pudo cargar la cola de bodega.",
-      );
+      const [ent, sal] = await Promise.allSettled([
+        entradaService.listar({ size: 100 }),
+        salidaService.listar({ size: 100 }),
+      ]);
+      if (ent.status === "fulfilled") setEntradas(ent.value.content);
+      if (sal.status === "fulfilled") setSalidas(sal.value.content);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al cargar datos");
     } finally {
       setLoading(false);
     }
-  }, [syncDashboard]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const updateRequest = useCallback((updated: WarehouseRequest) => {
-    setDashboard((current) => {
-      if (!current) {
-        return current;
-      }
-
-      const nextRequests = current.requests.map((request) =>
-        request.id === updated.id ? updated : request,
-      );
-
-      return {
-        ...current,
-        requests: nextRequests,
-        summary: buildSummary(nextRequests),
-      };
-    });
   }, []);
 
-  const confirm = useCallback(
-    async (id: string) => {
-      setActionId(id);
-      setError(null);
-      setSuccessMessage(null);
+  useEffect(() => { cargar(); }, [cargar]);
 
-      try {
-        const response = await confirmWarehouseRequest(id);
-        updateRequest(response.data);
-        setSuccessMessage(response.message);
-        return response.data;
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "No se pudo confirmar la solicitud.",
-        );
-        throw err;
-      } finally {
-        setActionId(null);
-      }
-    },
-    [updateRequest],
-  );
+  const confirmarEntrada = useCallback(async (id: number) => {
+    setActionKey(`e-${id}`);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const updated = await entradaService.confirmar(id);
+      setEntradas(prev => prev.map(e => e.id === id ? updated : e));
+      setSuccessMsg(`Entrada #${id} confirmada correctamente.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo confirmar la entrada.");
+    } finally {
+      setActionKey(null);
+    }
+  }, []);
 
-  const reject = useCallback(
-    async (id: string, reason: string) => {
-      setActionId(id);
-      setError(null);
-      setSuccessMessage(null);
+  const rechazarEntrada = useCallback(async (id: number, motivo: string) => {
+    setActionKey(`e-${id}`);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const updated = await entradaService.rechazar(id, { motivo });
+      setEntradas(prev => prev.map(e => e.id === id ? updated : e));
+      setSuccessMsg(`Entrada #${id} rechazada.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo rechazar la entrada.");
+    } finally {
+      setActionKey(null);
+    }
+  }, []);
 
-      try {
-        const response = await rejectWarehouseRequest(id, reason);
-        updateRequest(response.data);
-        setSuccessMessage(response.message);
-        return response.data;
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "No se pudo rechazar la solicitud.",
-        );
-        throw err;
-      } finally {
-        setActionId(null);
-      }
-    },
-    [updateRequest],
-  );
+  const confirmarSalida = useCallback(async (id: number) => {
+    setActionKey(`s-${id}`);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const updated = await salidaService.confirmar(id);
+      setSalidas(prev => prev.map(s => s.id === id ? updated : s));
+      setSuccessMsg(`Salida #${id} confirmada correctamente.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo confirmar la salida.");
+    } finally {
+      setActionKey(null);
+    }
+  }, []);
+
+  const rechazarSalida = useCallback(async (id: number, motivo: string) => {
+    setActionKey(`s-${id}`);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const updated = await salidaService.rechazar(id, { motivo });
+      setSalidas(prev => prev.map(s => s.id === id ? updated : s));
+      setSuccessMsg(`Salida #${id} rechazada.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo rechazar la salida.");
+    } finally {
+      setActionKey(null);
+    }
+  }, []);
+
+  const entradasPendientes = entradas.filter(e => e.estado === "PENDIENTE");
+  const salidasPendientes = salidas.filter(s => s.estado === "PENDIENTE");
+  const confirmadas =
+    entradas.filter(e => e.estado === "CONFIRMADA").length +
+    salidas.filter(s => s.estado === "CONFIRMADA").length;
+  const rechazadas =
+    entradas.filter(e => e.estado === "RECHAZADA").length +
+    salidas.filter(s => s.estado === "RECHAZADA").length;
 
   return {
-    requests: dashboard?.requests ?? [],
-    summary: dashboard?.summary ?? EMPTY_SUMMARY,
-    currentOperator: dashboard?.currentOperator ?? null,
+    entradas,
+    salidas,
+    entradasPendientes,
+    salidasPendientes,
+    stats: {
+      totalPendientes: entradasPendientes.length + salidasPendientes.length,
+      entradasPendientes: entradasPendientes.length,
+      salidasPendientes: salidasPendientes.length,
+      confirmadas,
+      rechazadas,
+    },
     loading,
-    actionId,
+    actionKey,
     error,
-    successMessage,
-    clearSuccess: () => setSuccessMessage(null),
-    reload: load,
-    confirm,
-    reject,
+    successMsg,
+    clearSuccess: () => setSuccessMsg(null),
+    recargar: cargar,
+    confirmarEntrada,
+    rechazarEntrada,
+    confirmarSalida,
+    rechazarSalida,
   };
 }
