@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import UserAvatar from "@/app/components/shared/ui/UserAvatar";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -307,13 +307,12 @@ export default function RoleTopbar({
               borderColor: userOpen ? accentColor : "transparent",
             }}
           >
-            <Image
-              src="/img/undraw_profile.svg"
-              alt={displayName}
-              width={32}
-              height={32}
-              className="rounded-full object-cover"
-              style={{ border: "2px solid #e5e7eb" }}
+            <UserAvatar
+              name={displayName}
+              size={32}
+              accentColor={accentColor}
+              borderWidth={2}
+              borderColor="#e5e7eb"
             />
             <div className="hidden min-w-0 text-left sm:block">
               <p className="truncate text-sm font-semibold" style={{ color: "#111827", fontFamily: "var(--font-poppins), sans-serif" }}>
@@ -347,13 +346,13 @@ export default function RoleTopbar({
                 {/* Info de usuario */}
                 <div className="border-b px-4 py-4" style={{ borderColor: "#f0f0f4" }}>
                   <div className="flex items-center gap-3">
-                    <Image
-                      src="/img/undraw_profile.svg"
-                      alt={displayName}
-                      width={34}
-                      height={34}
-                      className="rounded-full object-cover"
-                      style={{ border: "2px solid #e5e7eb" }}
+                    <UserAvatar
+                      name={displayName}
+                      size={40}
+                      accentColor={accentColor}
+                      borderWidth={2}
+                      borderColor={accentColor + "33"}
+                      shadow="0 2px 8px rgba(0,0,0,0.10)"
                     />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold" style={{ color: "#111827", fontFamily: "var(--font-poppins), sans-serif" }}>

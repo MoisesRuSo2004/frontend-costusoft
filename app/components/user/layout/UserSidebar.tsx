@@ -3,6 +3,7 @@
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
+  BrainCircuit,
   Building2,
   Calculator,
   LayoutDashboard,
@@ -31,6 +32,12 @@ export default function UserSidebar() {
         { label: "Calculadora",    href: "/user/calculadora",  icon: Calculator },
         { label: "Nueva Entrada",  href: "/user/entradas/add", icon: ArrowDownToLine },
         { label: "Nueva Salida",   href: "/user/salidas/add",  icon: ArrowUpFromLine },
+      ],
+    },
+    {
+      heading: "Inteligencia",
+      items: [
+        { label: "Asistente IA", href: "/user/ia", icon: BrainCircuit },
       ],
     },
     {

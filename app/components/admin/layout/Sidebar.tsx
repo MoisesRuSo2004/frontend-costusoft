@@ -5,6 +5,7 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   BarChart2,
+  BrainCircuit,
   Building2,
   Calculator,
   ClipboardCheck,
@@ -47,8 +48,9 @@ export default function Sidebar() {
     {
       heading: "Analitica",
       items: [
-        { label: "Reportes", href: "/reporte", icon: BarChart2 },
-        { label: "Prediccion", href: "/prediccion", icon: TrendingUp },
+        { label: "Reportes",    href: "/reporte",    icon: BarChart2 },
+        { label: "Prediccion",  href: "/prediccion", icon: TrendingUp },
+        { label: "Asistente IA", href: "/admin/ia",  icon: BrainCircuit },
       ],
     },
     {

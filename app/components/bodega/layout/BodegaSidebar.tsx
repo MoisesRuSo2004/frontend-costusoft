@@ -3,6 +3,7 @@
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
+  BrainCircuit,
   LayoutDashboard,
 } from "lucide-react";
 import RoleSidebar, { type SidebarNavGroup } from "@/app/components/shared/layout/RoleSidebar";
@@ -26,8 +27,14 @@ export default function BodegaSidebar() {
     {
       heading: "Cola de trabajo",
       items: [
-        { label: "Entradas pendientes", href: "/bodega", icon: ArrowDownToLine },
-        { label: "Salidas pendientes",  href: "/bodega", icon: ArrowUpFromLine },
+        { label: "Entradas pendientes", href: "/bodega",    icon: ArrowDownToLine },
+        { label: "Salidas pendientes",  href: "/bodega",    icon: ArrowUpFromLine },
+      ],
+    },
+    {
+      heading: "Inteligencia",
+      items: [
+        { label: "Asistente IA", href: "/bodega/ia", icon: BrainCircuit },
       ],
     },
   ];

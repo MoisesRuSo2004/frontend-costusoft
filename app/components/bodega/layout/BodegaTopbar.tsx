@@ -6,6 +6,7 @@ import { useNotificaciones } from "@/app/context/NotificacionesContext";
 const PAGE_TITLES: Record<string, string> = {
   "/bodega":        "Dashboard",
   "/bodega/perfil": "Mi Perfil",
+  "/bodega/ia":     "Asistente IA",
 };
 
 export default function BodegaTopbar() {

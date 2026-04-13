@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
+import UserAvatar from "@/app/components/shared/ui/UserAvatar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Mail, Shield, Lock,
@@ -260,10 +260,14 @@ export default function PerfilView({ accentColor, accentSoft, gradient }: Perfil
 
               {/* Avatar */}
               <div className="relative -mt-16 flex justify-center">
-                <div className="overflow-hidden rounded-full border-4"
-                  style={{ width: 96, height: 96, borderColor: "#ffffff", boxShadow: "0 4px 20px rgba(0,0,0,0.15)", backgroundColor: accentSoft }}>
-                  <Image src="/img/undraw_profile.svg" alt={usuario.username} width={96} height={96} className="h-full w-full object-cover" />
-                </div>
+                <UserAvatar
+                  name={usuario.username}
+                  size={96}
+                  accentColor={accentColor}
+                  borderWidth={4}
+                  borderColor="#ffffff"
+                  shadow="0 4px 24px rgba(0,0,0,0.18)"
+                />
               </div>
 
               {/* Info */}

@@ -10,6 +10,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/user/entradas/add": "Nueva Entrada",
   "/user/salidas/add":  "Nueva Salida",
   "/user/perfil":       "Mi Perfil",
+  "/user/ia":           "Asistente IA",
 };
 
 export default function UserTopbar() {

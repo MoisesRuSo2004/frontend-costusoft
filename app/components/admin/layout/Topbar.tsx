@@ -19,6 +19,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/prediccion": "Prediccion de Insumos",
   "/perfil": "Mi Perfil",
   "/solicitudes": "Solicitudes",
+  "/admin/ia":    "Asistente IA",
 };
 
 export default function Topbar() {

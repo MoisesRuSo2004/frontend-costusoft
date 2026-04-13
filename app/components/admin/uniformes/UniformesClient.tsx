@@ -309,8 +309,8 @@ function UniformeModal({
   form,
   colegios,
   insumos,
-  tallasUnicas,
   insumosPorTallaAgrupados,
+  tallasUnicas,
   submitting,
   error,
   onSetField,
@@ -324,44 +324,64 @@ function UniformeModal({
   form: ReturnType<typeof useUniformes>["form"];
   colegios: ReturnType<typeof useUniformes>["colegios"];
   insumos: ReturnType<typeof useUniformes>["insumos"];
-  tallasUnicas: string[];
   insumosPorTallaAgrupados: Map<string, ReturnType<typeof useUniformes>["form"]["insumosPorTalla"]>;
+  tallasUnicas: string[];
   submitting: boolean;
   error: string | null;
   onSetField: (field: keyof typeof form, value: (typeof form)[keyof typeof form]) => void;
   onAddInsumo: (insumoId: number, nombre: string, unidad: string, talla: string, cantidad: number) => void;
   onRemoveInsumo: (id: string) => void;
-  onSave: () => void;
+  onSave: () => void | Promise<boolean>;
 }) {
-  const [nuevaTalla, setNuevaTalla] = useState("");
-  const [tallaPersonalizada, setTallaPersonalizada] = useState("");
+  // ── Estado local del formulario de agregar insumo ────────────────────
+  const [tallaSelect, setTallaSelect]           = useState("");
+  const [tallaCustom, setTallaCustom]           = useState("");
+  const [busquedaInsumo, setBusquedaInsumo]     = useState("");
   const [insumoSeleccionado, setInsumoSeleccionado] = useState<number | "">("");
-  const [tallaParaInsumo, setTallaParaInsumo] = useState("");
-  const [cantidadInsumo, setCantidadInsumo] = useState(1);
+  const [cantidadInsumo, setCantidadInsumo]     = useState<number | "">(1);
 
   if (!isOpen) return null;
 
+  // Talla efectiva: la custom tiene prioridad si hay texto
+  const tallaEfectiva = tallaCustom.trim() || tallaSelect;
+
+  // Insumos filtrados por búsqueda
+  const insumosFiltrados = busquedaInsumo.trim()
+    ? insumos.filter((i) =>
+        i.nombre.toLowerCase().includes(busquedaInsumo.toLowerCase()) ||
+        i.unidadMedida.toLowerCase().includes(busquedaInsumo.toLowerCase())
+      )
+    : insumos;
+
+  const insumoElegido = insumos.find((i) => i.id === insumoSeleccionado);
+  const cantidadValida = typeof cantidadInsumo === "number" && cantidadInsumo > 0;
+  const puedeAgregar = !!insumoSeleccionado && !!tallaEfectiva && cantidadValida;
+
   const agregarInsumo = () => {
-    if (!insumoSeleccionado || !tallaParaInsumo || cantidadInsumo <= 0) return;
-
-    const insumo = insumos.find((i) => i.id === insumoSeleccionado);
-    if (!insumo) return;
-
-    onAddInsumo(insumo.id, insumo.nombre, insumo.unidadMedida, tallaParaInsumo, cantidadInsumo);
-
-    // Reset
+    if (!puedeAgregar || !insumoElegido) return;
+    onAddInsumo(
+      insumoElegido.id,
+      insumoElegido.nombre,
+      insumoElegido.unidadMedida,
+      tallaEfectiva,
+      cantidadInsumo as number,
+    );
+    // Solo resetear insumo y cantidad; mantener la talla para agregar más
     setInsumoSeleccionado("");
+    setBusquedaInsumo("");
     setCantidadInsumo(1);
   };
 
-  const agregarTalla = () => {
-    const talla = tallaPersonalizada.trim() || nuevaTalla;
-    if (!talla) return;
+  const inputStyle = {
+    borderColor: "#d0d5dd",
+    backgroundColor: "#ffffff",
+    color: "#101828",
+    fontFamily: "var(--font-poppins), sans-serif",
+  };
 
-    // Agregar insumo con talla vacía para que aparezca la sección
-    setTallaParaInsumo(talla);
-    setTallaPersonalizada("");
-    setNuevaTalla("");
+  const labelStyle = {
+    color: "#475467",
+    fontFamily: "var(--font-poppins), sans-serif",
   };
 
   return (
@@ -370,312 +390,326 @@ function UniformeModal({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border bg-white p-6"
+        className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-3xl border bg-white shadow-2xl"
         style={{ borderColor: "#eaecf0" }}
       >
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2
-              className="text-xl font-semibold"
-              style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}
-            >
-              {editingId ? "Editar Uniforme" : "Nuevo Uniforme"}
-            </h2>
-            <p
-              className="mt-1 text-sm"
-              style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}
-            >
-              {editingId
-                ? "Modifica los datos y los insumos requeridos"
-                : "Define la prenda y sus insumos por talla"}
-            </p>
+        {/* ── Header ──────────────────────────────────────────────────── */}
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-6 py-4" style={{ borderColor: "#eaecf0" }}>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl" style={{ backgroundColor: "#eff6ff" }}>
+              <Shirt size={18} style={{ color: "#1d4ed8" }} />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
+                {editingId ? "Editar uniforme" : "Nuevo uniforme"}
+              </h2>
+              <p className="text-xs" style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>
+                {editingId ? "Modifica los datos y los insumos por talla" : "Define la prenda y sus insumos por talla"}
+              </p>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-xl transition hover:bg-[#f8fafc]"
-          >
-            <X size={20} style={{ color: "#667085" }} />
+          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-xl transition hover:bg-[#f8fafc]">
+            <X size={18} style={{ color: "#667085" }} />
           </button>
         </div>
 
-        {/* Error */}
-        {error && (
-          <div
-            className="mb-4 flex items-center gap-3 rounded-2xl border px-4 py-3"
-            style={{ borderColor: "#fecaca", backgroundColor: "#fef2f2" }}
-          >
-            <TriangleAlert size={18} style={{ color: "#dc2626" }} />
-            <p
-              className="text-sm"
-              style={{ color: "#b42318", fontFamily: "var(--font-poppins), sans-serif" }}
-            >
-              {error}
+        <div className="p-6 space-y-6">
+          {/* ── Error ─────────────────────────────────────────────────── */}
+          {error && (
+            <div className="flex items-center gap-3 rounded-2xl border px-4 py-3" style={{ borderColor: "#fecaca", backgroundColor: "#fef2f2" }}>
+              <TriangleAlert size={16} style={{ color: "#dc2626" }} />
+              <p className="text-sm flex-1" style={{ color: "#b42318", fontFamily: "var(--font-poppins), sans-serif" }}>{error}</p>
+            </div>
+          )}
+
+          {/* ── Datos básicos ─────────────────────────────────────────── */}
+          <div>
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em]" style={{ color: "#1d4ed8", fontFamily: "var(--font-poppins), sans-serif" }}>
+              Datos de la prenda
             </p>
-          </div>
-        )}
-
-        {/* Formulario */}
-        <div className="space-y-6">
-          {/* Datos básicos */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label
-                className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em]"
-                style={{ color: "#475467", fontFamily: "var(--font-poppins), sans-serif" }}
-              >
-                Prenda *
-              </label>
-              <input
-                type="text"
-                value={form.prenda}
-                onChange={(e) => onSetField("prenda", e.target.value)}
-                placeholder="Ej: Suéter, Camisa, Pantalón"
-                className="w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-[#1d4ed8] focus:shadow-[0_0_0_3px_rgba(29,78,216,0.1)]"
-                style={{
-                  borderColor: "#d0d5dd",
-                  fontFamily: "var(--font-poppins), sans-serif",
-                }}
-              />
-            </div>
-
-            <div>
-              <label
-                className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em]"
-                style={{ color: "#475467", fontFamily: "var(--font-poppins), sans-serif" }}
-              >
-                Colegio *
-              </label>
-              <select
-                value={form.colegioId || ""}
-                onChange={(e) => onSetField("colegioId", Number(e.target.value) || null)}
-                disabled={!!editingId}
-                className="w-full rounded-2xl border px-4 py-3 text-sm outline-none transition disabled:cursor-not-allowed disabled:bg-[#f8fafc]"
-                style={{
-                  borderColor: "#d0d5dd",
-                  fontFamily: "var(--font-poppins), sans-serif",
-                }}
-              >
-                <option value="">Selecciona un colegio</option>
-                {colegios.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label
-                className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em]"
-                style={{ color: "#475467", fontFamily: "var(--font-poppins), sans-serif" }}
-              >
-                Tipo
-              </label>
-              <select
-                value={form.tipo}
-                onChange={(e) => onSetField("tipo", e.target.value)}
-                className="w-full rounded-2xl border px-4 py-3 text-sm outline-none"
-                style={{
-                  borderColor: "#d0d5dd",
-                  fontFamily: "var(--font-poppins), sans-serif",
-                }}
-              >
-                {TIPOS_UNIFORME.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label
-                className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em]"
-                style={{ color: "#475467", fontFamily: "var(--font-poppins), sans-serif" }}
-              >
-                Género
-              </label>
-              <select
-                value={form.genero}
-                onChange={(e) => onSetField("genero", e.target.value)}
-                className="w-full rounded-2xl border px-4 py-3 text-sm outline-none"
-                style={{
-                  borderColor: "#d0d5dd",
-                  fontFamily: "var(--font-poppins), sans-serif",
-                }}
-              >
-                <option value="">Selecciona...</option>
-                {GENEROS.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Sección de tallas e insumos */}
-          <div className="rounded-2xl border p-4" style={{ borderColor: "#eaecf0" }}>
-            <h3
-              className="mb-4 text-sm font-semibold"
-              style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}
-            >
-              Insumos requeridos por talla
-            </h3>
-
-            {/* Agregar nueva talla */}
-            <div className="mb-4 flex gap-2">
-              <select
-                value={nuevaTalla}
-                onChange={(e) => setNuevaTalla(e.target.value)}
-                className="rounded-xl border px-3 py-2 text-sm"
-                style={{ borderColor: "#d0d5dd" }}
-              >
-                <option value="">Talla predefinida...</option>
-                {TALLAS_PREDEFINIDAS.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-                {TALLAS_NUMERICAS.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="text"
-                value={tallaPersonalizada}
-                onChange={(e) => setTallaPersonalizada(e.target.value)}
-                placeholder="O personalizada..."
-                className="flex-1 rounded-xl border px-3 py-2 text-sm"
-                style={{ borderColor: "#d0d5dd" }}
-              />
-              <button
-                type="button"
-                onClick={agregarTalla}
-                disabled={!nuevaTalla && !tallaPersonalizada.trim()}
-                className="flex items-center gap-2 rounded-xl bg-[#1d4ed8] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-              >
-                <Plus size={14} /> Agregar talla
-              </button>
-            </div>
-
-            {/* Agregar insumo a talla */}
-            {tallasUnicas.length > 0 && (
-              <div className="mb-4 flex flex-wrap gap-2 rounded-xl border p-3" style={{ borderColor: "#f2f4f7" }}>
-                <select
-                  value={tallaParaInsumo}
-                  onChange={(e) => setTallaParaInsumo(e.target.value)}
-                  className="rounded-lg border px-3 py-2 text-sm"
-                  style={{ borderColor: "#d0d5dd" }}
-                >
-                  <option value="">Talla...</option>
-                  {tallasUnicas.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={insumoSeleccionado}
-                  onChange={(e) => setInsumoSeleccionado(Number(e.target.value) || "")}
-                  className="min-w-[150px] rounded-lg border px-3 py-2 text-sm"
-                  style={{ borderColor: "#d0d5dd" }}
-                >
-                  <option value="">Insumo...</option>
-                  {insumos.map((i) => (
-                    <option key={i.id} value={i.id}>
-                      {i.nombre} ({i.unidadMedida})
-                    </option>
-                  ))}
-                </select>
-
+            <div className="grid gap-4 sm:grid-cols-2">
+              {/* Prenda */}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.1em]" style={labelStyle}>
+                  Nombre de la prenda *
+                </label>
                 <input
-                  type="number"
-                  value={cantidadInsumo}
-                  onChange={(e) => setCantidadInsumo(Number(e.target.value) || 0)}
-                  placeholder="Cantidad"
-                  min="0.01"
-                  step="0.01"
-                  className="w-24 rounded-lg border px-3 py-2 text-sm"
-                  style={{ borderColor: "#d0d5dd" }}
+                  type="text"
+                  value={form.prenda}
+                  onChange={(e) => onSetField("prenda", e.target.value)}
+                  placeholder="Ej: Suéter, Camisa, Pantalón"
+                  className="w-full rounded-2xl border px-4 py-2.5 text-sm outline-none transition focus:border-[#1d4ed8] focus:shadow-[0_0_0_3px_rgba(29,78,216,0.08)]"
+                  style={inputStyle}
                 />
-
-                <button
-                  type="button"
-                  onClick={agregarInsumo}
-                  disabled={!insumoSeleccionado || !tallaParaInsumo || cantidadInsumo <= 0}
-                  className="flex items-center gap-2 rounded-lg bg-[#027a48] px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-                >
-                  <Plus size={14} /> Agregar
-                </button>
               </div>
-            )}
 
-            {/* Lista de insumos agrupados por talla */}
-            <div className="space-y-4">
-              {tallasUnicas.length === 0 ? (
-                <p
-                  className="text-center text-sm italic"
-                  style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}
+              {/* Colegio */}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.1em]" style={labelStyle}>
+                  Colegio *
+                </label>
+                <select
+                  value={form.colegioId || ""}
+                  onChange={(e) => onSetField("colegioId", Number(e.target.value) || null)}
+                  disabled={!!editingId}
+                  className="w-full rounded-2xl border px-4 py-2.5 text-sm outline-none transition disabled:cursor-not-allowed"
+                  style={{ ...inputStyle, backgroundColor: editingId ? "#f8fafc" : "#ffffff" }}
                 >
-                  Agrega una talla y luego los insumos necesarios para fabricar la prenda.
+                  <option value="">Selecciona un colegio</option>
+                  {colegios.map((c) => (
+                    <option key={c.id} value={c.id}>{c.nombre}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Tipo */}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.1em]" style={labelStyle}>
+                  Tipo de uniforme
+                </label>
+                <select
+                  value={form.tipo}
+                  onChange={(e) => onSetField("tipo", e.target.value)}
+                  className="w-full rounded-2xl border px-4 py-2.5 text-sm outline-none"
+                  style={inputStyle}
+                >
+                  {TIPOS_UNIFORME.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+
+              {/* Género */}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.1em]" style={labelStyle}>
+                  Género
+                </label>
+                <select
+                  value={form.genero}
+                  onChange={(e) => onSetField("genero", e.target.value)}
+                  className="w-full rounded-2xl border px-4 py-2.5 text-sm outline-none"
+                  style={inputStyle}
+                >
+                  <option value="">Sin especificar</option>
+                  {GENEROS.map((g) => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Sección insumos por talla ──────────────────────────────── */}
+          <div className="rounded-2xl border" style={{ borderColor: "#e2e8f0" }}>
+            {/* Sub-header */}
+            <div className="flex items-center gap-3 border-b px-4 py-3" style={{ borderColor: "#e2e8f0", backgroundColor: "#f8fafc" }}>
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ backgroundColor: "#eff6ff" }}>
+                <Package size={14} style={{ color: "#1d4ed8" }} />
+              </div>
+              <p className="text-sm font-semibold" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
+                Insumos requeridos por talla
+              </p>
+              {form.insumosPorTalla.length > 0 && (
+                <span className="ml-auto rounded-full px-2 py-0.5 text-xs font-semibold" style={{ backgroundColor: "#dbeafe", color: "#1d4ed8", fontFamily: "var(--font-poppins), sans-serif" }}>
+                  {form.insumosPorTalla.length} agregado{form.insumosPorTalla.length !== 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
+
+            <div className="p-4 space-y-4">
+              {/* ── Formulario de agregar insumo ──────────────────────── */}
+              <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: "#dbeafe", backgroundColor: "#f8fbff" }}>
+                <p className="text-xs font-semibold uppercase tracking-[0.1em]" style={{ color: "#1d4ed8", fontFamily: "var(--font-poppins), sans-serif" }}>
+                  Agregar insumo
                 </p>
-              ) : (
-                tallasUnicas.map((talla) => (
-                  <div
-                    key={talla}
-                    className="rounded-xl border p-3"
-                    style={{ borderColor: "#f2f4f7", backgroundColor: "#f8fafc" }}
-                  >
-                    <div className="mb-2 flex items-center gap-2">
-                      <Ruler size={14} style={{ color: "#1d4ed8" }} />
-                      <span
-                        className="text-sm font-semibold"
-                        style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}
-                      >
-                        Talla {talla}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {(insumosPorTallaAgrupados.get(talla) || []).map((insumo) => (
-                        <div
-                          key={insumo.id}
-                          className="flex items-center gap-2 rounded-lg border bg-white px-3 py-1.5"
-                          style={{ borderColor: "#eaecf0" }}
-                        >
-                          <span className="text-sm">{insumo.nombreInsumo}</span>
-                          <span className="text-xs text-gray-500">
-                            {insumo.cantidadBase} {insumo.unidadMedida}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => onRemoveInsumo(insumo.id)}
-                            className="ml-2 text-red-500 hover:text-red-700"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+
+                {/* Fila 1: Talla */}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium" style={labelStyle}>
+                      Talla *
+                    </label>
+                    <select
+                      value={tallaSelect}
+                      onChange={(e) => { setTallaSelect(e.target.value); setTallaCustom(""); }}
+                      className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+                      style={inputStyle}
+                    >
+                      <option value="">Selecciona una talla...</option>
+                      <optgroup label="Letras">
+                        {TALLAS_PREDEFINIDAS.map((t) => <option key={t} value={t}>{t}</option>)}
+                      </optgroup>
+                      <optgroup label="Numéricas">
+                        {TALLAS_NUMERICAS.map((t) => <option key={t} value={t}>{t}</option>)}
+                      </optgroup>
+                    </select>
                   </div>
-                ))
+                  <div>
+                    <label className="mb-1 block text-xs font-medium" style={labelStyle}>
+                      O talla personalizada
+                    </label>
+                    <input
+                      type="text"
+                      value={tallaCustom}
+                      onChange={(e) => { setTallaCustom(e.target.value); if (e.target.value.trim()) setTallaSelect(""); }}
+                      placeholder="Ej: 08-10, T2, UNICA..."
+                      className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+
+                {/* Indicador de talla activa */}
+                {tallaEfectiva && (
+                  <div className="flex items-center gap-2">
+                    <Ruler size={13} style={{ color: "#1d4ed8" }} />
+                    <span className="text-xs font-medium" style={{ color: "#1d4ed8", fontFamily: "var(--font-poppins), sans-serif" }}>
+                      Talla seleccionada: <strong>{tallaEfectiva}</strong>
+                    </span>
+                  </div>
+                )}
+
+                {/* Fila 2: Insumo + Cantidad */}
+                <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
+                  {/* Buscador de insumos */}
+                  <div>
+                    <label className="mb-1 block text-xs font-medium" style={labelStyle}>
+                      Buscar insumo *
+                    </label>
+                    <div className="relative">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#9ca3af" }} />
+                      <input
+                        type="text"
+                        value={busquedaInsumo}
+                        onChange={(e) => { setBusquedaInsumo(e.target.value); setInsumoSeleccionado(""); }}
+                        placeholder="Nombre del insumo..."
+                        className="w-full rounded-xl border py-2 pl-8 pr-3 text-sm outline-none"
+                        style={inputStyle}
+                      />
+                    </div>
+                    {/* Dropdown de resultados */}
+                    <select
+                      value={insumoSeleccionado}
+                      onChange={(e) => setInsumoSeleccionado(Number(e.target.value) || "")}
+                      className="mt-1 w-full rounded-xl border px-3 py-2 text-sm outline-none"
+                      style={inputStyle}
+                      size={insumosFiltrados.length > 0 && busquedaInsumo ? Math.min(insumosFiltrados.length + 1, 5) : 1}
+                    >
+                      <option value="">
+                        {busquedaInsumo && insumosFiltrados.length === 0
+                          ? "Sin resultados"
+                          : "Selecciona un insumo..."}
+                      </option>
+                      {insumosFiltrados.map((i) => (
+                        <option key={i.id} value={i.id}>
+                          {i.nombre} — {i.unidadMedida} {i.stock != null ? `(stock: ${i.stock})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                    {insumoElegido && (
+                      <p className="mt-1 text-xs" style={{ color: "#15803d", fontFamily: "var(--font-poppins), sans-serif" }}>
+                        ✓ {insumoElegido.nombre} · {insumoElegido.unidadMedida}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Cantidad */}
+                  <div>
+                    <label className="mb-1 block text-xs font-medium" style={labelStyle}>
+                      Cantidad *
+                    </label>
+                    <input
+                      type="number"
+                      value={cantidadInsumo}
+                      onChange={(e) => setCantidadInsumo(e.target.value === "" ? "" : Number(e.target.value))}
+                      min="0.01"
+                      step="0.01"
+                      placeholder="0"
+                      className="w-24 rounded-xl border px-3 py-2 text-sm outline-none"
+                      style={inputStyle}
+                    />
+                    {insumoElegido && (
+                      <p className="mt-1 text-xs text-center" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
+                        {insumoElegido.unidadMedida}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Botón agregar */}
+                  <div className="flex flex-col justify-end">
+                    <button
+                      type="button"
+                      onClick={agregarInsumo}
+                      disabled={!puedeAgregar}
+                      className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-40"
+                      style={{ backgroundColor: puedeAgregar ? "#027a48" : "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}
+                    >
+                      <Plus size={14} />
+                      Agregar
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Lista de insumos agrupados por talla ──────────────── */}
+              {tallasUnicas.length === 0 ? (
+                <div className="rounded-xl border-2 border-dashed py-8 text-center" style={{ borderColor: "#e2e8f0" }}>
+                  <Package size={28} className="mx-auto mb-2" style={{ color: "#d0d5dd" }} />
+                  <p className="text-sm" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
+                    Todavía no hay insumos. Usa el formulario de arriba para agregar.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {tallasUnicas.map((talla) => {
+                    const insumosGrupo = insumosPorTallaAgrupados.get(talla) || [];
+                    return (
+                      <div key={talla} className="rounded-2xl border" style={{ borderColor: "#eaecf0" }}>
+                        {/* Encabezado talla */}
+                        <div className="flex items-center gap-2 rounded-t-2xl border-b px-4 py-2.5" style={{ borderColor: "#eaecf0", backgroundColor: "#f8fafc" }}>
+                          <Ruler size={13} style={{ color: "#1d4ed8" }} />
+                          <span className="text-sm font-semibold" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
+                            Talla {talla}
+                          </span>
+                          <span className="ml-auto text-xs" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
+                            {insumosGrupo.length} insumo{insumosGrupo.length !== 1 ? "s" : ""}
+                          </span>
+                        </div>
+                        {/* Insumos */}
+                        <div className="divide-y" style={{ borderColor: "#f2f4f7" }}>
+                          {insumosGrupo.map((insumo) => (
+                            <div key={insumo.id} className="flex items-center justify-between px-4 py-2.5">
+                              <div>
+                                <p className="text-sm font-medium" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
+                                  {insumo.nombreInsumo}
+                                </p>
+                                <p className="text-xs" style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>
+                                  {insumo.cantidadBase} {insumo.unidadMedida} por unidad
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => onRemoveInsumo(insumo.id)}
+                                className="flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-red-50"
+                                title="Quitar insumo"
+                              >
+                                <X size={14} style={{ color: "#dc2626" }} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="mt-6 flex justify-end gap-3">
+        {/* ── Footer ──────────────────────────────────────────────────── */}
+        <div className="sticky bottom-0 flex justify-end gap-3 border-t bg-white px-6 py-4" style={{ borderColor: "#eaecf0" }}>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-2xl border px-5 py-3 text-sm font-semibold transition hover:bg-[#f8fafc]"
-            style={{ borderColor: "#d0d5dd", fontFamily: "var(--font-poppins), sans-serif" }}
+            className="rounded-2xl border px-5 py-2.5 text-sm font-semibold transition hover:bg-[#f8fafc]"
+            style={{ borderColor: "#d0d5dd", color: "#374151", fontFamily: "var(--font-poppins), sans-serif" }}
           >
             Cancelar
           </button>
@@ -683,17 +717,13 @@ function UniformeModal({
             type="button"
             onClick={onSave}
             disabled={submitting}
-            className="flex items-center gap-2 rounded-2xl bg-[#1d4ed8] px-5 py-3 text-sm font-semibold text-white transition disabled:opacity-70"
-            style={{ fontFamily: "var(--font-poppins), sans-serif" }}
+            className="flex items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-70"
+            style={{ backgroundColor: "#1d4ed8", fontFamily: "var(--font-poppins), sans-serif" }}
           >
             {submitting ? (
-              <>
-                <RefreshCw size={16} className="animate-spin" /> Guardando...
-              </>
+              <><RefreshCw size={15} className="animate-spin" /> Guardando...</>
             ) : (
-              <>
-                <Save size={16} /> {editingId ? "Guardar cambios" : "Crear uniforme"}
-              </>
+              <><Save size={15} /> {editingId ? "Guardar cambios" : "Crear uniforme"}</>
             )}
           </button>
         </div>
@@ -940,6 +970,8 @@ export default function UniformesClient() {
                 className="w-full rounded-2xl border py-2.5 pl-11 pr-4 text-sm outline-none transition sm:w-64"
                 style={{
                   borderColor: "#d0d5dd",
+                  backgroundColor: "#ffffff",
+                  color: "#101828",
                   fontFamily: "var(--font-poppins), sans-serif",
                 }}
               />
