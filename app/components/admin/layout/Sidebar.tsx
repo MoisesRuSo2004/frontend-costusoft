@@ -11,6 +11,7 @@ import {
   ClipboardCheck,
   ClipboardList,
   LayoutDashboard,
+  MessageSquare,
   Shirt,
   TrendingUp,
   Truck,
@@ -20,21 +21,22 @@ import RoleSidebar, { type SidebarNavGroup } from "@/app/components/shared/layou
 import { useNotificaciones } from "@/app/context/NotificacionesContext";
 
 export default function Sidebar() {
-  const { total } = useNotificaciones();
+  const { pedidosCount, solicitudesCount } = useNotificaciones();
 
   const NAV: SidebarNavGroup[] = [
     {
       heading: "Principal",
       items: [
         { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-        { label: "Solicitudes", href: "/solicitudes", icon: ClipboardCheck, badge: total > 0 ? total : undefined },
+        { label: "Solicitudes", href: "/solicitudes", icon: ClipboardCheck },
+        { label: "Inst. Solicitudes", href: "/admin/solicitudes-institucionales", icon: MessageSquare, badge: solicitudesCount > 0 ? solicitudesCount : undefined },
       ],
     },
     {
       heading: "Operaciones",
       items: [
         { label: "Calculadora", href: "/admin/calculadora", icon: Calculator },
-        { label: "Pedidos", href: "/admin/pedidos", icon: ClipboardList },
+        { label: "Pedidos", href: "/admin/pedidos", icon: ClipboardList, badge: pedidosCount > 0 ? pedidosCount : undefined },
       ],
     },
     {

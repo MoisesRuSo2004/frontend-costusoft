@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell, ChevronDown, LogOut, Menu, UserCircle,
   ShoppingCart, ArrowDownToLine, ArrowUpFromLine,
-  RefreshCw, Inbox,
+  RefreshCw, Inbox, Building2, MessageSquare,
 } from "lucide-react";
 import { useSidebar } from "@/app/context/SidebarContext";
 import { useAuth } from "@/app/context/AuthContext";
@@ -41,14 +41,17 @@ const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Administrador",
   USER: "Secretaria / Usuario",
   BODEGA: "Operador Bodega",
+  INSTITUCION: "Portal Institución",
 };
 
 // ── Config de tipos de notificación ──────────────────────────────────────────
 
 const NOTIF_CONFIG = {
-  pedido:  { color: "#1d4ed8", bg: "#eff6ff",  icon: ShoppingCart,    label: "Pedido"  },
-  entrada: { color: "#16a34a", bg: "#f0fdf4",  icon: ArrowDownToLine, label: "Entrada" },
-  salida:  { color: "#d97706", bg: "#fef3c7",  icon: ArrowUpFromLine, label: "Salida"  },
+  pedido:             { color: "#1d4ed8", bg: "#eff6ff",  icon: ShoppingCart,    label: "Pedido"       },
+  pedido_institucion: { color: "#6366f1", bg: "#eef2ff",  icon: Building2,       label: "Institución"  },
+  entrada:            { color: "#16a34a", bg: "#f0fdf4",  icon: ArrowDownToLine, label: "Entrada"      },
+  salida:             { color: "#d97706", bg: "#fef3c7",  icon: ArrowUpFromLine, label: "Salida"       },
+  solicitud_especial: { color: "#7c3aed", bg: "#f5f3ff",  icon: MessageSquare,   label: "Solicitud"    },
 } as const;
 
 // ── Componente ────────────────────────────────────────────────────────────────
@@ -237,7 +240,14 @@ export default function RoleTopbar({
                           type="button"
                           onClick={() => {
                             setBellOpen(false);
-                            router.push(notifHref);
+                            // Routing inteligente por tipo
+                            const href =
+                              item.tipo === "pedido_institucion" || item.tipo === "pedido"
+                                ? "/admin/pedidos"
+                                : item.tipo === "solicitud_especial"
+                                ? "/admin/solicitudes-institucionales"
+                                : notifHref;
+                            router.push(href);
                           }}
                           className="flex w-full items-start gap-3 px-4 py-3 text-left transition"
                           style={{

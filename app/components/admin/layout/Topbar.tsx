@@ -20,6 +20,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/perfil": "Mi Perfil",
   "/solicitudes": "Solicitudes",
   "/admin/ia":    "Asistente IA",
+  "/admin/solicitudes-institucionales": "Solicitudes Institucionales",
 };
 
 export default function Topbar() {

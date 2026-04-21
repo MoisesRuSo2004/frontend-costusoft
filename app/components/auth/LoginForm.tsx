@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { useAuth } from "@/app/context/AuthContext";
 
 export default function LoginForm() {
-  const { login } = useAuth();
+  const { login, rememberedUsername } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -13,6 +14,14 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Cargar username recordado al montar
+  useEffect(() => {
+    if (rememberedUsername) {
+      setUsername(rememberedUsername);
+      setRememberMe(true);
+    }
+  }, [rememberedUsername]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -251,6 +260,21 @@ export default function LoginForm() {
             </div>
             Recuérdame
           </label>
+
+          <Link
+            href="/recuperar-password"
+            style={{
+              fontSize: 13,
+              color: "#0b3d91",
+              fontWeight: 500,
+              fontFamily: "'Poppins', sans-serif",
+              textDecoration: "none",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.textDecoration = "underline")}
+            onMouseLeave={e => (e.currentTarget.style.textDecoration = "none")}
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
         </div>
 
         {/* Botón */}

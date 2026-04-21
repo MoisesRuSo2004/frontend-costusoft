@@ -9,7 +9,12 @@
       "Bash(npx tsc:*)",
       "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
       "Bash(find /c/dev/frontend-costusoft/app/components -type f -name \"*.tsx\" -exec grep -l \"undraw_profile\\\\|Image.*profile\" {} \\\\;)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(powershell -Command \"Get-Content 'C:\\\\Users\\\\Gerson Ruiz\\\\.claude\\\\projects\\\\C--dev-frontend-costusoft\\\\057c2fa9-79a4-4f34-8fd8-3d2f30e54268.jsonl' | Select-Object -Last 200 | Out-String\")",
+      "Bash(powershell -Command \"Select-String -Path 'C:\\\\Users\\\\Gerson Ruiz\\\\.claude\\\\projects\\\\C--dev-frontend-costusoft\\\\057c2fa9-79a4-4f34-8fd8-3d2f30e54268.jsonl' -Pattern 'InstitucionController|INSTITUCION' | Select-Object -First 3 LineNumber\")",
+      "Bash(dir /s /b \"C:\\\\dev\\\\frontend-costusoft\\\\app\\\\\\(institucion\\)\")",
+      "Bash(xargs -I {} find {} -type f -name \"*.tsx\")",
+      "Bash(grep -v \"^$\")"
     ]
   }
 }

@@ -11,15 +11,18 @@ import {
 import { useUsuarios, useUsuariosCrud } from "@/app/hooks/useUsuarios";
 import type { UsuarioResponse, UsuarioCreateRequest, UsuarioUpdateRequest, ChangePasswordRequest, UserRol } from "@/app/types/usuario";
 import { useAuth } from "@/app/context/AuthContext";
+import { colegiosService } from "@/app/services/colegios.service";
+import type { ColegioResponse } from "@/app/types/colegio";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONFIG DE ROLES
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ROL_CONFIG: Record<UserRol, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  ADMIN:   { label: "Administrador", color: "#7c3aed", bg: "#f5f3ff", icon: <ShieldCheck size={12} /> },
-  USER:    { label: "Usuario",       color: "#0b3d91", bg: "#eff6ff", icon: <User size={12} />        },
-  BODEGA:  { label: "Bodega",        color: "#ca8a04", bg: "#fefce8", icon: <Shield size={12} />      },
+  ADMIN:      { label: "Administrador",    color: "#7c3aed", bg: "#f5f3ff", icon: <ShieldCheck size={12} /> },
+  USER:       { label: "Usuario",          color: "#0b3d91", bg: "#eff6ff", icon: <User size={12} />        },
+  BODEGA:     { label: "Bodega",           color: "#ca8a04", bg: "#fefce8", icon: <Shield size={12} />      },
+  INSTITUCION:{ label: "Institución",       color: "#6366f1", bg: "#eef2ff", icon: <Shield size={12} />      },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -102,7 +105,7 @@ export default function UsuariosClient() {
     try {
       await crud.crear(data);
       setModalCrear(false);
-      showToast("ok", "Usuario creado correctamente");
+      showToast("ok", "Usuario creado. Se enviará un email de activación al correo registrado.");
       recargar(page);
     } catch (err) {
       showToast("err", err instanceof Error ? err.message : "Error al crear usuario");
@@ -265,7 +268,7 @@ export default function UsuariosClient() {
             onFocus={focusOn} onBlur={focusOff} />
         </div>
         <div className="flex items-center gap-2">
-          {(["TODOS", "ADMIN", "USER", "BODEGA"] as const).map(rol => {
+          {(["TODOS", "ADMIN", "USER", "BODEGA", "INSTITUCION"] as const).map(rol => {
             const cfg = rol !== "TODOS" ? ROL_CONFIG[rol] : null;
             const active = filtroRol === rol;
             return (
@@ -304,7 +307,7 @@ export default function UsuariosClient() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ backgroundColor: "#f9fafb" }}>
-                  {["Usuario", "Correo", "Rol", "Estado", "Creado", "Acciones"].map(h => (
+                  {["Usuario", "Correo", "Rol", "Estado", "Cuenta", "Creado", "Acciones"].map(h => (
                     <th key={h} className="px-5 py-3 text-left text-xs font-semibold uppercase"
                       style={{ color: "#6b7280", fontFamily: "'Poppins', sans-serif", borderBottom: "1px solid #eaecf0", whiteSpace: "nowrap" }}>
                       {h}
@@ -364,6 +367,18 @@ export default function UsuariosClient() {
                           }}>
                           <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: u.activo ? "#16a34a" : "#9ca3af" }} />
                           {u.activo ? "Activo" : "Inactivo"}
+                        </span>
+                      </td>
+
+                      {/* Cuenta activada */}
+                      <td className="px-5 py-3.5">
+                        <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                          style={{
+                            backgroundColor: u.cuentaActivada ? "#eff6ff" : "#fefce8",
+                            color: u.cuentaActivada ? "#1d4ed8" : "#a16207",
+                          }}>
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: u.cuentaActivada ? "#3b82f6" : "#eab308" }} />
+                          {u.cuentaActivada ? "Activada" : "Pendiente"}
                         </span>
                       </td>
 
@@ -484,8 +499,8 @@ function PagBtn({ onClick, disabled, active, children }: {
 // ─────────────────────────────────────────────────────────────────────────────
 
 type FormData = {
-  username: string; password: string; correo: string;
-  rol: UserRol; activo: boolean;
+  username: string; password?: string; correo: string;
+  rol: UserRol; activo: boolean; colegioId?: number;
 };
 
 function UsuarioFormModal({ titulo, modo, inicial, submitting, onClose, onSubmit }: {
@@ -498,23 +513,38 @@ function UsuarioFormModal({ titulo, modo, inicial, submitting, onClose, onSubmit
 }) {
   const [form, setForm] = useState<FormData>({
     username: inicial?.username ?? "",
-    password: "",
     correo: inicial?.correo ?? "",
     rol: inicial?.rol ?? "USER",
     activo: inicial?.activo ?? true,
+    colegioId: undefined,
+    ...(modo === "editar" ? { password: "" } : {}),
   });
   const [showPass, setShowPass] = useState(false);
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData | "colegioId", string>>>({});
+
+  // Colegios para el selector (solo cuando rol === "INSTITUCION")
+  const [colegios, setColegios] = useState<ColegioResponse[]>([]);
+  const [loadingColegios, setLoadingColegios] = useState(false);
+
+  React.useEffect(() => {
+    if (form.rol === "INSTITUCION" && colegios.length === 0) {
+      setLoadingColegios(true);
+      colegiosService.listar({ size: 200, sortBy: "nombre", sortDir: "asc" })
+        .then(res => setColegios(res.content))
+        .catch(() => {/* silencioso */})
+        .finally(() => setLoadingColegios(false));
+    }
+  }, [form.rol]);
 
   const validate = (): boolean => {
     const e: typeof errors = {};
     if (!form.username.trim()) e.username = "Requerido";
     else if (form.username.length < 3) e.username = "Mínimo 3 caracteres";
     else if (!/^[a-zA-Z0-9._-]+$/.test(form.username)) e.username = "Solo letras, números, puntos, guiones";
-    if (modo === "crear" && !form.password) e.password = "Requerido";
     if (form.password && form.password.length < 6) e.password = "Mínimo 6 caracteres";
     if (!form.correo.trim()) e.correo = "Requerido";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo)) e.correo = "Correo inválido";
+    if (form.rol === "INSTITUCION" && !form.colegioId) e.colegioId = "Requerido para este rol";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -524,11 +554,12 @@ function UsuarioFormModal({ titulo, modo, inicial, submitting, onClose, onSubmit
     if (!validate()) return;
     const payload = { ...form };
     if (modo === "editar" && !payload.password) delete (payload as any).password;
+    if (form.rol !== "INSTITUCION") delete (payload as any).colegioId;
     await onSubmit(payload);
   };
 
   const field = (k: keyof FormData) => ({
-    value: String(form[k]),
+    value: String(form[k] ?? ""),
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       setForm(f => ({ ...f, [k]: e.target.value }));
       setErrors(ev => ({ ...ev, [k]: undefined }));
@@ -545,7 +576,7 @@ function UsuarioFormModal({ titulo, modo, inicial, submitting, onClose, onSubmit
           <label style={lbl}>Usuario <span style={{ color: "#ef4444" }}>*</span></label>
           <div className="relative">
             <User size={14} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
-            <input {...field("username")} placeholder="ej. juan.garcia" maxLength={50}
+            <input {...field("username")} placeholder="ej. coord.consolata" maxLength={50}
               style={{ ...inp(!!errors.username), paddingLeft: 38 }}
               onFocus={focusOn} onBlur={e => focusOff(e, !!errors.username)} />
           </div>
@@ -557,42 +588,118 @@ function UsuarioFormModal({ titulo, modo, inicial, submitting, onClose, onSubmit
           <label style={lbl}>Correo electrónico <span style={{ color: "#ef4444" }}>*</span></label>
           <div className="relative">
             <Mail size={14} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
-            <input type="email" {...field("correo")} placeholder="juan@empresa.com" maxLength={100}
+            <input type="email" {...field("correo")} placeholder="coordinador@colegio.edu.co" maxLength={100}
               style={{ ...inp(!!errors.correo), paddingLeft: 38 }}
               onFocus={focusOn} onBlur={e => focusOff(e, !!errors.correo)} />
           </div>
           {errors.correo && <p className="mt-1 text-xs" style={{ color: "#dc2626" }}>{errors.correo}</p>}
         </div>
 
-        {/* Password */}
-        <div>
-          <label style={lbl}>
-            Contraseña {modo === "editar" && <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none", fontWeight: 400 }}>(vacío = sin cambios)</span>}
-            {modo === "crear" && <span style={{ color: "#ef4444" }}>*</span>}
-          </label>
-          <div className="relative">
-            <Lock size={14} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
-            <input type={showPass ? "text" : "password"} {...field("password")} placeholder="Mínimo 6 caracteres" maxLength={100}
-              style={{ ...inp(!!errors.password), paddingLeft: 38, paddingRight: 40 }}
-              onFocus={focusOn} onBlur={e => focusOff(e, !!errors.password)} />
-            <button type="button" onClick={() => setShowPass(s => !s)} tabIndex={-1}
-              style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#9ca3af" }}>
-              {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
-            </button>
+        {/* Banner de activación (solo en crear) */}
+        {modo === "crear" && (
+          <div className="flex items-start gap-3 rounded-xl border px-4 py-3"
+            style={{ borderColor: "#bfdbfe", backgroundColor: "#eff6ff" }}>
+            <Mail size={15} style={{ color: "#1d4ed8", flexShrink: 0, marginTop: 1 }} />
+            <div>
+              <p className="text-xs font-semibold" style={{ color: "#1e40af", fontFamily: "'Poppins', sans-serif", marginBottom: 2 }}>
+                Activación por correo
+              </p>
+              <p className="text-xs" style={{ color: "#3b82f6", fontFamily: "'Poppins', sans-serif", lineHeight: 1.6 }}>
+                No se asigna contraseña al crear. El sistema generará un token de activación y el usuario deberá establecer su propia contraseña.
+              </p>
+            </div>
           </div>
-          {errors.password && <p className="mt-1 text-xs" style={{ color: "#dc2626" }}>{errors.password}</p>}
-        </div>
+        )}
+
+        {/* Password — solo en modo editar (opcional) */}
+        {modo === "editar" && (
+          <div>
+            <label style={lbl}>
+              Contraseña <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none", fontWeight: 400 }}>(vacío = sin cambios)</span>
+            </label>
+            <div className="relative">
+              <Lock size={14} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
+              <input type={showPass ? "text" : "password"} {...field("password")} placeholder="Dejar vacío para no cambiar" maxLength={100}
+                style={{ ...inp(!!errors.password), paddingLeft: 38, paddingRight: 40 }}
+                onFocus={focusOn} onBlur={e => focusOff(e, !!errors.password)} />
+              <button type="button" onClick={() => setShowPass(s => !s)} tabIndex={-1}
+                style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#9ca3af" }}>
+                {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            </div>
+            {errors.password && <p className="mt-1 text-xs" style={{ color: "#dc2626" }}>{errors.password}</p>}
+          </div>
+        )}
 
         {/* Rol */}
         <div>
           <label style={lbl}>Rol <span style={{ color: "#ef4444" }}>*</span></label>
-          <select value={form.rol} onChange={e => setForm(f => ({ ...f, rol: e.target.value as UserRol }))}
+          <select
+            value={form.rol}
+            onChange={e => {
+              const nuevoRol = e.target.value as UserRol;
+              setForm(f => ({ ...f, rol: nuevoRol, colegioId: undefined }));
+              setErrors(ev => ({ ...ev, colegioId: undefined }));
+            }}
             style={{ ...inp(), cursor: "pointer" }} onFocus={focusOn} onBlur={focusOff}>
             <option value="ADMIN">Administrador</option>
             <option value="USER">Usuario</option>
             <option value="BODEGA">Bodega</option>
+            <option value="INSTITUCION">Institución</option>
           </select>
         </div>
+
+        {/* Colegio — solo cuando rol === INSTITUCION */}
+        {form.rol === "INSTITUCION" && (
+          <div>
+            <label style={lbl}>
+              Colegio asignado <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            {loadingColegios ? (
+              <div className="flex items-center gap-2 rounded-xl border px-4 py-3"
+                style={{ borderColor: "#e5e7eb", backgroundColor: "#fafafa" }}>
+                <Loader2 size={14} className="animate-spin" style={{ color: "#6366f1" }} />
+                <span className="text-sm" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
+                  Cargando colegios...
+                </span>
+              </div>
+            ) : colegios.length === 0 ? (
+              <div className="flex items-center gap-2 rounded-xl border px-4 py-3"
+                style={{ borderColor: "#fde68a", backgroundColor: "#fefce8" }}>
+                <AlertCircle size={14} style={{ color: "#d97706" }} />
+                <span className="text-xs" style={{ color: "#92400e", fontFamily: "'Poppins', sans-serif" }}>
+                  No hay colegios registrados. Crea uno primero en el módulo de Colegios.
+                </span>
+              </div>
+            ) : (
+              <>
+                <select
+                  value={form.colegioId ?? ""}
+                  onChange={e => {
+                    setForm(f => ({ ...f, colegioId: e.target.value ? Number(e.target.value) : undefined }));
+                    setErrors(ev => ({ ...ev, colegioId: undefined }));
+                  }}
+                  style={{ ...inp(!!errors.colegioId), cursor: "pointer" }}
+                  onFocus={focusOn}
+                  onBlur={e => focusOff(e, !!errors.colegioId)}
+                >
+                  <option value="">— Selecciona un colegio —</option>
+                  {colegios.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombre}{c.direccion ? ` · ${c.direccion}` : ""}
+                    </option>
+                  ))}
+                </select>
+                {errors.colegioId && (
+                  <p className="mt-1 text-xs" style={{ color: "#dc2626" }}>{errors.colegioId}</p>
+                )}
+                <p className="mt-1 text-xs" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
+                  El usuario solo verá datos de este colegio en el Portal Institucional.
+                </p>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Activo (solo en editar) */}
         {modo === "editar" && (

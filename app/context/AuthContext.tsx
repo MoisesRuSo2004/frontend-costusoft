@@ -14,6 +14,8 @@ import {
   clearAuthCookies,
   getTokenFromCookie,
   setAuthCookies,
+  getRememberedUsername,
+  isSessionExpired,
 } from "@/app/lib/cookies";
 
 // Dashboard por rol
@@ -21,6 +23,7 @@ const ROLE_DASHBOARD: Record<UserRole, string> = {
   ADMIN: "/admin",
   USER: "/user",
   BODEGA: "/bodega",
+  INSTITUCION: "/institucion/dashboard",
 };
 
 interface AuthContextValue {
@@ -28,6 +31,8 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   /** true mientras se verifica la sesión al cargar la app */
   isLoading: boolean;
+  /** Obtiene el username guardado en "Recuérdame" */
+  rememberedUsername: string | null;
   /** Inicia sesión, guarda cookies y redirige al dashboard del rol */
   login: (username: string, password: string, rememberMe?: boolean) => Promise<void>;
   /** Cierra sesión, limpia cookies y redirige a /login */
@@ -39,13 +44,22 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UsuarioInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [rememberedUsername, setRememberedUsername] = useState<string | null>(null);
   const router = useRouter();
 
   // Al montar, intentar restaurar la sesión con /me
   useEffect(() => {
     const token = getTokenFromCookie();
+    const remembered = getRememberedUsername();
+    const sessionExpired = isSessionExpired();
 
-    if (!token) {
+    setRememberedUsername(remembered);
+
+    if (!token || sessionExpired) {
+      // Si la sesión ha expirado, limpiar cookies pero mantener username recordado
+      if (sessionExpired && token) {
+        clearAuthCookies();
+      }
       setIsLoading(false);
       return;
     }
@@ -65,16 +79,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (username: string, password: string, rememberMe = false) => {
       const data = await authService.login({ username, password });
 
-      // Si "recuérdame" está activo extendemos la cookie al tiempo del refresh token (7 días)
-      const expiresIn = rememberMe ? 7 * 24 * 60 * 60 * 1000 : data.expiresIn;
+      // Tiempos de sesión: 7 días con "Recuérdame", 8 horas sin
+      const expiresIn = rememberMe
+        ? 7 * 24 * 60 * 60 * 1000 // 7 días
+        : 8 * 60 * 60 * 1000;     // 8 horas
 
       setAuthCookies({
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
         rol: data.usuario.rol,
         expiresIn,
+        rememberMe,
+        username,
       });
 
+      setRememberedUsername(rememberMe ? username : null);
       setUser(data.usuario);
 
       router.push(ROLE_DASHBOARD[data.usuario.rol]);
@@ -94,6 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isAuthenticated: !!user,
         isLoading,
+        rememberedUsername,
         login,
         logout,
       }}

@@ -388,6 +388,7 @@ export function usePedidos() {
       await loadPedidos(state.page);
       if (pedidoSeleccionado?.id === id) {
         await loadPedidoDetalle(id);
+        void loadHistorial(id);
       }
       return true;
     } catch (err) {
@@ -397,7 +398,7 @@ export function usePedidos() {
     } finally {
       setSubmitting(false);
     }
-  }, [state.page, loadPedidos, loadPedidoDetalle, pedidoSeleccionado?.id]);
+  }, [state.page, loadPedidos, loadPedidoDetalle, loadHistorial, pedidoSeleccionado?.id]);
 
   const confirmar = useCallback(async (id: number): Promise<boolean> => {
     setSubmitting(true);
@@ -407,6 +408,7 @@ export function usePedidos() {
       await loadPedidos(state.page);
       if (pedidoSeleccionado?.id === id) {
         await loadPedidoDetalle(id);
+        void loadHistorial(id);
       }
       return true;
     } catch (err) {
@@ -416,7 +418,7 @@ export function usePedidos() {
     } finally {
       setSubmitting(false);
     }
-  }, [state.page, loadPedidos, loadPedidoDetalle, pedidoSeleccionado?.id]);
+  }, [state.page, loadPedidos, loadPedidoDetalle, loadHistorial, pedidoSeleccionado?.id]);
 
   const iniciarProduccion = useCallback(async (id: number): Promise<boolean> => {
     setSubmitting(true);
@@ -426,6 +428,7 @@ export function usePedidos() {
       await loadPedidos(state.page);
       if (pedidoSeleccionado?.id === id) {
         await loadPedidoDetalle(id);
+        void loadHistorial(id);
       }
       return true;
     } catch (err) {
@@ -435,7 +438,7 @@ export function usePedidos() {
     } finally {
       setSubmitting(false);
     }
-  }, [state.page, loadPedidos, loadPedidoDetalle, pedidoSeleccionado?.id]);
+  }, [state.page, loadPedidos, loadPedidoDetalle, loadHistorial, pedidoSeleccionado?.id]);
 
   const marcarListo = useCallback(async (id: number): Promise<boolean> => {
     setSubmitting(true);
@@ -445,6 +448,7 @@ export function usePedidos() {
       await loadPedidos(state.page);
       if (pedidoSeleccionado?.id === id) {
         await loadPedidoDetalle(id);
+        void loadHistorial(id);
       }
       return true;
     } catch (err) {
@@ -454,7 +458,7 @@ export function usePedidos() {
     } finally {
       setSubmitting(false);
     }
-  }, [state.page, loadPedidos, loadPedidoDetalle, pedidoSeleccionado?.id]);
+  }, [state.page, loadPedidos, loadPedidoDetalle, loadHistorial, pedidoSeleccionado?.id]);
 
   const entregar = useCallback(async (id: number): Promise<boolean> => {
     setSubmitting(true);
@@ -464,6 +468,7 @@ export function usePedidos() {
       await loadPedidos(state.page);
       if (pedidoSeleccionado?.id === id) {
         await loadPedidoDetalle(id);
+        void loadHistorial(id);
       }
       return true;
     } catch (err) {
@@ -473,7 +478,7 @@ export function usePedidos() {
     } finally {
       setSubmitting(false);
     }
-  }, [state.page, loadPedidos, loadPedidoDetalle, pedidoSeleccionado?.id]);
+  }, [state.page, loadPedidos, loadPedidoDetalle, loadHistorial, pedidoSeleccionado?.id]);
 
   const cancelar = useCallback(async (id: number, motivo: string): Promise<boolean> => {
     setSubmitting(true);
@@ -483,6 +488,7 @@ export function usePedidos() {
       await loadPedidos(state.page);
       if (pedidoSeleccionado?.id === id) {
         await loadPedidoDetalle(id);
+        void loadHistorial(id);
       }
       return true;
     } catch (err) {
@@ -492,7 +498,7 @@ export function usePedidos() {
     } finally {
       setSubmitting(false);
     }
-  }, [state.page, loadPedidos, loadPedidoDetalle, pedidoSeleccionado?.id]);
+  }, [state.page, loadPedidos, loadPedidoDetalle, loadHistorial, pedidoSeleccionado?.id]);
 
   // ── Paginación ─────────────────────────────────────────────────────────
 
@@ -570,6 +576,7 @@ export function usePedidos() {
     // Acciones
     loadPedidos,
     loadPedidoDetalle,
+    loadHistorial,
     setFiltroEstado,
     setFiltroColegio,
     clearFiltros,

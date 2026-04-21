@@ -53,7 +53,8 @@ export default function RoleSidebar({
   }, [closeMobile, pathname]);
 
   const showText = mobileOpen || !collapsed;
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <>
@@ -68,18 +69,34 @@ export default function RoleSidebar({
         className={`fixed inset-y-0 left-0 z-40 flex h-screen transform flex-col overflow-hidden transition-all duration-300 ease-in-out lg:static lg:z-30 ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} ${collapsed ? "lg:w-[84px]" : "lg:w-[272px]"} w-[272px]`}
         style={{ background: gradient, boxShadow: shadow }}
       >
-        <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.04]" aria-hidden>
+        <svg
+          className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.04]"
+          aria-hidden
+        >
           <defs>
-            <pattern id="role-grid" width="32" height="32" patternUnits="userSpaceOnUse">
-              <path d="M 32 0 L 0 0 0 32" fill="none" stroke="white" strokeWidth="0.8" />
+            <pattern
+              id="role-grid"
+              width="32"
+              height="32"
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                d="M 32 0 L 0 0 0 32"
+                fill="none"
+                stroke="white"
+                strokeWidth="0.8"
+              />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#role-grid)" />
         </svg>
 
-        <div className="relative flex items-center gap-3 border-b px-4 py-5" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+        <div
+          className="relative flex items-center gap-3 border-b px-4 py-5"
+          style={{ borderColor: "rgba(255,255,255,0.08)" }}
+        >
           <Image
-            src="/img/logo_miniatura.png"
+            src="/logo/logo.svg"
             alt="CostuSoft"
             width={36}
             height={36}
@@ -95,10 +112,19 @@ export default function RoleSidebar({
                 transition={{ duration: 0.18 }}
                 className="overflow-hidden"
               >
-                <p className="text-sm font-semibold text-white" style={{ fontFamily: "var(--font-poppins), sans-serif" }}>
+                <p
+                  className="text-sm font-semibold text-white"
+                  style={{ fontFamily: "var(--font-poppins), sans-serif" }}
+                >
                   CostuSoft
                 </p>
-                <p className="text-xs" style={{ color: "rgba(255,255,255,0.55)", fontFamily: "var(--font-poppins), sans-serif" }}>
+                <p
+                  className="text-xs"
+                  style={{
+                    color: "rgba(255,255,255,0.55)",
+                    fontFamily: "var(--font-poppins), sans-serif",
+                  }}
+                >
                   {brandSubtitle}
                 </p>
               </motion.div>
@@ -108,19 +134,34 @@ export default function RoleSidebar({
 
         <nav
           className="relative flex-1 overflow-y-auto px-3 py-4 scrollbar-minimal"
-          style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.15) transparent" }}
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: "rgba(255,255,255,0.15) transparent",
+          }}
         >
           {nav.map((group, groupIndex) => (
-            <div key={`${group.heading ?? "group"}-${groupIndex}`} className="mb-3">
+            <div
+              key={`${group.heading ?? "group"}-${groupIndex}`}
+              className="mb-3"
+            >
               {group.heading ? (
                 showText ? (
                   <div className="px-3 pb-2 pt-4">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.35)", fontFamily: "var(--font-poppins), sans-serif" }}>
+                    <span
+                      className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+                      style={{
+                        color: "rgba(255,255,255,0.35)",
+                        fontFamily: "var(--font-poppins), sans-serif",
+                      }}
+                    >
                       {group.heading}
                     </span>
                   </div>
                 ) : (
-                  <div className="mx-3 my-3 h-px" style={{ backgroundColor: "rgba(255,255,255,0.10)" }} />
+                  <div
+                    className="mx-3 my-3 h-px"
+                    style={{ backgroundColor: "rgba(255,255,255,0.10)" }}
+                  />
                 )
               ) : null}
 
@@ -135,19 +176,23 @@ export default function RoleSidebar({
                       title={!showText ? label : undefined}
                       className="group relative flex items-center gap-3 rounded-2xl px-3 py-3 transition-all duration-300 ease-in-out"
                       style={{
-                        backgroundColor: active ? activeBackground : "transparent",
+                        backgroundColor: active
+                          ? activeBackground
+                          : "transparent",
                         color: active ? activeText : "rgba(255,255,255,0.72)",
                         textDecoration: "none",
                         justifyContent: showText ? "flex-start" : "center",
                       }}
                       onMouseEnter={(event) => {
                         if (!active) {
-                          event.currentTarget.style.backgroundColor = hoverBackground;
+                          event.currentTarget.style.backgroundColor =
+                            hoverBackground;
                         }
                       }}
                       onMouseLeave={(event) => {
                         if (!active) {
-                          event.currentTarget.style.backgroundColor = "transparent";
+                          event.currentTarget.style.backgroundColor =
+                            "transparent";
                         }
                       }}
                     >
@@ -164,13 +209,18 @@ export default function RoleSidebar({
                           size={18}
                           strokeWidth={active ? 2.2 : 1.8}
                           style={{
-                            color: active ? activeText : "rgba(255,255,255,0.62)",
+                            color: active
+                              ? activeText
+                              : "rgba(255,255,255,0.62)",
                           }}
                         />
                         {badge && !showText ? (
                           <span
                             className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[9px] font-bold text-white"
-                            style={{ backgroundColor: "#ef4444", lineHeight: 1 }}
+                            style={{
+                              backgroundColor: "#ef4444",
+                              lineHeight: 1,
+                            }}
                           >
                             {badge > 99 ? "99+" : badge}
                           </span>
@@ -186,7 +236,9 @@ export default function RoleSidebar({
                             transition={{ duration: 0.16 }}
                             className="flex flex-1 items-center justify-between truncate text-sm"
                             style={{
-                              color: active ? activeText : "rgba(255,255,255,0.78)",
+                              color: active
+                                ? activeText
+                                : "rgba(255,255,255,0.78)",
                               fontWeight: active ? 600 : 500,
                               fontFamily: "var(--font-poppins), sans-serif",
                             }}
@@ -195,7 +247,10 @@ export default function RoleSidebar({
                             {badge ? (
                               <span
                                 className="ml-2 flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white"
-                                style={{ backgroundColor: "#ef4444", flexShrink: 0 }}
+                                style={{
+                                  backgroundColor: "#ef4444",
+                                  flexShrink: 0,
+                                }}
                               >
                                 {badge > 99 ? "99+" : badge}
                               </span>
@@ -211,7 +266,10 @@ export default function RoleSidebar({
           ))}
         </nav>
 
-        <div className="hidden border-t px-3 py-4 lg:flex lg:justify-end" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+        <div
+          className="hidden border-t px-3 py-4 lg:flex lg:justify-end"
+          style={{ borderColor: "rgba(255,255,255,0.08)" }}
+        >
           <button
             type="button"
             onClick={toggleCollapsed}
@@ -223,10 +281,12 @@ export default function RoleSidebar({
               cursor: "pointer",
             }}
             onMouseEnter={(event) => {
-              event.currentTarget.style.backgroundColor = "rgba(255,255,255,0.16)";
+              event.currentTarget.style.backgroundColor =
+                "rgba(255,255,255,0.16)";
             }}
             onMouseLeave={(event) => {
-              event.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)";
+              event.currentTarget.style.backgroundColor =
+                "rgba(255,255,255,0.08)";
             }}
           >
             {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -238,7 +298,7 @@ export default function RoleSidebar({
       <style jsx>{`
         .scrollbar-minimal {
           scrollbar-width: thin;
-          scrollbar-color: rgba(255,255,255,0.15) transparent;
+          scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
         }
         .scrollbar-minimal::-webkit-scrollbar {
           width: 4px;
@@ -247,11 +307,11 @@ export default function RoleSidebar({
           background: transparent;
         }
         .scrollbar-minimal::-webkit-scrollbar-thumb {
-          background: rgba(255,255,255,0.15);
+          background: rgba(255, 255, 255, 0.15);
           border-radius: 4px;
         }
         .scrollbar-minimal::-webkit-scrollbar-thumb:hover {
-          background: rgba(255,255,255,0.3);
+          background: rgba(255, 255, 255, 0.3);
         }
         /* Ocultar scrollbar cuando no hay hover (opcional - descomentar si se quiere)
         @media (hover: hover) {

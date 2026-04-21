@@ -13,15 +13,17 @@ import { usePerfil } from "@/app/hooks/usePerfil";
 // ─── Config por rol ───────────────────────────────────────────────────────────
 
 const ROL_LABEL: Record<string, string> = {
-  ADMIN:  "Administrador",
-  USER:   "Secretaria",
-  BODEGA: "Operario de Bodega",
+  ADMIN:      "Administrador",
+  USER:       "Secretaria",
+  BODEGA:     "Operario de Bodega",
+  INSTITUCION: "Coordinador de Colegio",
 };
 
 const ROL_COLOR: Record<string, { bg: string; color: string }> = {
-  ADMIN:  { bg: "#0b3d9115", color: "#0b3d91" },
-  USER:   { bg: "#1d4ed815", color: "#1d4ed8" },
-  BODEGA: { bg: "#15803d15", color: "#15803d" },
+  ADMIN:       { bg: "#0b3d9115", color: "#0b3d91" },
+  USER:        { bg: "#1d4ed815", color: "#1d4ed8" },
+  BODEGA:      { bg: "#15803d15", color: "#15803d" },
+  INSTITUCION: { bg: "#0891b21a", color: "#0891b2" },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

@@ -10,10 +10,11 @@ import {
 import { pedidoService } from "@/app/services/pedido.service";
 import { entradaService } from "@/app/services/entrada.service";
 import { salidaService } from "@/app/services/salida.service";
+import { solicitudEspecialService } from "@/app/services/solicitudEspecialService";
 
 // ── Tipo público ──────────────────────────────────────────────────────────────
 
-export type NotifTipo = "pedido" | "entrada" | "salida";
+export type NotifTipo = "pedido" | "pedido_institucion" | "entrada" | "salida" | "solicitud_especial";
 
 export interface NotifItem {
   id: string;
@@ -25,6 +26,10 @@ export interface NotifItem {
 interface NotificacionesCtxValue {
   items: NotifItem[];
   total: number;
+  /** Pedidos BORRADOR (nuevos de institución) + CALCULADO (esperan confirmación) */
+  pedidosCount: number;
+  /** Solicitudes especiales PENDIENTE de instituciones */
+  solicitudesCount: number;
   loading: boolean;
   refetch: () => void;
 }
@@ -34,6 +39,8 @@ interface NotificacionesCtxValue {
 const NotificacionesCtx = createContext<NotificacionesCtxValue>({
   items: [],
   total: 0,
+  pedidosCount: 0,
+  solicitudesCount: 0,
   loading: false,
   refetch: () => {},
 });
@@ -49,28 +56,46 @@ export function NotificacionesProvider({
 }) {
   const [items, setItems] = useState<NotifItem[]>([]);
   const [total, setTotal] = useState(0);
+  const [pedidosCount, setPedidosCount] = useState(0);
+  const [solicitudesCount, setSolicitudesCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [pedidos, entradas, salidas] = await Promise.allSettled([
+      const [pedidosCalculados, pedidosBorrador, entradas, salidas, solicitudesEspeciales] = await Promise.allSettled([
         pedidoService.listarPorEstado("CALCULADO", { size: 5 }),
+        pedidoService.listarPorEstado("BORRADOR",  { size: 5 }),
         entradaService.listarPorEstado("PENDIENTE", { size: 5 }),
         salidaService.listarPorEstado("PENDIENTE", { size: 5 }),
+        solicitudEspecialService.listarPorEstado("PENDIENTE", { size: 5 }),
       ]);
 
       const notifs: NotifItem[] = [];
       let count = 0;
 
-      if (pedidos.status === "fulfilled") {
-        count += pedidos.value.totalElements;
-        pedidos.value.content.slice(0, 3).forEach((p) => {
+      // Pedidos en BORRADOR — recién creados por instituciones, esperan ser calculados
+      if (pedidosBorrador.status === "fulfilled") {
+        count += pedidosBorrador.value.totalElements;
+        pedidosBorrador.value.content.slice(0, 3).forEach((p) => {
+          notifs.push({
+            id: `pedido-borrador-${p.id}`,
+            tipo: "pedido_institucion",
+            titulo: `Nuevo pedido de ${p.colegio?.nombre ?? "institución"}`,
+            subtitulo: `${p.numeroPedido ?? `#${p.id}`} · Pendiente de cálculo`,
+          });
+        });
+      }
+
+      // Pedidos CALCULADOS — esperan confirmación del admin
+      if (pedidosCalculados.status === "fulfilled") {
+        count += pedidosCalculados.value.totalElements;
+        pedidosCalculados.value.content.slice(0, 3).forEach((p) => {
           notifs.push({
             id: `pedido-${p.id}`,
             tipo: "pedido",
             titulo: `Pedido ${p.numeroPedido}`,
-            subtitulo: `${p.colegio.nombre} · Requiere confirmación`,
+            subtitulo: `${p.colegio?.nombre ?? "Sin colegio"} · Requiere confirmación`,
           });
         });
       }
@@ -99,8 +124,32 @@ export function NotificacionesProvider({
         });
       }
 
+      // Solicitudes especiales PENDIENTE — enviadas por instituciones
+      if (solicitudesEspeciales.status === "fulfilled") {
+        count += solicitudesEspeciales.value.totalElements;
+        solicitudesEspeciales.value.content.slice(0, 3).forEach((s) => {
+          notifs.push({
+            id: `solicitud-especial-${s.id}`,
+            tipo: "solicitud_especial",
+            titulo: `Solicitud de ${s.colegioNombre}`,
+            subtitulo: `${s.asunto} · Pendiente de revisión`,
+          });
+        });
+      }
+
+      const newPedidosCount =
+        (pedidosBorrador.status === "fulfilled" ? pedidosBorrador.value.totalElements : 0) +
+        (pedidosCalculados.status === "fulfilled" ? pedidosCalculados.value.totalElements : 0);
+
+      const newSolicitudesCount =
+        solicitudesEspeciales.status === "fulfilled"
+          ? solicitudesEspeciales.value.totalElements
+          : 0;
+
       setItems(notifs);
       setTotal(count);
+      setPedidosCount(newPedidosCount);
+      setSolicitudesCount(newSolicitudesCount);
     } catch {
       // falla silenciosa — no interrumpimos la UI
     } finally {
@@ -116,7 +165,7 @@ export function NotificacionesProvider({
 
   return (
     <NotificacionesCtx.Provider
-      value={{ items, total, loading, refetch: fetchAll }}
+      value={{ items, total, pedidosCount, solicitudesCount, loading, refetch: fetchAll }}
     >
       {children}
     </NotificacionesCtx.Provider>

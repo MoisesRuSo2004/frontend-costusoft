@@ -7,6 +7,7 @@ import {
   Calculator,
   CheckCircle,
   ChevronDown,
+  ChevronRight,
   ClipboardList,
   Clock,
   Eye,
@@ -552,6 +553,11 @@ export default function PedidosClient() {
   const [cancelMotivo, setCancelMotivo] = useState("");
   const [pedidoToCancel, setPedidoToCancel] = useState<PedidoResponse | null>(null);
 
+  // Estado para el selector de nueva prenda en modal crear/editar
+  const [newUniformeId, setNewUniformeId] = useState<number | null>(null);
+  const [newTalla, setNewTalla] = useState("");
+  const [newCantidad, setNewCantidad] = useState(1);
+
   const {
     pedidos,
     pedidosPorEstado,
@@ -582,6 +588,7 @@ export default function PedidosClient() {
     openEditModal,
     openViewModal,
     closeModal,
+    setFormField,
     setColegio,
     addDetalle,
     removeDetalle,
@@ -599,6 +606,8 @@ export default function PedidosClient() {
     prevPage,
     clearMessages,
     loadPedidos,
+    loadPedidoDetalle,
+    loadHistorial,
   } = usePedidos();
 
   // ── Handlers de acciones ───────────────────────────────────────────────
@@ -638,6 +647,21 @@ export default function PedidosClient() {
         setCancelMotivo("");
       }
     }
+  };
+
+  const handleAddPrenda = () => {
+    const uniforme = uniformes.find((u) => u.id === newUniformeId);
+    if (!uniforme || !newTalla || newCantidad < 1) return;
+    addDetalle({
+      id: `prenda-${Date.now()}-${Math.random()}`,
+      uniformeId: uniforme.id,
+      nombreUniforme: `${uniforme.prenda}${uniforme.tipo ? ` · ${uniforme.tipo}` : ""}${uniforme.genero ? ` (${uniforme.genero})` : ""}`,
+      talla: newTalla,
+      cantidad: newCantidad,
+    });
+    setNewUniformeId(null);
+    setNewTalla("");
+    setNewCantidad(1);
   };
 
   // ── Render ─────────────────────────────────────────────────────────────
@@ -1024,6 +1048,554 @@ export default function PedidosClient() {
           )}
         </>
       )}
+
+      {/* ── Modal: Ver Detalle de Pedido (panel deslizante) ─────────────── */}
+      <AnimatePresence>
+        {modalOpen && modalMode === "view" && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={closeModal}
+            />
+            <motion.div
+              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 260 }}
+              className="fixed right-0 top-0 h-full z-50 flex flex-col bg-white"
+              style={{ width: "min(720px, 100vw)", boxShadow: "-4px 0 40px rgba(0,0,0,0.16)" }}
+            >
+              {/* Header */}
+              <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "#eaecf0" }}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: "#eff6ff" }}>
+                    <ClipboardList size={18} style={{ color: "#1d4ed8" }} />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-base font-bold truncate" style={{ color: "#101828", fontFamily: "var(--font-poppins)" }}>
+                      {loadingDetalle ? "Cargando..." : (pedidoSeleccionado?.numeroPedido ?? "Detalle del Pedido")}
+                    </h2>
+                    {pedidoSeleccionado && (
+                      <p className="text-xs truncate" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins)" }}>
+                        {pedidoSeleccionado.colegio.nombre} · por {pedidoSeleccionado.creadoPor}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {pedidoSeleccionado && (
+                    <button
+                      onClick={() => { void loadPedidoDetalle(pedidoSeleccionado.id); void loadHistorial(pedidoSeleccionado.id); }}
+                      disabled={loadingDetalle || loadingHistorial}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border transition hover:bg-gray-50"
+                      style={{ borderColor: "#e5e7eb" }} title="Actualizar"
+                    >
+                      <RefreshCw size={13} className={(loadingDetalle || loadingHistorial) ? "animate-spin" : ""} style={{ color: "#6b7280" }} />
+                    </button>
+                  )}
+                  <button onClick={closeModal} className="flex h-8 w-8 items-center justify-center rounded-lg border transition hover:bg-gray-50" style={{ borderColor: "#e5e7eb" }}>
+                    <X size={16} style={{ color: "#6b7280" }} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Contenido */}
+              {loadingDetalle ? (
+                <div className="flex flex-1 items-center justify-center gap-3">
+                  <RefreshCw size={24} className="animate-spin" style={{ color: "#1d4ed8" }} />
+                  <p className="text-sm" style={{ color: "#667085", fontFamily: "var(--font-poppins)" }}>Cargando pedido...</p>
+                </div>
+              ) : pedidoSeleccionado ? (
+                <div className="flex-1 overflow-y-auto divide-y" style={{ borderColor: "#f3f4f6" }}>
+
+                  {/* Estado + stepper */}
+                  <div className="px-6 py-4" style={{ backgroundColor: "#fafafa" }}>
+                    <div className="flex flex-wrap items-center gap-3 mb-3">
+                      <BadgeEstado estado={pedidoSeleccionado.estado} />
+                      {pedidoSeleccionado.fechaEstimadaEntrega && (
+                        <span className="flex items-center gap-1 text-xs" style={{ color: "#667085", fontFamily: "var(--font-poppins)" }}>
+                          <Clock size={11} />
+                          Entrega: {new Date(pedidoSeleccionado.fechaEstimadaEntrega).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })}
+                        </span>
+                      )}
+                      <span className="text-xs" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins)" }}>
+                        Creado: {new Date(pedidoSeleccionado.fechaCreacion).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })}
+                      </span>
+                    </div>
+                    {pedidoSeleccionado.estado !== "CANCELADO" ? (
+                      <div className="flex items-center gap-0.5 flex-wrap">
+                        {(["BORRADOR","CALCULADO","CONFIRMADO","EN_PRODUCCION","LISTO_PARA_ENTREGA","ENTREGADO"] as EstadoPedido[]).map((step, idx, arr) => {
+                          const info = getEstadoInfo(step);
+                          const curIdx = arr.indexOf(pedidoSeleccionado.estado as EstadoPedido);
+                          const done = idx < curIdx;
+                          const active = idx === curIdx;
+                          return (
+                            <div key={step} className="flex items-center">
+                              <div className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                                style={{
+                                  backgroundColor: active ? `${info.color}18` : done ? "#f0fdf4" : "#f3f4f6",
+                                  color: active ? info.color : done ? "#16a34a" : "#9ca3af",
+                                  border: `1.5px solid ${active ? info.color + "50" : done ? "#bbf7d0" : "#e5e7eb"}`,
+                                  fontFamily: "var(--font-poppins)",
+                                }}
+                              >
+                                {done && <CheckCircle size={10} />}
+                                {info.label}
+                              </div>
+                              {idx < arr.length - 1 && <ChevronRight size={11} style={{ color: "#d1d5db", margin: "0 1px", flexShrink: 0 }} />}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 rounded-xl border px-4 py-2" style={{ borderColor: "#fecaca", backgroundColor: "#fef2f2" }}>
+                        <XCircle size={15} style={{ color: "#dc2626" }} />
+                        <span className="text-sm font-semibold" style={{ color: "#dc2626", fontFamily: "var(--font-poppins)" }}>Pedido cancelado</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Acciones de transición */}
+                  {!["ENTREGADO","CANCELADO"].includes(pedidoSeleccionado.estado) && (
+                    <div className="px-6 py-4">
+                      <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins)" }}>
+                        Acciones disponibles
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {pedidoSeleccionado.estado === "BORRADOR" && (
+                          <>
+                            <Button variant="primary" size="sm" icon={Calculator} loading={submitting}
+                              onClick={() => calcular(pedidoSeleccionado.id)}>
+                              Calcular Disponibilidad
+                            </Button>
+                            <Button variant="secondary" size="sm" icon={FileText}
+                              onClick={() => { closeModal(); setTimeout(() => openEditModal(pedidoSeleccionado), 150); }}>
+                              Editar
+                            </Button>
+                          </>
+                        )}
+                        {pedidoSeleccionado.estado === "CALCULADO" && (
+                          <Button variant="primary" size="sm" icon={CheckCircle} loading={submitting}
+                            onClick={() => confirmar(pedidoSeleccionado.id)}>
+                            Confirmar Pedido
+                          </Button>
+                        )}
+                        {pedidoSeleccionado.estado === "CONFIRMADO" && (
+                          <Button variant="primary" size="sm" icon={Play} loading={submitting}
+                            onClick={() => iniciarProduccion(pedidoSeleccionado.id)}>
+                            Iniciar Producción
+                          </Button>
+                        )}
+                        {pedidoSeleccionado.estado === "EN_PRODUCCION" && (
+                          <Button variant="primary" size="sm" icon={PackageCheck} loading={submitting}
+                            onClick={() => marcarListo(pedidoSeleccionado.id)}>
+                            Marcar como Listo
+                          </Button>
+                        )}
+                        {pedidoSeleccionado.estado === "LISTO_PARA_ENTREGA" && (
+                          <Button variant="primary" size="sm" icon={Truck} loading={submitting}
+                            onClick={() => entregar(pedidoSeleccionado.id)}>
+                            Registrar Entrega
+                          </Button>
+                        )}
+                        {canCancelPedido(pedidoSeleccionado.estado) && (
+                          <Button variant="danger" size="sm" icon={XCircle}
+                            onClick={() => { closeModal(); setTimeout(() => handleCancelClick(pedidoSeleccionado), 150); }}>
+                            Cancelar Pedido
+                          </Button>
+                        )}
+                      </div>
+                      {/* Resultado calculadora inline */}
+                      {pedidoSeleccionado.porcentajeCumplimiento !== null && (
+                        <div className="mt-3 flex items-center gap-3 rounded-xl border px-4 py-3"
+                          style={{
+                            borderColor: pedidoSeleccionado.disponibleCompleto ? "#bbf7d0" : "#fde68a",
+                            backgroundColor: pedidoSeleccionado.disponibleCompleto ? "#f0fdf4" : "#fffbeb",
+                          }}
+                        >
+                          <div className="flex-1">
+                            <p className="text-xs font-semibold" style={{ color: pedidoSeleccionado.disponibleCompleto ? "#16a34a" : "#d97706", fontFamily: "var(--font-poppins)" }}>
+                              {pedidoSeleccionado.disponibleCompleto
+                                ? "✓ Stock suficiente para todo el pedido"
+                                : `⚠ Stock parcial — ${pedidoSeleccionado.porcentajeCumplimiento}% disponible`}
+                              {pedidoSeleccionado.insumoLimitante && (
+                                <span className="font-normal"> · Limitante: {pedidoSeleccionado.insumoLimitante}</span>
+                              )}
+                            </p>
+                            <div className="mt-1.5 flex items-center gap-2">
+                              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#e5e7eb" }}>
+                                <div className="h-full rounded-full" style={{
+                                  width: `${pedidoSeleccionado.porcentajeCumplimiento}%`,
+                                  backgroundColor: pedidoSeleccionado.disponibleCompleto ? "#10b981" : "#f59e0b",
+                                }} />
+                              </div>
+                              <span className="text-xs font-bold flex-shrink-0" style={{ color: pedidoSeleccionado.disponibleCompleto ? "#16a34a" : "#d97706" }}>
+                                {pedidoSeleccionado.porcentajeCumplimiento}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Resumen insumos post-cálculo */}
+                  {pedidoSeleccionado.resumenInsumos && pedidoSeleccionado.resumenInsumos.length > 0 && (
+                    <div className="px-6 py-4">
+                      <p className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: "#101828", fontFamily: "var(--font-poppins)" }}>
+                        <Package size={14} style={{ color: "#1d4ed8" }} /> Insumos requeridos
+                      </p>
+                      <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "#e5e7eb" }}>
+                        <table className="w-full text-sm">
+                          <thead style={{ backgroundColor: "#f9fafb" }}>
+                            <tr>
+                              {["Insumo","Necesario","Stock actual","Estado"].map(h => (
+                                <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: "#667085", fontFamily: "var(--font-poppins)" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y" style={{ borderColor: "#f3f4f6" }}>
+                            {pedidoSeleccionado.resumenInsumos.map(ins => (
+                              <tr key={ins.insumoId} className="hover:bg-gray-50">
+                                <td className="px-3 py-2.5 font-medium" style={{ color: "#101828", fontFamily: "var(--font-poppins)" }}>{ins.nombre}</td>
+                                <td className="px-3 py-2.5 text-sm" style={{ color: "#374151", fontFamily: "var(--font-poppins)" }}>{ins.totalNecesario} {ins.unidadMedida}</td>
+                                <td className="px-3 py-2.5 text-sm" style={{ color: "#374151", fontFamily: "var(--font-poppins)" }}>{ins.stockActual}</td>
+                                <td className="px-3 py-2.5">
+                                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold"
+                                    style={{ backgroundColor: ins.suficiente ? "#f0fdf4" : "#fef2f2", color: ins.suficiente ? "#16a34a" : "#dc2626", fontFamily: "var(--font-poppins)" }}>
+                                    {ins.estado}
+                                  </span>
+                                  {ins.alertaStockMinimo && <span className="ml-1 text-[10px]" style={{ color: "#d97706" }}>⚠</span>}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Prendas */}
+                  <div className="px-6 py-4">
+                    <p className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: "#101828", fontFamily: "var(--font-poppins)" }}>
+                      <Shirt size={14} style={{ color: "#1d4ed8" }} />
+                      Prendas
+                      <span className="rounded-full px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: "#eff6ff", color: "#1d4ed8" }}>
+                        {pedidoSeleccionado.detalles.reduce((s,d)=>s+d.cantidad,0)} unidades · {pedidoSeleccionado.detalles.length} tipos
+                      </span>
+                    </p>
+                    <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "#e5e7eb" }}>
+                      <table className="w-full text-sm">
+                        <thead style={{ backgroundColor: "#f9fafb" }}>
+                          <tr>
+                            {["Prenda","Tipo","Género","Talla","Cant.","Disponible"].map(h => (
+                              <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: "#667085", fontFamily: "var(--font-poppins)" }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y" style={{ borderColor: "#f3f4f6" }}>
+                          {pedidoSeleccionado.detalles.map(d => (
+                            <tr key={d.id} className="hover:bg-gray-50">
+                              <td className="px-3 py-2.5 font-medium" style={{ color: "#101828", fontFamily: "var(--font-poppins)" }}>{d.nombreUniforme}</td>
+                              <td className="px-3 py-2.5 text-xs" style={{ color: "#374151", fontFamily: "var(--font-poppins)" }}>{d.tipo}</td>
+                              <td className="px-3 py-2.5 text-xs" style={{ color: "#374151", fontFamily: "var(--font-poppins)" }}>{d.genero ?? "—"}</td>
+                              <td className="px-3 py-2.5">
+                                <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ backgroundColor: "#eef2ff", color: "#4f46e5" }}>{d.talla}</span>
+                              </td>
+                              <td className="px-3 py-2.5 font-bold" style={{ color: "#101828" }}>{d.cantidad}</td>
+                              <td className="px-3 py-2.5">
+                                {d.disponibleIndividual === null ? (
+                                  <span className="text-xs" style={{ color: "#9ca3af" }}>—</span>
+                                ) : d.disponibleIndividual ? (
+                                  <CheckCircle size={14} style={{ color: "#10b981" }} />
+                                ) : (
+                                  <AlertCircle size={14} style={{ color: "#dc2626" }} />
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Historial */}
+                  <div className="px-6 py-5">
+                    <p className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: "#101828", fontFamily: "var(--font-poppins)" }}>
+                      <History size={14} style={{ color: "#1d4ed8" }} />
+                      Historial de cambios
+                      {loadingHistorial && <RefreshCw size={11} className="animate-spin ml-1" style={{ color: "#6b7280" }} />}
+                    </p>
+                    {!loadingHistorial && historial.length === 0 ? (
+                      <p className="text-sm" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins)" }}>Sin historial registrado aún.</p>
+                    ) : (
+                      <div className="flex flex-col">
+                        {historial.map((item, idx) => {
+                          const isLast = idx === historial.length - 1;
+                          const info = getEstadoInfo(item.estadoNuevo as EstadoPedido);
+                          return (
+                            <div key={item.id} className="flex gap-3">
+                              <div className="flex flex-col items-center">
+                                <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full"
+                                  style={{ backgroundColor: `${info.color}18`, border: `2px solid ${info.color}40` }}>
+                                  <CheckCircle size={12} style={{ color: info.color }} />
+                                </div>
+                                {!isLast && <div className="mt-1 w-0.5 flex-1" style={{ backgroundColor: "#e5e7eb", minHeight: 20 }} />}
+                              </div>
+                              <div className={`flex-1 ${isLast ? "pb-0" : "pb-4"}`}>
+                                <div className="flex items-start justify-between gap-2">
+                                  <div>
+                                    <p className="text-sm font-semibold" style={{ color: info.color, fontFamily: "var(--font-poppins)" }}>{item.accion}</p>
+                                    {item.observacion && <p className="text-xs mt-0.5" style={{ color: "#6b7280", fontFamily: "var(--font-poppins)" }}>{item.observacion}</p>}
+                                    <p className="text-xs mt-0.5" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins)" }}>por {item.realizadoPor}</p>
+                                  </div>
+                                  <span className="text-xs flex-shrink-0 mt-0.5" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins)" }}>{item.fechaAccion}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-sm" style={{ color: "#9ca3af" }}>No se pudo cargar el pedido.</p>
+                </div>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Modal: Crear / Editar Pedido ─────────────────────────────────── */}
+      <AnimatePresence>
+        {modalOpen && (modalMode === "create" || modalMode === "edit") && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={closeModal}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div
+                className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl bg-white shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "#eaecf0" }}>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ backgroundColor: "#eff6ff" }}>
+                      {modalMode === "create" ? <Plus size={16} style={{ color: "#1d4ed8" }} /> : <FileText size={16} style={{ color: "#1d4ed8" }} />}
+                    </div>
+                    <h2 className="text-base font-bold" style={{ color: "#101828", fontFamily: "var(--font-poppins)" }}>
+                      {modalMode === "create" ? "Nuevo Pedido" : `Editar ${pedidoSeleccionado?.numeroPedido ?? "Pedido"}`}
+                    </h2>
+                  </div>
+                  <button onClick={closeModal} className="flex h-8 w-8 items-center justify-center rounded-lg border transition hover:bg-gray-50" style={{ borderColor: "#e5e7eb" }}>
+                    <X size={16} style={{ color: "#6b7280" }} />
+                  </button>
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
+                  {loadingDetalle && modalMode === "edit" ? (
+                    <div className="flex items-center justify-center py-8 gap-3">
+                      <RefreshCw size={20} className="animate-spin" style={{ color: "#1d4ed8" }} />
+                      <span className="text-sm" style={{ color: "#667085", fontFamily: "var(--font-poppins)" }}>Cargando pedido...</span>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Colegio */}
+                      <div>
+                        <label className="block text-sm font-semibold mb-1.5" style={{ color: "#374151", fontFamily: "var(--font-poppins)" }}>
+                          Colegio <span style={{ color: "#dc2626" }}>*</span>
+                        </label>
+                        {modalMode === "edit" ? (
+                          <div className="flex items-center gap-2 rounded-xl border px-3 py-2.5" style={{ borderColor: "#e5e7eb", backgroundColor: "#f9fafb" }}>
+                            <School2 size={14} style={{ color: "#6b7280" }} />
+                            <span className="text-sm" style={{ color: "#344054", fontFamily: "var(--font-poppins)" }}>
+                              {colegios.find(c => c.id === form.colegioId)?.nombre ?? pedidoSeleccionado?.colegio.nombre ?? "Colegio seleccionado"}
+                            </span>
+                          </div>
+                        ) : (
+                          <select
+                            value={form.colegioId ?? ""}
+                            onChange={(e) => { setColegio(e.target.value ? Number(e.target.value) : null); setNewUniformeId(null); setNewTalla(""); }}
+                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+                            style={{ borderColor: "#d0d5dd", fontFamily: "var(--font-poppins)", color: "#344054" }}
+                          >
+                            <option value="">Selecciona un colegio...</option>
+                            {colegios.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                          </select>
+                        )}
+                      </div>
+
+                      {/* Fecha + Observaciones */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold mb-1.5" style={{ color: "#374151", fontFamily: "var(--font-poppins)" }}>
+                            Fecha estimada de entrega
+                          </label>
+                          <input
+                            type="date"
+                            value={form.fechaEstimadaEntrega}
+                            min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
+                            onChange={(e) => setFormField("fechaEstimadaEntrega", e.target.value)}
+                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+                            style={{ borderColor: "#d0d5dd", fontFamily: "var(--font-poppins)", color: "#344054" }}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold mb-1.5" style={{ color: "#374151", fontFamily: "var(--font-poppins)" }}>
+                            Observaciones
+                          </label>
+                          <input
+                            type="text"
+                            value={form.observaciones}
+                            onChange={(e) => setFormField("observaciones", e.target.value)}
+                            placeholder="Notas adicionales..."
+                            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+                            style={{ borderColor: "#d0d5dd", fontFamily: "var(--font-poppins)", color: "#344054" }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Agregar prenda */}
+                      {form.colegioId && (
+                        <div className="rounded-2xl border p-4" style={{ borderColor: "#dbeafe", backgroundColor: "#f8fbff" }}>
+                          <p className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: "#1d4ed8", fontFamily: "var(--font-poppins)" }}>
+                            <Plus size={14} /> Agregar prenda
+                          </p>
+                          {loadingUniformes ? (
+                            <div className="flex items-center gap-2 text-sm" style={{ color: "#6b7280" }}>
+                              <RefreshCw size={14} className="animate-spin" /> Cargando uniformes...
+                            </div>
+                          ) : uniformes.length === 0 ? (
+                            <p className="text-sm" style={{ color: "#d97706" }}>
+                              Este colegio no tiene uniformes configurados. Configúralos en Gestión → Uniformes.
+                            </p>
+                          ) : (
+                            <div className="flex flex-wrap items-end gap-3">
+                              <div className="flex-1 min-w-[160px]">
+                                <p className="text-xs font-medium mb-1" style={{ color: "#374151" }}>Prenda</p>
+                                <select
+                                  value={newUniformeId ?? ""}
+                                  onChange={(e) => { setNewUniformeId(e.target.value ? Number(e.target.value) : null); setNewTalla(""); }}
+                                  className="w-full rounded-lg border px-2.5 py-2 text-sm outline-none"
+                                  style={{ borderColor: "#d0d5dd", fontFamily: "var(--font-poppins)", color: "#344054" }}
+                                >
+                                  <option value="">Seleccionar...</option>
+                                  {uniformes.map(u => (
+                                    <option key={u.id} value={u.id}>
+                                      {u.prenda}{u.tipo ? ` · ${u.tipo}` : ""}{u.genero ? ` (${u.genero})` : ""}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div style={{ width: 90 }}>
+                                <p className="text-xs font-medium mb-1" style={{ color: "#374151" }}>Talla</p>
+                                <select
+                                  value={newTalla}
+                                  onChange={(e) => setNewTalla(e.target.value)}
+                                  disabled={!newUniformeId}
+                                  className="w-full rounded-lg border px-2.5 py-2 text-sm outline-none"
+                                  style={{ borderColor: "#d0d5dd", fontFamily: "var(--font-poppins)", color: "#344054", backgroundColor: !newUniformeId ? "#f9fafb" : "#fff" }}
+                                >
+                                  <option value="">—</option>
+                                  {newUniformeId && uniformes.find(u => u.id === newUniformeId)?.tallas.map(t => (
+                                    <option key={t} value={t}>{t}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div style={{ width: 80 }}>
+                                <p className="text-xs font-medium mb-1" style={{ color: "#374151" }}>Cantidad</p>
+                                <input
+                                  type="number" min={1} value={newCantidad}
+                                  onChange={(e) => setNewCantidad(Math.max(1, Number(e.target.value)))}
+                                  className="w-full rounded-lg border px-2.5 py-2 text-sm outline-none"
+                                  style={{ borderColor: "#d0d5dd", fontFamily: "var(--font-poppins)", color: "#344054" }}
+                                />
+                              </div>
+                              <button
+                                onClick={handleAddPrenda}
+                                disabled={!newUniformeId || !newTalla || newCantidad < 1}
+                                className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                style={{ backgroundColor: "#0b3d91", fontFamily: "var(--font-poppins)" }}
+                              >
+                                <Plus size={14} /> Agregar
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Lista de prendas */}
+                      {form.detalles.length > 0 && (
+                        <div>
+                          <p className="text-sm font-semibold mb-2 flex items-center gap-2" style={{ color: "#374151", fontFamily: "var(--font-poppins)" }}>
+                            <Shirt size={14} style={{ color: "#1d4ed8" }} />
+                            Prendas ({form.detalles.length} tipo{form.detalles.length !== 1 ? "s" : ""} · {totalPrendas} unidades)
+                          </p>
+                          <div className="flex flex-col gap-2">
+                            {form.detalles.map(d => (
+                              <div key={d.id} className="flex items-center justify-between gap-3 rounded-xl border px-4 py-2.5" style={{ borderColor: "#e5e7eb" }}>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <Shirt size={13} style={{ color: "#6366f1", flexShrink: 0 }} />
+                                  <span className="text-sm font-medium truncate" style={{ color: "#101828", fontFamily: "var(--font-poppins)" }}>{d.nombreUniforme}</span>
+                                  <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold" style={{ backgroundColor: "#eef2ff", color: "#4f46e5" }}>{d.talla}</span>
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <div className="flex items-center rounded-lg border overflow-hidden" style={{ borderColor: "#e5e7eb" }}>
+                                    <button onClick={() => updateDetalleCantidad(d.id, Math.max(1, d.cantidad - 1))}
+                                      className="flex h-7 w-7 items-center justify-center text-sm hover:bg-gray-50 transition" style={{ color: "#374151" }}>−</button>
+                                    <span className="px-2 text-sm font-bold border-x" style={{ color: "#101828", borderColor: "#e5e7eb", fontFamily: "var(--font-poppins)" }}>{d.cantidad}</span>
+                                    <button onClick={() => updateDetalleCantidad(d.id, d.cantidad + 1)}
+                                      className="flex h-7 w-7 items-center justify-center text-sm hover:bg-gray-50 transition" style={{ color: "#374151" }}>+</button>
+                                  </div>
+                                  <button onClick={() => removeDetalle(d.id)}
+                                    className="flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-red-50">
+                                    <Trash2 size={13} style={{ color: "#dc2626" }} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-t" style={{ borderColor: "#eaecf0" }}>
+                  <p className="text-xs" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins)" }}>
+                    {form.detalles.length === 0
+                      ? "Agrega al menos una prenda para continuar"
+                      : `${form.detalles.length} tipo${form.detalles.length !== 1 ? "s" : ""} · ${totalPrendas} unidades`}
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <Button variant="secondary" onClick={closeModal}>Cancelar</Button>
+                    <Button
+                      variant="primary" loading={submitting}
+                      disabled={!form.colegioId || form.detalles.length === 0}
+                      onClick={save}
+                    >
+                      {modalMode === "create" ? "Crear Pedido" : "Guardar Cambios"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Modal Cancelar */}
       <AnimatePresence>

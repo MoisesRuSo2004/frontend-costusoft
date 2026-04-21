@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/app/context/AuthContext";
+import { SessionTimeoutManager } from "@/app/components/auth/SessionTimeoutManager";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -29,8 +30,11 @@ export default function RootLayout({
   return (
     <html lang="es" className={poppins.variable}>
       <body className={`${poppins.className} antialiased`}>
-          <AuthProvider>{children}</AuthProvider>
-        </body>
+        <AuthProvider>
+          <SessionTimeoutManager />
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }

@@ -1,15 +1,17 @@
 import type { PageData } from "./pagination";
 
-export type UserRol = "ADMIN" | "USER" | "BODEGA";
+export type UserRol = "ADMIN" | "USER" | "BODEGA" | "INSTITUCION";
 
 // ── Requests ─────────────────────────────────────────────────────────────
 
 export interface UsuarioCreateRequest {
   username: string;       // 3-50 chars, solo letras/números/._-
-  password: string;       // 6-100 chars
+  // password NO se incluye — el sistema envía email de activación al usuario
   correo: string;         // email válido, max 100
   rol: UserRol;
   activo?: boolean;       // default true
+  /** Obligatorio cuando rol === "INSTITUCION" */
+  colegioId?: number;
 }
 
 export interface UsuarioUpdateRequest {
@@ -34,6 +36,8 @@ export interface UsuarioResponse {
   correo: string;
   rol: UserRol;
   activo: boolean;
+  /** true = el usuario ya activó su cuenta y puede iniciar sesión */
+  cuentaActivada: boolean;
   createdAt: string;
   updatedAt: string;
 }

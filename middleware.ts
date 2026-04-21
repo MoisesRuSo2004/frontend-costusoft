@@ -5,6 +5,7 @@ const ROLE_DASHBOARD: Record<string, string> = {
   ADMIN: "/admin",
   USER: "/user",
   BODEGA: "/bodega",
+  INSTITUCION: "/institucion/dashboard",
 };
 
 // Rutas que pertenecen al panel de ADMIN
@@ -71,6 +72,13 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith("/user")) {
     if (!isAuthenticated) return NextResponse.redirect(loginUrl);
     if (role !== "USER") return NextResponse.redirect(dashboardUrl());
+    return NextResponse.next();
+  }
+
+  // ── Rutas de INSTITUCION ───────────────────────────────────────────────
+  if (pathname.startsWith("/institucion")) {
+    if (!isAuthenticated) return NextResponse.redirect(loginUrl);
+    if (role !== "INSTITUCION") return NextResponse.redirect(dashboardUrl());
     return NextResponse.next();
   }
 

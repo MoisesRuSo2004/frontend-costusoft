@@ -95,10 +95,10 @@ export default function AuthLayout({
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.9, ease: "easeOut" }}
-            className="mb-10"
+            className="-mb-0"
           >
             <Image
-              src="/img/Logo_p_t.png"
+              src="/logo/logo-login.svg"
               alt="CostuSoft Control"
               width={320}
               height={140}
