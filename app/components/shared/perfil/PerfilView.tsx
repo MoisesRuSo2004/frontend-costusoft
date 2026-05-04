@@ -88,21 +88,23 @@ function Toast({ msg, type, onDone }: { msg: string; type: "success" | "error"; 
   );
 }
 
-// ─── Cambiar contraseña ───────────────────────────────────────────────────────
+// ─── PasswordInput — definido a nivel de módulo para evitar remount en cada render ──
 
-function CambiarPassword({
-  formPassword, changingPassword, accentColor, onChange, onSubmit,
-}: {
-  formPassword: { actual: string; nueva: string; confirmar: string };
-  changingPassword: boolean;
+type PasswordKey = "actual" | "nueva" | "confirmar";
+
+interface PasswordInputProps {
+  label: string;
+  placeholder: string;
+  value: string;
+  show: boolean;
+  disabled: boolean;
   accentColor: string;
-  onChange: (f: "actual" | "nueva" | "confirmar", v: string) => void;
-  onSubmit: () => void;
-}) {
-  const [show, setShow] = useState({ actual: false, nueva: false, confirmar: false });
-  const toggle = (k: keyof typeof show) => setShow(p => ({ ...p, [k]: !p[k] }));
+  onChange: (v: string) => void;
+  onToggle: () => void;
+}
 
-  const PasswordInput = ({ k, placeholder, label }: { k: keyof typeof show; placeholder: string; label: string }) => (
+function PasswordInput({ label, placeholder, value, show, disabled, accentColor, onChange, onToggle }: PasswordInputProps) {
+  return (
     <div>
       <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em]"
         style={{ color: "#475467", fontFamily: "var(--font-poppins), sans-serif" }}>
@@ -111,11 +113,11 @@ function CambiarPassword({
       <div className="relative">
         <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#667085" }} />
         <input
-          type={show[k] ? "text" : "password"}
-          value={formPassword[k]}
+          type={show ? "text" : "password"}
+          value={value}
           placeholder={placeholder}
-          onChange={e => onChange(k, e.target.value)}
-          disabled={changingPassword}
+          onChange={e => onChange(e.target.value)}
+          disabled={disabled}
           className="w-full rounded-2xl border py-3 pl-11 pr-11 text-sm outline-none transition disabled:cursor-not-allowed disabled:bg-[#f8fafc]"
           style={{ borderColor: "#d0d5dd", backgroundColor: "#ffffff", color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}
           onFocus={e => {
@@ -127,21 +129,63 @@ function CambiarPassword({
             e.currentTarget.style.boxShadow = "none";
           }}
         />
-        <button type="button" onClick={() => toggle(k)} disabled={changingPassword}
+        <button type="button" onClick={onToggle} disabled={disabled}
           className="absolute right-4 top-1/2 -translate-y-1/2 transition disabled:opacity-50"
           style={{ color: "#667085" }}>
-          {show[k] ? <EyeOff size={16} /> : <Eye size={16} />}
+          {show ? <EyeOff size={16} /> : <Eye size={16} />}
         </button>
       </div>
     </div>
   );
+}
+
+// ─── Cambiar contraseña ───────────────────────────────────────────────────────
+
+function CambiarPassword({
+  formPassword, changingPassword, accentColor, onChange, onSubmit,
+}: {
+  formPassword: { actual: string; nueva: string; confirmar: string };
+  changingPassword: boolean;
+  accentColor: string;
+  onChange: (f: PasswordKey, v: string) => void;
+  onSubmit: () => void;
+}) {
+  const [show, setShow] = useState<Record<PasswordKey, boolean>>({ actual: false, nueva: false, confirmar: false });
+  const toggle = (k: PasswordKey) => setShow(p => ({ ...p, [k]: !p[k] }));
 
   return (
     <form onSubmit={e => { e.preventDefault(); onSubmit(); }} className="flex flex-col gap-5">
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <PasswordInput k="actual"   placeholder="••••••••"           label="Contraseña actual" />
-        <PasswordInput k="nueva"    placeholder="Mínimo 6 caracteres" label="Nueva contraseña" />
-        <PasswordInput k="confirmar" placeholder="Repite la contraseña" label="Confirmar contraseña" />
+        <PasswordInput
+          label="Contraseña actual"
+          placeholder="••••••••"
+          value={formPassword.actual}
+          show={show.actual}
+          disabled={changingPassword}
+          accentColor={accentColor}
+          onChange={v => onChange("actual", v)}
+          onToggle={() => toggle("actual")}
+        />
+        <PasswordInput
+          label="Nueva contraseña"
+          placeholder="Mínimo 6 caracteres"
+          value={formPassword.nueva}
+          show={show.nueva}
+          disabled={changingPassword}
+          accentColor={accentColor}
+          onChange={v => onChange("nueva", v)}
+          onToggle={() => toggle("nueva")}
+        />
+        <PasswordInput
+          label="Confirmar contraseña"
+          placeholder="Repite la contraseña"
+          value={formPassword.confirmar}
+          show={show.confirmar}
+          disabled={changingPassword}
+          accentColor={accentColor}
+          onChange={v => onChange("confirmar", v)}
+          onToggle={() => toggle("confirmar")}
+        />
       </div>
       <div className="flex justify-end">
         <button type="submit" disabled={changingPassword}

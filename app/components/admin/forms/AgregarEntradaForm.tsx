@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowDownToLine, ArrowLeft, Plus, Trash2, Save, RotateCcw, CheckCircle2, Package, Search, AlertCircle, Calendar } from "lucide-react";
+import { ArrowDownToLine, ArrowLeft, Plus, Trash2, Save, RotateCcw, CheckCircle2, Package, Search, AlertCircle, Calendar, PackagePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { insumoService } from "@/app/services/insumo.service";
 import { entradaService } from "@/app/services/entrada.service";
@@ -24,7 +24,7 @@ function inp(err?: boolean): React.CSSProperties {
 
 export default function AgregarEntradaForm({ returnPath = "/entradas" }: { returnPath?: string }) {
   const router = useRouter();
-  const { proveedores } = useProveedores();
+  const { proveedores, loading: loadingProveedores, error: errorProveedores, recargar: recargarProveedores } = useProveedores();
   const [fecha, setFecha] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [proveedorId, setProveedorId] = useState<number | "">();
@@ -32,6 +32,7 @@ export default function AgregarEntradaForm({ returnPath = "/entradas" }: { retur
   const [busqueda, setBusqueda] = useState("");
   const [sugerencias, setSugerencias] = useState<InsumoOption[]>([]);
   const [buscando, setBuscando] = useState(false);
+  const [sinResultados, setSinResultados] = useState(false);
   const [cantidadInput, setCantidadInput] = useState("1");
   const [insumoSeleccionado, setInsumoSeleccionado] = useState<InsumoOption | null>(null);
   const [loading, setLoading] = useState(false);
@@ -45,6 +46,7 @@ export default function AgregarEntradaForm({ returnPath = "/entradas" }: { retur
   const buscarInsumos = useCallback(async (query: string) => {
     setBusqueda(query);
     setInsumoSeleccionado(null);
+    setSinResultados(false);
     if (query.trim().length < 2) { setSugerencias([]); return; }
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(async () => {
@@ -52,7 +54,8 @@ export default function AgregarEntradaForm({ returnPath = "/entradas" }: { retur
       try {
         const res = await insumoService.buscar(query.trim());
         setSugerencias(res as InsumoOption[]);
-      } catch { setSugerencias([]); }
+        setSinResultados(res.length === 0);
+      } catch { setSugerencias([]); setSinResultados(false); }
       finally { setBuscando(false); }
     }, 350);
   }, []);
@@ -61,6 +64,7 @@ export default function AgregarEntradaForm({ returnPath = "/entradas" }: { retur
     setInsumoSeleccionado(insumo);
     setBusqueda(insumo.nombre);
     setSugerencias([]);
+    setSinResultados(false);
   };
 
   const agregarLinea = () => {
@@ -69,7 +73,7 @@ export default function AgregarEntradaForm({ returnPath = "/entradas" }: { retur
     if (!cant || cant <= 0) { setValidationError("La cantidad debe ser mayor a 0."); return; }
     if (lineas.some(l => l.insumoId === insumoSeleccionado.id)) { setValidationError("Este insumo ya fue agregado."); return; }
     setLineas(ls => [...ls, { insumoId: insumoSeleccionado.id, nombre: insumoSeleccionado.nombre, unidadMedida: insumoSeleccionado.unidadMedida, cantidad: cant }]);
-    setBusqueda(""); setInsumoSeleccionado(null); setSugerencias([]); setCantidadInput("1"); setValidationError("");
+    setBusqueda(""); setInsumoSeleccionado(null); setSugerencias([]); setSinResultados(false); setCantidadInput("1"); setValidationError("");
   };
 
   const quitarLinea = (id: number) => setLineas(ls => ls.filter(l => l.insumoId !== id));
@@ -82,6 +86,7 @@ export default function AgregarEntradaForm({ returnPath = "/entradas" }: { retur
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!fecha) { setValidationError("La fecha es obligatoria."); return; }
+    if (!proveedorId) { setValidationError("El proveedor es obligatorio."); return; }
     if (!descripcion.trim()) { setValidationError("La descripción es obligatoria."); return; }
     if (lineas.length === 0) { setValidationError("Agrega al menos un insumo."); return; }
     setLoading(true);
@@ -91,7 +96,7 @@ export default function AgregarEntradaForm({ returnPath = "/entradas" }: { retur
       await entradaService.crear({
         fecha,
         descripcion: descripcion.trim(),
-        proveedorId: proveedorId ? Number(proveedorId) : undefined,
+        proveedorId: Number(proveedorId),
         detalles: lineas.map(l => ({ insumoId: l.insumoId, cantidad: l.cantidad })),
       });
       setSuccess(true);
@@ -175,13 +180,32 @@ export default function AgregarEntradaForm({ returnPath = "/entradas" }: { retur
 
           {/* Proveedor */}
           <div className="mb-4">
-            <label style={lbl}>Proveedor (opcional)</label>
-            <select value={proveedorId ?? ""} onChange={e => setProveedorId(e.target.value ? Number(e.target.value) : "")} style={{ ...inp(), cursor: "pointer" }}>
-              <option value="">-- Sin proveedor específico --</option>
-              {proveedores.map(p => (
-                <option key={p.id} value={p.id}>{p.nombre} — {p.nit}</option>
-              ))}
-            </select>
+            <label style={lbl}>Proveedor <span style={{ color: "#ef4444" }}>*</span></label>
+            {loadingProveedores ? (
+              <div style={{ ...inp(), color: "#9ca3af", display: "flex", alignItems: "center", gap: 8 }}>
+                <span>Cargando proveedores...</span>
+              </div>
+            ) : errorProveedores ? (
+              <div className="flex items-center gap-3 rounded-2xl border px-4 py-3"
+                style={{ borderColor: "#fecaca", backgroundColor: "#fef2f2" }}>
+                <AlertCircle size={15} style={{ color: "#dc2626", flexShrink: 0 }} />
+                <p className="text-sm flex-1" style={{ color: "#b42318", fontFamily: "'Poppins', sans-serif" }}>
+                  No se pudieron cargar los proveedores.
+                </p>
+                <button type="button" onClick={() => recargarProveedores(0)}
+                  className="text-xs font-semibold underline"
+                  style={{ color: "#b42318", fontFamily: "'Poppins', sans-serif" }}>
+                  Reintentar
+                </button>
+              </div>
+            ) : (
+              <select value={proveedorId ?? ""} onChange={e => setProveedorId(e.target.value ? Number(e.target.value) : "")} style={{ ...inp(!proveedorId && !!validationError), cursor: "pointer" }}>
+                <option value="">Selecciona un proveedor...</option>
+                {proveedores.map(p => (
+                  <option key={p.id} value={p.id}>{p.nombre} — {p.nit}</option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Descripción */}
@@ -235,6 +259,24 @@ export default function AgregarEntradaForm({ returnPath = "/entradas" }: { retur
                     )}
                   </motion.div>
                 )}
+                {sinResultados && !buscando && (
+                  <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                    className="mt-2 flex items-center justify-between gap-3 rounded-2xl border px-4 py-3"
+                    style={{ borderColor: "#fde68a", backgroundColor: "#fffbeb" }}>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <PackagePlus size={15} style={{ color: "#d97706", flexShrink: 0 }} />
+                      <p className="text-sm truncate" style={{ color: "#92400e", fontFamily: "'Poppins', sans-serif" }}>
+                        <span className="font-semibold">"{busqueda}"</span> no existe en inventario.
+                      </p>
+                    </div>
+                    <Link href="/inventario" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-semibold transition"
+                      style={{ backgroundColor: "#d97706", color: "#fff", fontFamily: "'Poppins', sans-serif" }}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#b45309")}
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#d97706")}>
+                      <PackagePlus size={12} /> Crear en inventario
+                    </Link>
+                  </motion.div>
+                )}
               </AnimatePresence>
             </div>
 
@@ -261,8 +303,8 @@ export default function AgregarEntradaForm({ returnPath = "/entradas" }: { retur
               <p className="text-sm" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>Agrega los insumos que van a ingresar</p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-2xl border" style={{ borderColor: "#eaecf0" }}>
-              <table className="w-full">
+            <div className="overflow-x-auto overflow-hidden rounded-2xl border" style={{ borderColor: "#eaecf0" }}>
+              <table className="w-full min-w-[480px]">
                 <thead style={{ backgroundColor: "#f9fafb" }}>
                   <tr>
                     {["Insumo", "Unidad", "Cantidad", ""].map(h => (

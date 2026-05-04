@@ -291,7 +291,7 @@ export default function EntradasClient() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[560px]">
               <thead>
                 <tr style={{ borderBottom: "1px solid #f0f0f4" }}>
                   {["#", "Fecha", "Descripción", "Ítems", "Proveedor", "Estado", "Acciones"].map(h => (

@@ -58,4 +58,9 @@ export const insumoService = {
   async eliminar(id: number): Promise<void> {
     await apiFetch<void>(`/api/insumos/${id}`, { method: "DELETE" });
   },
+
+  /** PATCH /api/insumos/:id/inhabilitar — toggle activo */
+  async inhabilitar(id: number): Promise<InsumoResponse> {
+    return apiFetch<InsumoResponse>(`/api/insumos/${id}/inhabilitar`, { method: "PATCH" });
+  },
 };

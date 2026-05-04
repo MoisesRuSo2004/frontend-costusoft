@@ -103,15 +103,37 @@ export function useInsumos() {
     }
   }, [load, page, search]);
 
-  const eliminar = useCallback(async (id: number) => {
+  const eliminar = useCallback(async (id: number): Promise<"OK" | "HAS_MOVEMENTS"> => {
     setSaving(true);
     setError(null);
     try {
       await insumoService.eliminar(id);
       setSuccessMsg("Insumo eliminado correctamente.");
       await load(page, search);
-    } catch (err) {
+      return "OK";
+    } catch (err: any) {
+      if (err?.body?.data?.errorCode === "INSUMO_CON_MOVIMIENTOS") {
+        return "HAS_MOVEMENTS";
+      }
       setError(err instanceof Error ? err.message : "Error al eliminar insumo.");
+      throw err;
+    } finally {
+      setSaving(false);
+    }
+  }, [load, page, search]);
+
+  const inhabilitar = useCallback(async (id: number) => {
+    setSaving(true);
+    setError(null);
+    try {
+      const resultado = await insumoService.inhabilitar(id);
+      const msg = resultado.activo === false
+        ? "Insumo inhabilitado. Ya no aparecerá en movimientos ni alertas."
+        : "Insumo reactivado correctamente.";
+      setSuccessMsg(msg);
+      await load(page, search);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al inhabilitar insumo.");
       throw err;
     } finally {
       setSaving(false);
@@ -139,6 +161,7 @@ export function useInsumos() {
     actualizar,
     ajustarStock,
     eliminar,
+    inhabilitar,
     clearMessages,
   };
 }

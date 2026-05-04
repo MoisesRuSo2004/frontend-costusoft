@@ -270,8 +270,8 @@ export default function AgregarSalidaForm({ returnPath = "/salidas" }: { returnP
               <p className="text-sm" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>Agrega los insumos a despachar</p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-2xl border" style={{ borderColor: "#eaecf0" }}>
-              <table className="w-full">
+            <div className="overflow-x-auto overflow-hidden rounded-2xl border" style={{ borderColor: "#eaecf0" }}>
+              <table className="w-full min-w-[480px]">
                 <thead style={{ backgroundColor: "#f9fafb" }}>
                   <tr>
                     {["Insumo", "Stock actual", "A despachar", "Estado", ""].map(h => (

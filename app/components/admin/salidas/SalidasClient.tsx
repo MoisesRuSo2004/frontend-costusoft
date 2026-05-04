@@ -293,7 +293,7 @@ export default function SalidasClient() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[560px]">
               <thead>
                 <tr style={{ borderBottom: "1px solid #f0f0f4" }}>
                   {["#", "Fecha", "Descripción", "Ítems", "Colegio", "Creado por", "Estado", "Acciones"].map(h => (

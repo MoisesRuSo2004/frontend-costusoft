@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -48,6 +48,14 @@ export default function RoleSidebar({
   const pathname = usePathname();
   const { collapsed, mobileOpen, closeMobile, toggleCollapsed } = useSidebar();
 
+  // Cierra el sidebar deslizando hacia la izquierda en móvil
+  const touchStartX = useRef(0);
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (diff > 48) closeMobile(); // swipe left > 48px → cerrar
+  };
+
   useEffect(() => {
     closeMobile();
   }, [closeMobile, pathname]);
@@ -66,8 +74,10 @@ export default function RoleSidebar({
       />
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex h-screen transform flex-col overflow-hidden transition-all duration-300 ease-in-out lg:static lg:z-30 ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} ${collapsed ? "lg:w-[84px]" : "lg:w-[272px]"} w-[272px]`}
+        className={`fixed inset-y-0 left-0 z-40 flex h-[100dvh] transform flex-col overflow-hidden transition-all duration-300 ease-in-out lg:static lg:z-30 lg:h-screen ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} ${collapsed ? "lg:w-[84px]" : "lg:w-[272px]"} w-[272px]`}
         style={{ background: gradient, boxShadow: shadow }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         <svg
           className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.04]"

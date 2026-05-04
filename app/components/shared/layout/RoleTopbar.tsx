@@ -174,6 +174,14 @@ export default function RoleTopbar({
             )}
           </button>
 
+          {/* Backdrop móvil — cierra el dropdown al tocar fuera */}
+          {bellOpen && (
+            <div
+              className="fixed inset-0 z-40 sm:hidden"
+              onClick={() => setBellOpen(false)}
+            />
+          )}
+
           <AnimatePresence>
             {bellOpen && (
               <motion.div
@@ -182,12 +190,13 @@ export default function RoleTopbar({
                 animate="visible"
                 exit="hidden"
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 top-12 w-80 overflow-hidden rounded-2xl border"
+                // Móvil: fixed anclado bajo el topbar, ancho casi completo
+                // Desktop (sm+): absolute clásico a la derecha
+                className="fixed inset-x-3 top-[68px] z-50 overflow-hidden rounded-2xl border sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-80 sm:z-50"
                 style={{
                   borderColor: "#f0f0f4",
                   backgroundColor: "#ffffff",
                   boxShadow: "0 20px 48px rgba(0,0,0,0.14)",
-                  zIndex: 50,
                 }}
               >
                 {/* Header */}
@@ -204,15 +213,25 @@ export default function RoleTopbar({
                       </span>
                     )}
                   </div>
-                  <button
-                    onClick={() => { onNotifRefetch?.(); }}
-                    disabled={notifLoading}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg transition"
-                    style={{ color: "#9ca3af", cursor: "pointer" }}
-                    title="Actualizar"
-                  >
-                    <RefreshCw size={13} className={notifLoading ? "animate-spin" : ""} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => { onNotifRefetch?.(); }}
+                      disabled={notifLoading}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg transition"
+                      style={{ color: "#9ca3af", cursor: "pointer" }}
+                      title="Actualizar"
+                    >
+                      <RefreshCw size={13} className={notifLoading ? "animate-spin" : ""} />
+                    </button>
+                    {/* Botón X solo visible en móvil */}
+                    <button
+                      onClick={() => setBellOpen(false)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg transition sm:hidden"
+                      style={{ color: "#9ca3af" }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Lista */}
@@ -230,7 +249,7 @@ export default function RoleTopbar({
                     </p>
                   </div>
                 ) : (
-                  <div className="max-h-72 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
+                  <div className="max-h-[60vh] overflow-y-auto sm:max-h-72" style={{ scrollbarWidth: "thin" }}>
                     {notifItems.map((item, i) => {
                       const cfg = NOTIF_CONFIG[item.tipo];
                       const Icn = cfg.icon;
@@ -240,7 +259,6 @@ export default function RoleTopbar({
                           type="button"
                           onClick={() => {
                             setBellOpen(false);
-                            // Routing inteligente por tipo
                             const href =
                               item.tipo === "pedido_institucion" || item.tipo === "pedido"
                                 ? "/admin/pedidos"
@@ -249,7 +267,7 @@ export default function RoleTopbar({
                                 : notifHref;
                             router.push(href);
                           }}
-                          className="flex w-full items-start gap-3 px-4 py-3 text-left transition"
+                          className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition"
                           style={{
                             borderTop: i > 0 ? "1px solid #f9fafb" : undefined,
                             fontFamily: "var(--font-poppins), sans-serif",
@@ -258,22 +276,22 @@ export default function RoleTopbar({
                           onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
                         >
                           <div
-                            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl"
+                            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl"
                             style={{ backgroundColor: cfg.bg }}
                           >
-                            <Icn size={14} style={{ color: cfg.color }} />
+                            <Icn size={15} style={{ color: cfg.color }} />
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-semibold"
                               style={{ color: "#101828" }}>
                               {item.titulo}
                             </p>
-                            <p className="truncate text-xs"
+                            <p className="truncate text-xs mt-0.5"
                               style={{ color: "#9ca3af" }}>
                               {item.subtitulo}
                             </p>
                           </div>
-                          <span className="flex-shrink-0 mt-0.5 h-2 w-2 rounded-full" style={{ backgroundColor: cfg.color }} />
+                          <span className="flex-shrink-0 mt-1 h-2 w-2 rounded-full" style={{ backgroundColor: cfg.color }} />
                         </button>
                       );
                     })}
@@ -288,7 +306,7 @@ export default function RoleTopbar({
                       setBellOpen(false);
                       router.push(notifHref);
                     }}
-                    className="flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold transition"
+                    className="flex w-full items-center justify-center gap-2 py-3.5 text-sm font-semibold transition"
                     style={{ color: accentColor, fontFamily: "var(--font-poppins), sans-serif", cursor: "pointer" }}
                     onMouseEnter={e => { e.currentTarget.style.backgroundColor = accentSoft; }}
                     onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
@@ -350,7 +368,7 @@ export default function RoleTopbar({
                 animate="visible"
                 exit="hidden"
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 top-14 w-60 overflow-hidden rounded-2xl border"
+                className="absolute right-0 top-14 w-60 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border"
                 style={{ borderColor: "#f0f0f4", backgroundColor: "#ffffff", boxShadow: "0 16px 40px rgba(0,0,0,0.12)" }}
               >
                 {/* Info de usuario */}

@@ -17,6 +17,7 @@ const ADMIN_PATHS = [
   "/salidas",
   "/perfil",
   "/prediccion",
+  "/optimizacion",
   "/proveedores",
   "/reporte",
   "/usuarios",

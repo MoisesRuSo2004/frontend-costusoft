@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Clock,
   Eye,
+  ExternalLink,
   FileText,
   Filter,
   History,
@@ -28,6 +29,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePedidos } from "@/app/hooks/usePedidos";
 import {
@@ -868,8 +870,8 @@ export default function PedidosClient() {
       ) : viewMode === "list" ? (
         <>
           {/* Vista Lista */}
-          <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#eaecf0" }}>
-            <table className="w-full">
+          <div className="rounded-xl border overflow-x-auto overflow-hidden" style={{ borderColor: "#eaecf0" }}>
+            <table className="w-full min-w-[640px]">
               <thead style={{ backgroundColor: "#f9fafb" }}>
                 <tr>
                   <th
@@ -1424,6 +1426,30 @@ export default function PedidosClient() {
                               {colegios.find(c => c.id === form.colegioId)?.nombre ?? pedidoSeleccionado?.colegio.nombre ?? "Colegio seleccionado"}
                             </span>
                           </div>
+                        ) : loadingColegios ? (
+                          <div className="flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm" style={{ borderColor: "#e5e7eb", color: "#6b7280" }}>
+                            <RefreshCw size={14} className="animate-spin" /> Cargando colegios...
+                          </div>
+                        ) : colegios.length === 0 ? (
+                          <div className="flex items-start gap-3 rounded-xl border px-4 py-3" style={{ borderColor: "#fde68a", backgroundColor: "#fffbeb" }}>
+                            <AlertCircle size={16} style={{ color: "#d97706", flexShrink: 0, marginTop: 2 }} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold" style={{ color: "#92400e", fontFamily: "var(--font-poppins)" }}>
+                                No hay colegios registrados
+                              </p>
+                              <p className="text-xs mt-0.5" style={{ color: "#b45309", fontFamily: "var(--font-poppins)" }}>
+                                Para crear un pedido necesitas tener al menos un colegio (cliente) creado en el sistema.
+                              </p>
+                            </div>
+                            <Link
+                              href="/colegios"
+                              onClick={closeModal}
+                              className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition"
+                              style={{ backgroundColor: "#d97706", fontFamily: "var(--font-poppins)" }}
+                            >
+                              <ExternalLink size={12} /> Ir a Clientes
+                            </Link>
+                          </div>
                         ) : (
                           <select
                             value={form.colegioId ?? ""}
@@ -1478,9 +1504,25 @@ export default function PedidosClient() {
                               <RefreshCw size={14} className="animate-spin" /> Cargando uniformes...
                             </div>
                           ) : uniformes.length === 0 ? (
-                            <p className="text-sm" style={{ color: "#d97706" }}>
-                              Este colegio no tiene uniformes configurados. Configúralos en Gestión → Uniformes.
-                            </p>
+                            <div className="flex items-start gap-3 rounded-xl border px-4 py-3" style={{ borderColor: "#fde68a", backgroundColor: "#fffbeb" }}>
+                              <AlertCircle size={16} style={{ color: "#d97706", flexShrink: 0, marginTop: 2 }} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold" style={{ color: "#92400e", fontFamily: "var(--font-poppins)" }}>
+                                  Sin uniformes configurados
+                                </p>
+                                <p className="text-xs mt-0.5" style={{ color: "#b45309", fontFamily: "var(--font-poppins)" }}>
+                                  Este colegio no tiene uniformes asociados aún. Debes configurarlos antes de poder agregar prendas al pedido.
+                                </p>
+                              </div>
+                              <Link
+                                href="/uniformes"
+                                onClick={closeModal}
+                                className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition"
+                                style={{ backgroundColor: "#d97706", fontFamily: "var(--font-poppins)" }}
+                              >
+                                <ExternalLink size={12} /> Ir a Uniformes
+                              </Link>
+                            </div>
                           ) : (
                             <div className="flex flex-wrap items-end gap-3">
                               <div className="flex-1 min-w-[160px]">
@@ -1584,7 +1626,7 @@ export default function PedidosClient() {
                     <Button variant="secondary" onClick={closeModal}>Cancelar</Button>
                     <Button
                       variant="primary" loading={submitting}
-                      disabled={!form.colegioId || form.detalles.length === 0}
+                      disabled={!form.colegioId || form.detalles.length === 0 || (modalMode === "create" && colegios.length === 0)}
                       onClick={save}
                     >
                       {modalMode === "create" ? "Crear Pedido" : "Guardar Cambios"}

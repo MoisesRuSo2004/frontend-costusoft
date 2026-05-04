@@ -17,7 +17,7 @@ export default function BodegaLayout({
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <BodegaTopbar />
 
-            <main className="flex-1 overflow-y-auto overflow-x-hidden" style={{ padding: "28px 28px 0" }}>
+            <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 pb-0 sm:px-6 sm:pt-6 lg:px-7 lg:pt-7">
               {children}
             </main>
 

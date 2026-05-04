@@ -229,8 +229,8 @@ function PedidoCard({ pedido, submitting, onConfirmar, onCancelar }: PedidoCardP
         {open && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }} style={{ overflow: "hidden" }}>
-            <div className="mt-4 rounded-xl overflow-hidden" style={{ border: "1px solid #f3f4f6" }}>
-              <table className="w-full text-xs">
+            <div className="mt-4 rounded-xl overflow-x-auto overflow-hidden" style={{ border: "1px solid #f3f4f6" }}>
+              <table className="w-full min-w-[340px] text-xs">
                 <thead>
                   <tr style={{ backgroundColor: "#f9fafb" }}>
                     {["Uniforme", "Talla", "Cantidad", "Disponible"].map(h => (
@@ -343,8 +343,8 @@ function EntradaCard({ entrada, submitting, onConfirmar, onRechazar }: EntradaCa
         {open && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }} style={{ overflow: "hidden" }}>
-            <div className="mt-4 rounded-xl overflow-hidden" style={{ border: "1px solid #f3f4f6" }}>
-              <table className="w-full text-xs">
+            <div className="mt-4 rounded-xl overflow-x-auto overflow-hidden" style={{ border: "1px solid #f3f4f6" }}>
+              <table className="w-full min-w-[340px] text-xs">
                 <thead>
                   <tr style={{ backgroundColor: "#f9fafb" }}>
                     {["Insumo", "Cantidad", "Unidad"].map(h => (
@@ -444,8 +444,8 @@ function SalidaCard({ salida, submitting, onConfirmar, onRechazar }: SalidaCardP
         {open && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }} style={{ overflow: "hidden" }}>
-            <div className="mt-4 rounded-xl overflow-hidden" style={{ border: "1px solid #f3f4f6" }}>
-              <table className="w-full text-xs">
+            <div className="mt-4 rounded-xl overflow-x-auto overflow-hidden" style={{ border: "1px solid #f3f4f6" }}>
+              <table className="w-full min-w-[340px] text-xs">
                 <thead>
                   <tr style={{ backgroundColor: "#f9fafb" }}>
                     {["Insumo", "Cantidad", "Unidad"].map(h => (

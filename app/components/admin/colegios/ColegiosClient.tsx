@@ -212,7 +212,7 @@ export default function ColegiosClient() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <table style={{ width: "100%", minWidth: 520, borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ backgroundColor: "#f9fafb" }}>
                   {["Colegio", "Dirección", "Uniformes", "Creado", "Acciones"].map(h => (

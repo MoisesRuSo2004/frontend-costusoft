@@ -21,47 +21,43 @@ import RoleSidebar, { type SidebarNavGroup } from "@/app/components/shared/layou
 import { useNotificaciones } from "@/app/context/NotificacionesContext";
 
 export default function Sidebar() {
-  const { pedidosCount, solicitudesCount } = useNotificaciones();
+  const { pedidosCount, solicitudesCount, bandejaSolicitudesCount } = useNotificaciones();
 
   const NAV: SidebarNavGroup[] = [
     {
       heading: "Principal",
       items: [
-        { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-        { label: "Solicitudes", href: "/solicitudes", icon: ClipboardCheck },
-        { label: "Inst. Solicitudes", href: "/admin/solicitudes-institucionales", icon: MessageSquare, badge: solicitudesCount > 0 ? solicitudesCount : undefined },
-      ],
-    },
-    {
-      heading: "Operaciones",
-      items: [
-        { label: "Calculadora", href: "/admin/calculadora", icon: Calculator },
-        { label: "Pedidos", href: "/admin/pedidos", icon: ClipboardList, badge: pedidosCount > 0 ? pedidosCount : undefined },
+        { label: "Dashboard",          href: "/admin",                              icon: LayoutDashboard },
+        { label: "Pedidos",            href: "/admin/pedidos",                      icon: ClipboardList,  badge: pedidosCount > 0 ? pedidosCount : undefined },
+        { label: "Solicitudes",        href: "/solicitudes",                        icon: ClipboardCheck, badge: bandejaSolicitudesCount > 0 ? bandejaSolicitudesCount : undefined },
+        { label: "Inst. Solicitudes",  href: "/admin/solicitudes-institucionales",  icon: MessageSquare,  badge: solicitudesCount > 0 ? solicitudesCount : undefined },
       ],
     },
     {
       heading: "Inventario",
       items: [
-        { label: "Insumos", href: "/inventario", icon: Archive },
-        { label: "Entradas", href: "/entradas", icon: ArrowDownToLine },
-        { label: "Salidas", href: "/salidas", icon: ArrowUpFromLine },
-      ],
-    },
-    {
-      heading: "Analitica",
-      items: [
-        { label: "Reportes",    href: "/reporte",    icon: BarChart2 },
-        { label: "Prediccion",  href: "/prediccion", icon: TrendingUp },
-        { label: "Asistente IA", href: "/admin/ia",  icon: BrainCircuit },
+        { label: "Entradas",  href: "/entradas",   icon: ArrowDownToLine },
+        { label: "Salidas",   href: "/salidas",     icon: ArrowUpFromLine },
+        { label: "Insumos",   href: "/inventario",  icon: Archive },
       ],
     },
     {
       heading: "Gestion",
       items: [
-        { label: "Colegios", href: "/admin/colegios", icon: Building2 },
-        { label: "Uniformes", href: "/admin/uniformes", icon: Shirt },
-        { label: "Usuarios", href: "/usuarios", icon: Users },
-        { label: "Proveedores", href: "/proveedores", icon: Truck },
+        { label: "Colegios",    href: "/admin/colegios",  icon: Building2 },
+        { label: "Uniformes",   href: "/admin/uniformes", icon: Shirt },
+        { label: "Proveedores", href: "/proveedores",     icon: Truck },
+        { label: "Usuarios",    href: "/usuarios",        icon: Users },
+      ],
+    },
+    {
+      heading: "Herramientas",
+      items: [
+        { label: "Calculadora",   href: "/admin/calculadora", icon: Calculator },
+        { label: "Reportes",      href: "/reporte",            icon: BarChart2 },
+        { label: "Prediccion",    href: "/prediccion",         icon: TrendingUp },
+        { label: "Optimizacion",  href: "/optimizacion",       icon: Calculator },
+        { label: "Asistente IA",  href: "/admin/ia",           icon: BrainCircuit },
       ],
     },
   ];

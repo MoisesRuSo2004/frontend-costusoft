@@ -30,6 +30,8 @@ interface NotificacionesCtxValue {
   pedidosCount: number;
   /** Solicitudes especiales PENDIENTE de instituciones */
   solicitudesCount: number;
+  /** Pedidos CALCULADO + Entradas PENDIENTE + Salidas PENDIENTE (bandeja /solicitudes) */
+  bandejaSolicitudesCount: number;
   loading: boolean;
   refetch: () => void;
 }
@@ -41,6 +43,7 @@ const NotificacionesCtx = createContext<NotificacionesCtxValue>({
   total: 0,
   pedidosCount: 0,
   solicitudesCount: 0,
+  bandejaSolicitudesCount: 0,
   loading: false,
   refetch: () => {},
 });
@@ -58,6 +61,7 @@ export function NotificacionesProvider({
   const [total, setTotal] = useState(0);
   const [pedidosCount, setPedidosCount] = useState(0);
   const [solicitudesCount, setSolicitudesCount] = useState(0);
+  const [bandejaSolicitudesCount, setBandejaSolicitudesCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const fetchAll = useCallback(async () => {
@@ -146,10 +150,16 @@ export function NotificacionesProvider({
           ? solicitudesEspeciales.value.totalElements
           : 0;
 
+      const newBandejaSolicitudesCount =
+        (pedidosCalculados.status === "fulfilled" ? pedidosCalculados.value.totalElements : 0) +
+        (entradas.status === "fulfilled" ? entradas.value.totalElements : 0) +
+        (salidas.status === "fulfilled" ? salidas.value.totalElements : 0);
+
       setItems(notifs);
       setTotal(count);
       setPedidosCount(newPedidosCount);
       setSolicitudesCount(newSolicitudesCount);
+      setBandejaSolicitudesCount(newBandejaSolicitudesCount);
     } catch {
       // falla silenciosa — no interrumpimos la UI
     } finally {
@@ -165,7 +175,7 @@ export function NotificacionesProvider({
 
   return (
     <NotificacionesCtx.Provider
-      value={{ items, total, pedidosCount, solicitudesCount, loading, refetch: fetchAll }}
+      value={{ items, total, pedidosCount, solicitudesCount, bandejaSolicitudesCount, loading, refetch: fetchAll }}
     >
       {children}
     </NotificacionesCtx.Provider>

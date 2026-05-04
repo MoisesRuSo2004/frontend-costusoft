@@ -304,7 +304,7 @@ export default function UsuariosClient() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <table style={{ width: "100%", minWidth: 560, borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ backgroundColor: "#f9fafb" }}>
                   {["Usuario", "Correo", "Rol", "Estado", "Cuenta", "Creado", "Acciones"].map(h => (

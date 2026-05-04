@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, ArrowDownToLine, ArrowUpFromLine, Search, RefreshCw,
   Package, AlertCircle, X, ChevronLeft, ChevronRight, SlidersHorizontal,
-  Trash2, Edit3, CheckCircle2,
+  Trash2, Edit3, CheckCircle2, PowerOff, Power,
 } from "lucide-react";
 import { useInsumos } from "@/app/hooks/useInsumos";
 import type { InsumoResponse } from "@/app/types/insumo";
@@ -129,6 +129,45 @@ function EliminarModal({ nombre, onClose, onConfirm, saving }: {
             className="flex-1 rounded-2xl py-2.5 text-sm font-semibold text-white"
             style={{ backgroundColor: "#dc2626", fontFamily: "var(--font-poppins), sans-serif", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
             {saving ? "Eliminando..." : "Eliminar"}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Modal Inhabilitar (cuando tiene movimientos) ─────────────────────────────
+
+function InhabilitarModal({ nombre, onClose, onConfirm, saving }: {
+  nombre: string; onClose: () => void; onConfirm: () => void; saving: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.45)" }}>
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.15 }}
+        className="w-full max-w-sm rounded-3xl border p-6"
+        style={{ backgroundColor: "#fff", borderColor: "#eaecf0", boxShadow: "0 24px 64px rgba(0,0,0,0.18)" }}>
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl" style={{ backgroundColor: "#fff7ed" }}>
+          <PowerOff size={20} style={{ color: "#ea580c" }} />
+        </div>
+        <h3 className="mb-1 text-base font-semibold" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
+          No se puede eliminar
+        </h3>
+        <p className="mb-3 text-sm" style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>
+          <strong>"{nombre}"</strong> tiene movimientos registrados (entradas o salidas) y no puede eliminarse para preservar el historial.
+        </p>
+        <div className="mb-5 rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: "#fed7aa", backgroundColor: "#fff7ed", color: "#9a3412", fontFamily: "var(--font-poppins), sans-serif" }}>
+          ¿Deseas <strong>inhabilitarlo</strong> en su lugar? Quedará inactivo y no aparecerá en autocompletados ni alertas, pero el historial se conserva.
+        </div>
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 rounded-2xl border py-2.5 text-sm font-medium"
+            style={{ borderColor: "#d0d5dd", color: "#374151", fontFamily: "var(--font-poppins), sans-serif" }}>
+            Cancelar
+          </button>
+          <button onClick={onConfirm} disabled={saving}
+            className="flex-1 rounded-2xl py-2.5 text-sm font-semibold text-white"
+            style={{ backgroundColor: saving ? "#d97706" : "#ea580c", fontFamily: "var(--font-poppins), sans-serif", cursor: saving ? "not-allowed" : "pointer" }}>
+            {saving ? "Inhabilitando..." : "Inhabilitar"}
           </button>
         </div>
       </motion.div>
@@ -319,11 +358,12 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function InventarioClient() {
-  const { data, stockBajo, loading, saving, error, successMsg, page, setPage, search, buscar, reload, ajustarStock, actualizar, eliminar, clearMessages } = useInsumos();
+  const { data, stockBajo, loading, saving, error, successMsg, page, setPage, search, buscar, reload, ajustarStock, actualizar, eliminar, inhabilitar, clearMessages } = useInsumos();
   const [searchInput, setSearchInput] = useState("");
   const [ajusteInsumo, setAjusteInsumo] = useState<InsumoResponse | null>(null);
   const [editarInsumo, setEditarInsumo] = useState<InsumoResponse | null>(null);
   const [deleteInsumo, setDeleteInsumo] = useState<InsumoResponse | null>(null);
+  const [inhabilitarInsumo, setInhabilitarInsumo] = useState<InsumoResponse | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce search
@@ -447,7 +487,7 @@ export default function InventarioClient() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[600px]">
               <thead>
                 <tr style={{ borderBottom: "1px solid #f0f0f4" }}>
                   {["#", "Nombre", "Tipo", "Unidad", "Stock", "Mínimo", "Estado", "Acciones"].map(h => (
@@ -457,8 +497,11 @@ export default function InventarioClient() {
                 </tr>
               </thead>
               <tbody>
-                {insumos.map((insumo, idx) => (
-                  <tr key={insumo.id} style={{ borderBottom: "1px solid #f9fafb" }}
+                {insumos.map((insumo, idx) => {
+                  const inactivo = insumo.activo === false;
+                  return (
+                  <tr key={insumo.id}
+                    style={{ borderBottom: "1px solid #f9fafb", opacity: inactivo ? 0.55 : 1 }}
                     onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#fafafa")}
                     onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}>
                     <td className="px-5 py-4 text-sm" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
@@ -466,12 +509,20 @@ export default function InventarioClient() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2.5">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-xl flex-shrink-0" style={{ backgroundColor: "rgba(11,61,145,0.08)" }}>
-                          <Package size={14} style={{ color: "#0b3d91" }} />
+                        <div className="flex h-8 w-8 items-center justify-center rounded-xl flex-shrink-0"
+                          style={{ backgroundColor: inactivo ? "rgba(156,163,175,0.12)" : "rgba(11,61,145,0.08)" }}>
+                          <Package size={14} style={{ color: inactivo ? "#9ca3af" : "#0b3d91" }} />
                         </div>
                         <div>
-                          <span className="text-sm font-medium" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>{insumo.nombre}</span>
-                          {insumo.riesgo && (
+                          <span className="text-sm font-medium" style={{ color: inactivo ? "#9ca3af" : "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
+                            {insumo.nombre}
+                          </span>
+                          {inactivo && (
+                            <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: "#f3f4f6", color: "#6b7280" }}>
+                              INACTIVO
+                            </span>
+                          )}
+                          {!inactivo && insumo.riesgo && (
                             <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: getRiesgoColor(insumo.riesgo) + "20", color: getRiesgoColor(insumo.riesgo) }}>
                               {insumo.riesgo.toUpperCase()}
                             </span>
@@ -481,11 +532,18 @@ export default function InventarioClient() {
                     </td>
                     <td className="px-5 py-4 text-sm" style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>{insumo.tipo || "—"}</td>
                     <td className="px-5 py-4 text-sm" style={{ color: "#475467", fontFamily: "var(--font-poppins), sans-serif" }}>{insumo.unidadMedida}</td>
-                    <td className="px-5 py-4 text-sm font-semibold" style={{ color: insumo.stock <= 0 ? "#dc2626" : insumo.stock <= insumo.stockMinimo ? "#b45309" : "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
+                    <td className="px-5 py-4 text-sm font-semibold" style={{ color: inactivo ? "#9ca3af" : insumo.stock <= 0 ? "#dc2626" : insumo.stock <= insumo.stockMinimo ? "#b45309" : "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
                       {insumo.stock}
                     </td>
                     <td className="px-5 py-4 text-sm" style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>{insumo.stockMinimo}</td>
-                    <td className="px-5 py-4"><StockBadge insumo={insumo} /></td>
+                    <td className="px-5 py-4">
+                      {inactivo
+                        ? <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium" style={{ backgroundColor: "#f3f4f6", color: "#6b7280" }}>
+                            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "#9ca3af" }} />Inactivo
+                          </span>
+                        : <StockBadge insumo={insumo} />
+                      }
+                    </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
                         <button onClick={() => setEditarInsumo(insumo)} title="Editar insumo"
@@ -495,24 +553,37 @@ export default function InventarioClient() {
                           onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#374151"; }}>
                           <Edit3 size={13} />
                         </button>
-                        <button onClick={() => setAjusteInsumo(insumo)} title="Ajustar stock"
-                          className="flex h-8 w-8 items-center justify-center rounded-xl border transition"
-                          style={{ borderColor: "#e5e7eb", color: "#374151" }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor = "#49c21b"; e.currentTarget.style.color = "#49c21b"; }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#374151"; }}>
-                          <RefreshCw size={13} />
-                        </button>
-                        <button onClick={() => setDeleteInsumo(insumo)} title="Eliminar"
-                          className="flex h-8 w-8 items-center justify-center rounded-xl border transition"
-                          style={{ borderColor: "#e5e7eb", color: "#374151" }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor = "#fecaca"; e.currentTarget.style.color = "#dc2626"; }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#374151"; }}>
-                          <Trash2 size={13} />
-                        </button>
+                        {!inactivo && (
+                          <button onClick={() => setAjusteInsumo(insumo)} title="Ajustar stock"
+                            className="flex h-8 w-8 items-center justify-center rounded-xl border transition"
+                            style={{ borderColor: "#e5e7eb", color: "#374151" }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = "#49c21b"; e.currentTarget.style.color = "#49c21b"; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#374151"; }}>
+                            <RefreshCw size={13} />
+                          </button>
+                        )}
+                        {inactivo ? (
+                          <button onClick={() => setInhabilitarInsumo(insumo)} title="Reactivar insumo"
+                            className="flex h-8 w-8 items-center justify-center rounded-xl border transition"
+                            style={{ borderColor: "#e5e7eb", color: "#374151" }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = "#bbf7d0"; e.currentTarget.style.color = "#16a34a"; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#374151"; }}>
+                            <Power size={13} />
+                          </button>
+                        ) : (
+                          <button onClick={() => setDeleteInsumo(insumo)} title="Eliminar"
+                            className="flex h-8 w-8 items-center justify-center rounded-xl border transition"
+                            style={{ borderColor: "#e5e7eb", color: "#374151" }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = "#fecaca"; e.currentTarget.style.color = "#dc2626"; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#374151"; }}>
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -553,8 +624,25 @@ export default function InventarioClient() {
             saving={saving}
             onClose={() => setDeleteInsumo(null)}
             onConfirm={async () => {
-              await eliminar(deleteInsumo.id);
-              setDeleteInsumo(null);
+              const target = deleteInsumo;
+              const result = await eliminar(target.id);
+              if (result === "HAS_MOVEMENTS") {
+                setDeleteInsumo(null);
+                setInhabilitarInsumo(target);
+              } else {
+                setDeleteInsumo(null);
+              }
+            }}
+          />
+        )}
+        {inhabilitarInsumo && (
+          <InhabilitarModal
+            nombre={inhabilitarInsumo.nombre}
+            saving={saving}
+            onClose={() => setInhabilitarInsumo(null)}
+            onConfirm={async () => {
+              await inhabilitar(inhabilitarInsumo.id);
+              setInhabilitarInsumo(null);
             }}
           />
         )}

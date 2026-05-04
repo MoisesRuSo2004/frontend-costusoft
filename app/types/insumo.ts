@@ -5,6 +5,7 @@ export interface InsumoResponse {
   unidadMedida: string;
   tipo: string;
   stockMinimo: number;
+  activo?: boolean;
   riesgo?: string;
   stockBajo?: boolean;
   createdAt?: string;
