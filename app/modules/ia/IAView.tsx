@@ -782,15 +782,15 @@ export default function IAView({ canOrdenCompra = false }: IAViewProps) {
 
   return (
     <section
-      className="flex flex-col gap-5 pb-6"
-      style={{ height: "calc(100vh - 64px - 48px - 28px)", minHeight: 600 }}
+      className="flex flex-col gap-3 sm:gap-5 pb-4 sm:pb-6"
+      style={{ height: "calc(100dvh - 64px - 32px - 16px)", minHeight: 480 }}
     >
       {/* ── Header ── */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex flex-col gap-4 rounded-[28px] border px-6 py-5"
+        className="flex flex-col gap-3 rounded-2xl sm:rounded-[28px] border px-4 py-3 sm:px-6 sm:py-5"
         style={{
           borderColor: "#e0e7ff",
           background:
@@ -798,19 +798,19 @@ export default function IAView({ canOrdenCompra = false }: IAViewProps) {
           flexShrink: 0,
         }}
       >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
             <div
-              className="flex h-11 w-11 items-center justify-center rounded-2xl flex-shrink-0"
+              className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl flex-shrink-0"
               style={{
                 background: "linear-gradient(135deg, #1d4ed8, #7c3aed)",
               }}
             >
-              <BrainCircuit size={22} style={{ color: "#ffffff" }} />
+              <BrainCircuit size={18} style={{ color: "#ffffff" }} />
             </div>
             <div>
               <h1
-                className="text-xl font-semibold"
+                className="text-base sm:text-xl font-semibold"
                 style={{
                   color: "#101828",
                   fontFamily: "var(--font-poppins), sans-serif",
@@ -819,7 +819,7 @@ export default function IAView({ canOrdenCompra = false }: IAViewProps) {
                 Asistente IA
               </h1>
               <p
-                className="text-xs"
+                className="text-[11px] sm:text-xs hidden sm:block"
                 style={{
                   color: "#667085",
                   fontFamily: "var(--font-poppins), sans-serif",
@@ -829,31 +829,31 @@ export default function IAView({ canOrdenCompra = false }: IAViewProps) {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Estado del servicio */}
             <div
-              className="flex items-center gap-2 rounded-2xl border px-3 py-1.5"
+              className="flex items-center gap-1.5 rounded-2xl border px-2 py-1 sm:px-3 sm:py-1.5"
               style={{
                 borderColor: serviceUp ? "#abefc6" : "#fecaca",
                 backgroundColor: serviceUp ? "#f0fdf4" : "#fef2f2",
               }}
             >
               <span
-                className="h-2 w-2 rounded-full"
+                className="h-2 w-2 rounded-full flex-shrink-0"
                 style={{ backgroundColor: serviceUp ? "#22c55e" : "#ef4444" }}
               />
               <span
-                className="text-xs font-semibold"
+                className="text-[10px] sm:text-xs font-semibold"
                 style={{
                   color: serviceUp ? "#15803d" : "#b42318",
                   fontFamily: "var(--font-poppins), sans-serif",
                 }}
               >
                 {loadingEstado
-                  ? "Verificando..."
+                  ? "..."
                   : serviceUp
-                    ? "Groq disponible"
-                    : "Servicio no disponible"}
+                    ? "Groq OK"
+                    : "No disponible"}
               </span>
             </div>
             <button
@@ -894,8 +894,8 @@ export default function IAView({ canOrdenCompra = false }: IAViewProps) {
           </div>
         </div>
 
-        {/* ── Quick actions ── */}
-        <div className="flex flex-wrap gap-2">
+        {/* ── Quick actions — scroll horizontal en móvil ── */}
+        <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
           {/* Briefing del día — destacado */}
           <button
             type="button"
@@ -961,7 +961,7 @@ export default function IAView({ canOrdenCompra = false }: IAViewProps) {
 
       {/* ── Área de mensajes ── */}
       <div
-        className="flex-1 overflow-hidden rounded-3xl border"
+        className="flex-1 overflow-hidden rounded-2xl sm:rounded-3xl border"
         style={{
           borderColor: "#eaecf0",
           backgroundColor: "#f8fafc",
@@ -969,7 +969,7 @@ export default function IAView({ canOrdenCompra = false }: IAViewProps) {
         }}
       >
         <div
-          className="h-full overflow-y-auto px-5 py-5"
+          className="h-full overflow-y-auto px-3 py-3 sm:px-5 sm:py-5"
           style={{ scrollbarWidth: "thin" }}
         >
           <div className="flex flex-col gap-4 max-w-3xl mx-auto">
@@ -1009,14 +1009,14 @@ export default function IAView({ canOrdenCompra = false }: IAViewProps) {
 
       {/* ── Input area ── */}
       <div
-        className="flex-shrink-0 rounded-3xl border p-3"
+        className="flex-shrink-0 rounded-2xl sm:rounded-3xl border p-2 sm:p-3"
         style={{
           borderColor: "#eaecf0",
           backgroundColor: "#ffffff",
           boxShadow: "0 4px 20px rgba(15,23,42,0.06)",
         }}
       >
-        <div className="flex items-end gap-3">
+        <div className="flex items-end gap-2 sm:gap-3">
           <div className="flex-1 relative">
             <textarea
               ref={textareaRef}
@@ -1024,7 +1024,7 @@ export default function IAView({ canOrdenCompra = false }: IAViewProps) {
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               disabled={sending}
-              placeholder="Pregunta sobre tu inventario... (Enter para enviar, Shift+Enter para nueva línea)"
+              placeholder="Escribe tu consulta..."
               rows={1}
               className="w-full resize-none rounded-2xl border px-4 py-3 text-sm outline-none transition disabled:cursor-not-allowed disabled:bg-[#f8fafc]"
               style={{
