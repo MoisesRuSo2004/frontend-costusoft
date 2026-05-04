@@ -175,10 +175,10 @@ export default function PrediccionClient() {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: "Críticos",  value: criticos, ...RIESGO_CONFIG.CRITICO },
-            { label: "Alto Riesgo", value: altos,  ...RIESGO_CONFIG.ALTO    },
-            { label: "Medio Riesgo", value: medios, ...RIESGO_CONFIG.MEDIO  },
-            { label: "Estables",  value: estables, ...RIESGO_CONFIG.ESTABLE },
+            { ...RIESGO_CONFIG.CRITICO, label: "Críticos",    value: criticos },
+            { ...RIESGO_CONFIG.ALTO,    label: "Alto Riesgo", value: altos    },
+            { ...RIESGO_CONFIG.MEDIO,   label: "Medio Riesgo",value: medios   },
+            { ...RIESGO_CONFIG.ESTABLE, label: "Estables",    value: estables },
           ].map(({ label, value, badge, bg, icon }, i) => (
             <motion.div key={label}
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
