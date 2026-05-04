@@ -188,7 +188,7 @@ export default function PrediccionClient() {
               style={{ backgroundColor: "#fff", boxShadow: "0 1px 12px rgba(0,0,0,0.07)", borderLeft: `4px solid ${badge}` }}>
               <div className="flex items-center justify-center rounded-xl flex-shrink-0"
                 style={{ width: 42, height: 42, backgroundColor: bg }}>
-                <span style={{ color: badge }}>{React.cloneElement(icon as React.ReactElement, { size: 20 })}</span>
+                <span style={{ color: badge }}>{React.cloneElement(icon as React.ReactElement, { size: 20 } as Record<string, unknown>)}</span>
               </div>
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide" style={{ color: badge, fontFamily: "'Poppins', sans-serif" }}>{label}</p>
