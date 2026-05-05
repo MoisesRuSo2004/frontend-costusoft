@@ -474,7 +474,7 @@ export default function SolicitudesInstitucionalesClient() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f8f9fc", fontFamily: "'Poppins', sans-serif" }}>
       {/* ── Toast stack ── */}
-      <div className="fixed bottom-6 right-6 z-[60] flex flex-col gap-2 pointer-events-none">
+      <div className="fixed bottom-6 right-4 left-4 sm:left-auto sm:right-6 z-[60] flex flex-col gap-2 pointer-events-none items-end">
         <AnimatePresence>
           {toasts.map(t => (
             <motion.div
@@ -486,7 +486,7 @@ export default function SolicitudesInstitucionalesClient() {
               style={{
                 backgroundColor: t.type === "success" ? "#16a34a" : "#dc2626",
                 fontFamily: "'Poppins', sans-serif",
-                maxWidth: 340,
+                maxWidth: "calc(100vw - 2rem)",
               }}
             >
               {t.type === "success" ? <CheckCircle2 size={16} /> : <XCircle size={16} />}

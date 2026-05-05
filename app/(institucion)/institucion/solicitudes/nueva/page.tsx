@@ -126,7 +126,7 @@ export default function NuevaSolicitudPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-3xl border p-6"
+          className="rounded-3xl border p-4 sm:p-6"
           style={{ borderColor: "#eaecf0", backgroundColor: "#ffffff", boxShadow: "0 2px 20px rgba(15,23,42,0.05)" }}
         >
           <h2
@@ -180,7 +180,7 @@ export default function NuevaSolicitudPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="rounded-3xl border p-6"
+          className="rounded-3xl border p-4 sm:p-6"
           style={{ borderColor: "#eaecf0", backgroundColor: "#ffffff", boxShadow: "0 2px 20px rgba(15,23,42,0.05)" }}
         >
           <div className="flex flex-col gap-4">

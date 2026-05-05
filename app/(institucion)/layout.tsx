@@ -23,8 +23,7 @@ export default function InstitucionLayout({
 
           {/* Page content */}
           <main
-            className="flex-1 overflow-y-auto overflow-x-hidden"
-            style={{ padding: "28px 28px 0" }}
+            className="flex-1 overflow-y-auto overflow-x-hidden px-4 pt-5 sm:px-6 sm:pt-6 lg:px-7 lg:pt-7"
           >
             {children}
           </main>

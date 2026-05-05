@@ -6,6 +6,7 @@ import {
   BrainCircuit,
   Building2,
   Calculator,
+  ClipboardList,
   LayoutDashboard,
 } from "lucide-react";
 import RoleSidebar, { type SidebarNavGroup } from "@/app/components/shared/layout/RoleSidebar";
@@ -29,6 +30,7 @@ export default function UserSidebar() {
     {
       heading: "Operaciones",
       items: [
+        { label: "Pedidos",        href: "/user/pedidos",      icon: ClipboardList },
         { label: "Calculadora",    href: "/user/calculadora",  icon: Calculator },
         { label: "Nueva Entrada",  href: "/user/entradas/add", icon: ArrowDownToLine },
         { label: "Nueva Salida",   href: "/user/salidas/add",  icon: ArrowUpFromLine },

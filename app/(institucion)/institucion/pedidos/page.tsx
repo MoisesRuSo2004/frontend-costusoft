@@ -158,7 +158,7 @@ export default function PedidosPage() {
         style={{ borderColor: "#eaecf0", backgroundColor: "#ffffff", boxShadow: "0 2px 20px rgba(15,23,42,0.05)" }}
       >
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[480px]">
             <thead>
               <tr style={{ backgroundColor: "#f9fafb", borderBottom: "1px solid #eaecf0" }}>
                 {["N° Pedido", "Estado", "Fecha", "Entrega Est.", ""].map((h) => (

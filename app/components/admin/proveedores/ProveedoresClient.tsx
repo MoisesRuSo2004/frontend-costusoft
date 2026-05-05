@@ -539,19 +539,19 @@ export default function ProveedoresClient() {
       </AnimatePresence>
 
       {/* ── Toast stack ── */}
-      <div className="fixed bottom-6 right-6 z-[200] flex flex-col gap-2 items-end">
+      <div className="fixed bottom-6 right-4 left-4 sm:left-auto sm:right-6 z-[200] flex flex-col gap-2 items-end">
         <AnimatePresence>
           {toasts.map(t => (
             <motion.div key={t.id}
               initial={{ opacity: 0, x: 40, scale: 0.95 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 40, scale: 0.95 }}
-              className="flex items-center gap-3 rounded-2xl px-5 py-3.5"
+              className="flex items-center gap-3 rounded-2xl px-5 py-3.5 w-full sm:w-auto"
               style={{
                 backgroundColor: t.type === "success" ? "#ecfdf5" : "#fef2f2",
                 border: `1.5px solid ${t.type === "success" ? "#6ee7b7" : "#fecaca"}`,
                 boxShadow: "0 8px 24px rgba(15,23,42,0.12)",
-                minWidth: 260, maxWidth: 360,
+                minWidth: 220, maxWidth: "calc(100vw - 2rem)",
               }}>
               {t.type === "success"
                 ? <CheckCircle2 size={16} style={{ color: "#059669", flexShrink: 0 }} />

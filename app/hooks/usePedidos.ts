@@ -500,6 +500,28 @@ export function usePedidos() {
     }
   }, [state.page, loadPedidos, loadPedidoDetalle, loadHistorial, pedidoSeleccionado?.id]);
 
+  // ── Actualizar fecha de entrega ──────────────────────────────────────────
+
+  const actualizarFecha = useCallback(async (id: number, fecha: string | null): Promise<boolean> => {
+    setSubmitting(true);
+    try {
+      await pedidoService.actualizarFechaEntrega(id, fecha);
+      setSuccessMessage("Fecha de entrega actualizada.");
+      await loadPedidos(state.page);
+      if (pedidoSeleccionado?.id === id) {
+        await loadPedidoDetalle(id);
+        void loadHistorial(id);
+      }
+      return true;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error al actualizar la fecha de entrega.";
+      setState((s) => ({ ...s, error: msg }));
+      return false;
+    } finally {
+      setSubmitting(false);
+    }
+  }, [state.page, loadPedidos, loadPedidoDetalle, loadHistorial, pedidoSeleccionado?.id]);
+
   // ── Paginación ─────────────────────────────────────────────────────────
 
   const goToPage = useCallback(
@@ -597,6 +619,7 @@ export function usePedidos() {
     marcarListo,
     entregar,
     cancelar,
+    actualizarFecha,
     goToPage,
     nextPage,
     prevPage,

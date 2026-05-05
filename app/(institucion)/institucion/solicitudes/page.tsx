@@ -181,10 +181,10 @@ export default function SolicitudesPage() {
         <div className="divide-y" style={{ borderColor: "#f9fafb" }}>
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="p-5">
+              <div key={i} className="p-4 sm:p-5">
                 <div className="flex flex-col gap-2">
                   <div className="h-4 w-48 animate-pulse rounded-full" style={{ backgroundColor: "#e5e7eb" }} />
-                  <div className="h-3 w-72 animate-pulse rounded-full" style={{ backgroundColor: "#e5e7eb" }} />
+                  <div className="h-3 w-full max-w-[288px] animate-pulse rounded-full" style={{ backgroundColor: "#e5e7eb" }} />
                 </div>
               </div>
             ))
@@ -208,7 +208,7 @@ export default function SolicitudesPage() {
               return (
                 <div
                   key={sol.id}
-                  className="flex items-start justify-between gap-4 p-5 transition-colors"
+                  className="flex items-start justify-between gap-4 p-4 sm:p-5 transition-colors"
                   onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.backgroundColor = "#fafafa")}
                   onMouseLeave={(e) => ((e.currentTarget as HTMLDivElement).style.backgroundColor = "transparent")}
                 >

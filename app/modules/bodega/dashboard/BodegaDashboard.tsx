@@ -74,7 +74,7 @@ function MotivoModal({
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ backgroundColor: "rgba(15,23,42,0.45)" }}
       onClick={onClose}
     >
@@ -114,11 +114,11 @@ function MotivoModal({
             {err}
           </div>
         )}
-        <div className="mt-5 flex justify-end gap-3">
-          <button type="button" onClick={onClose} className="rounded-2xl border px-4 py-3 text-sm font-semibold" style={{ borderColor: "#d0d5dd", color: "#475467", backgroundColor: "#ffffff", fontFamily: "var(--font-poppins), sans-serif" }}>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
+          <button type="button" onClick={onClose} className="w-full rounded-2xl border px-4 py-3 text-sm font-semibold sm:w-auto" style={{ borderColor: "#d0d5dd", color: "#475467", backgroundColor: "#ffffff", fontFamily: "var(--font-poppins), sans-serif" }}>
             Cancelar
           </button>
-          <button type="button" disabled={loading} onClick={submit} className="inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white" style={{ backgroundColor: "#b42318", opacity: loading ? 0.7 : 1, cursor: loading ? "not-allowed" : "pointer", fontFamily: "var(--font-poppins), sans-serif" }}>
+          <button type="button" disabled={loading} onClick={submit} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white sm:w-auto" style={{ backgroundColor: "#b42318", opacity: loading ? 0.7 : 1, cursor: loading ? "not-allowed" : "pointer", fontFamily: "var(--font-poppins), sans-serif" }}>
             Guardar rechazo
           </button>
         </div>
@@ -315,6 +315,166 @@ function SalidaRow({
   );
 }
 
+// ─── Card de entrada (mobile) ─────────────────────────────────────────────────
+
+function EntradaCard({
+  entrada, actionKey, onConfirmar, onRechazar,
+}: {
+  entrada: EntradaResponse;
+  actionKey: string | null;
+  onConfirmar: (id: number) => void;
+  onRechazar: (id: number, motivo: string) => void;
+}) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const key = `e-${entrada.id}`;
+  const busy = actionKey === key;
+  const isPending = entrada.estado === "PENDIENTE";
+
+  return (
+    <>
+      <div className="px-4 py-4" style={{ borderTop: "1px solid #f2f4f7" }}>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <span className="inline-flex rounded-full px-2.5 py-1 text-xs font-bold" style={{ backgroundColor: "#eff8ff", color: "#175cd3", fontFamily: "var(--font-poppins), sans-serif" }}>
+            Entrada #{entrada.id}
+          </span>
+          <EstadoBadge estado={entrada.estado} />
+        </div>
+        <p className="text-xs mb-1" style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>
+          {fmtFecha(entrada.createdAt ?? entrada.fecha)}
+        </p>
+        {entrada.proveedorNombre && (
+          <p className="text-sm font-semibold mb-1" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
+            {entrada.proveedorNombre}
+          </p>
+        )}
+        {entrada.descripcion && (
+          <p className="text-xs mb-2" style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>
+            {entrada.descripcion}
+          </p>
+        )}
+        <div className="flex flex-col gap-0.5 mb-3">
+          {entrada.detalles.map(d => (
+            <span key={d.id} className="text-xs" style={{ color: "#344054", fontFamily: "var(--font-poppins), sans-serif" }}>
+              • {d.nombreInsumo} — {d.cantidad} {d.unidadMedida}
+            </span>
+          ))}
+        </div>
+        {entrada.motivoRechazo && (
+          <p className="text-xs mb-2" style={{ color: "#b42318", fontFamily: "var(--font-poppins), sans-serif" }}>
+            Motivo: {entrada.motivoRechazo}
+          </p>
+        )}
+        {entrada.confirmadaPor && (
+          <p className="text-xs mb-2" style={{ color: "#027a48", fontFamily: "var(--font-poppins), sans-serif" }}>
+            Confirmada por {entrada.confirmadaPor}
+          </p>
+        )}
+        {isPending && (
+          <div className="flex gap-2 mt-1">
+            <button type="button" disabled={!!actionKey} onClick={() => setModalOpen(true)}
+              className="flex-1 rounded-xl border py-2 text-xs font-semibold transition"
+              style={{ borderColor: "#fecaca", backgroundColor: "#fff5f5", color: "#b42318", cursor: actionKey ? "not-allowed" : "pointer", opacity: actionKey ? 0.7 : 1, fontFamily: "var(--font-poppins), sans-serif" }}>
+              Rechazar
+            </button>
+            <button type="button" disabled={!!actionKey} onClick={() => onConfirmar(entrada.id)}
+              className="flex-1 rounded-xl py-2 text-xs font-semibold text-white transition"
+              style={{ backgroundColor: "#15803d", cursor: actionKey ? "not-allowed" : "pointer", opacity: actionKey ? 0.7 : 1, fontFamily: "var(--font-poppins), sans-serif" }}>
+              {busy ? "Procesando…" : "Confirmar"}
+            </button>
+          </div>
+        )}
+      </div>
+      <AnimatePresence>
+        {modalOpen && (
+          <MotivoModal titulo={`Entrada #${entrada.id}`} loading={busy}
+            onConfirm={m => { onRechazar(entrada.id, m); setModalOpen(false); }}
+            onClose={() => setModalOpen(false)} />
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+// ─── Card de salida (mobile) ──────────────────────────────────────────────────
+
+function SalidaCard({
+  salida, actionKey, onConfirmar, onRechazar,
+}: {
+  salida: SalidaResponse;
+  actionKey: string | null;
+  onConfirmar: (id: number) => void;
+  onRechazar: (id: number, motivo: string) => void;
+}) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const key = `s-${salida.id}`;
+  const busy = actionKey === key;
+  const isPending = salida.estado === "PENDIENTE";
+
+  return (
+    <>
+      <div className="px-4 py-4" style={{ borderTop: "1px solid #f2f4f7" }}>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <span className="inline-flex rounded-full px-2.5 py-1 text-xs font-bold" style={{ backgroundColor: "#fff4ed", color: "#c4320a", fontFamily: "var(--font-poppins), sans-serif" }}>
+            Salida #{salida.id}
+          </span>
+          <EstadoBadge estado={salida.estado} />
+        </div>
+        <p className="text-xs mb-1" style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>
+          {fmtFecha(salida.createdAt ?? salida.fecha)}
+        </p>
+        {salida.colegioNombre && (
+          <p className="text-sm font-semibold mb-1" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
+            {salida.colegioNombre}
+          </p>
+        )}
+        {salida.descripcion && (
+          <p className="text-xs mb-2" style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>
+            {salida.descripcion}
+          </p>
+        )}
+        <div className="flex flex-col gap-0.5 mb-3">
+          {salida.detalles.map(d => (
+            <span key={d.id} className="text-xs" style={{ color: "#344054", fontFamily: "var(--font-poppins), sans-serif" }}>
+              • {d.nombreInsumo} — {d.cantidad} {d.unidadMedida}
+            </span>
+          ))}
+        </div>
+        {salida.motivoRechazo && (
+          <p className="text-xs mb-2" style={{ color: "#b42318", fontFamily: "var(--font-poppins), sans-serif" }}>
+            Motivo: {salida.motivoRechazo}
+          </p>
+        )}
+        {salida.confirmadoPor && (
+          <p className="text-xs mb-2" style={{ color: "#027a48", fontFamily: "var(--font-poppins), sans-serif" }}>
+            Confirmada por {salida.confirmadoPor}
+          </p>
+        )}
+        {isPending && (
+          <div className="flex gap-2 mt-1">
+            <button type="button" disabled={!!actionKey} onClick={() => setModalOpen(true)}
+              className="flex-1 rounded-xl border py-2 text-xs font-semibold transition"
+              style={{ borderColor: "#fecaca", backgroundColor: "#fff5f5", color: "#b42318", cursor: actionKey ? "not-allowed" : "pointer", opacity: actionKey ? 0.7 : 1, fontFamily: "var(--font-poppins), sans-serif" }}>
+              Rechazar
+            </button>
+            <button type="button" disabled={!!actionKey} onClick={() => onConfirmar(salida.id)}
+              className="flex-1 rounded-xl py-2 text-xs font-semibold text-white transition"
+              style={{ backgroundColor: "#15803d", cursor: actionKey ? "not-allowed" : "pointer", opacity: actionKey ? 0.7 : 1, fontFamily: "var(--font-poppins), sans-serif" }}>
+              {busy ? "Procesando…" : "Confirmar"}
+            </button>
+          </div>
+        )}
+      </div>
+      <AnimatePresence>
+        {modalOpen && (
+          <MotivoModal titulo={`Salida #${salida.id}`} loading={busy}
+            onConfirm={m => { onRechazar(salida.id, m); setModalOpen(false); }}
+            onClose={() => setModalOpen(false)} />
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
 // ─── Cola vacía ───────────────────────────────────────────────────────────────
 
 function ColaVacia() {
@@ -401,7 +561,7 @@ export default function BodegaDashboard() {
   return (
     <section className="flex flex-col gap-6 pb-8">
       {/* Banner header */}
-      <div className="rounded-[28px] border px-6 py-6"
+      <div className="rounded-[28px] border px-4 py-5 sm:px-6 sm:py-6"
         style={{ borderColor: "#bbf7d0", background: "linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(5,46,22,0.08) 100%)" }}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
@@ -449,9 +609,9 @@ export default function BodegaDashboard() {
       {/* Área principal: Cola + Actividad reciente */}
       <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
         {/* Cola de trabajo */}
-        <div className="rounded-3xl border" style={{ borderColor: "#eaecf0", backgroundColor: "#ffffff", boxShadow: "0 18px 50px rgba(15,23,42,0.05)" }}>
+        <div className="rounded-3xl border overflow-hidden" style={{ borderColor: "#eaecf0", backgroundColor: "#ffffff", boxShadow: "0 18px 50px rgba(15,23,42,0.05)" }}>
           {/* Header cola */}
-          <div className="flex flex-col gap-4 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between"
+          <div className="flex flex-col gap-3 border-b px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5"
             style={{ borderColor: "#f0f0f4" }}>
             <div>
               <h2 className="text-lg font-semibold" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
@@ -464,13 +624,13 @@ export default function BodegaDashboard() {
             <input
               value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Buscar por ID, proveedor, colegio, insumo..."
-              className="rounded-2xl border px-4 py-2.5 text-sm outline-none sm:w-72"
+              className="w-full rounded-2xl border px-4 py-2.5 text-sm outline-none sm:w-72"
               style={{ borderColor: "#d0d5dd", color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}
             />
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 border-b px-6 py-3" style={{ borderColor: "#f0f0f4" }}>
+          <div className="flex gap-1 border-b px-4 py-3 sm:px-6" style={{ borderColor: "#f0f0f4" }}>
             {TABS.map(t => (
               <button key={t.id} type="button" onClick={() => setTab(t.id)}
                 className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition"
@@ -490,44 +650,62 @@ export default function BodegaDashboard() {
             ))}
           </div>
 
-          {/* Tabla */}
+          {/* Contenido de la cola */}
           {loading ? (
             <div className="p-6"><Skeleton /></div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse">
-                <thead style={{ backgroundColor: "#f8fafc" }}>
-                  <tr>
-                    {["Tipo", "ID / Fecha", "Referencia", "Insumos", "Estado", "Acciones"].map(h => (
-                      <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.12em]"
-                        style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
+          ) : (() => {
+            const isEmpty =
+              (tab === "TODAS"    && allPendientes.ent.length === 0 && allPendientes.sal.length === 0) ||
+              (tab === "ENTRADAS" && allPendientes.ent.length === 0) ||
+              (tab === "SALIDAS"  && allPendientes.sal.length === 0);
+            return (
+              <>
+                {/* ── Vista móvil: cards (< md) ── */}
+                <div className="md:hidden">
                   {tab !== "SALIDAS" && allPendientes.ent.map(e => (
-                    <EntradaRow key={`e-${e.id}`} entrada={e} actionKey={actionKey}
+                    <EntradaCard key={`e-${e.id}`} entrada={e} actionKey={actionKey}
                       onConfirmar={confirmarEntrada} onRechazar={rechazarEntrada} />
                   ))}
                   {tab !== "ENTRADAS" && allPendientes.sal.map(s => (
-                    <SalidaRow key={`s-${s.id}`} salida={s} actionKey={actionKey}
+                    <SalidaCard key={`s-${s.id}`} salida={s} actionKey={actionKey}
                       onConfirmar={confirmarSalida} onRechazar={rechazarSalida} />
                   ))}
-                </tbody>
-              </table>
-              {(tab === "TODAS" && allPendientes.ent.length === 0 && allPendientes.sal.length === 0) ||
-               (tab === "ENTRADAS" && allPendientes.ent.length === 0) ||
-               (tab === "SALIDAS" && allPendientes.sal.length === 0) ? (
-                <ColaVacia />
-              ) : null}
-            </div>
-          )}
+                  {isEmpty && <ColaVacia />}
+                </div>
+
+                {/* ── Vista desktop: tabla (md+) ── */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full min-w-[640px] border-collapse">
+                    <thead style={{ backgroundColor: "#f8fafc" }}>
+                      <tr>
+                        {["Tipo", "ID / Fecha", "Referencia", "Insumos", "Estado", "Acciones"].map(h => (
+                          <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.12em]"
+                            style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tab !== "SALIDAS" && allPendientes.ent.map(e => (
+                        <EntradaRow key={`e-${e.id}`} entrada={e} actionKey={actionKey}
+                          onConfirmar={confirmarEntrada} onRechazar={rechazarEntrada} />
+                      ))}
+                      {tab !== "ENTRADAS" && allPendientes.sal.map(s => (
+                        <SalidaRow key={`s-${s.id}`} salida={s} actionKey={actionKey}
+                          onConfirmar={confirmarSalida} onRechazar={rechazarSalida} />
+                      ))}
+                    </tbody>
+                  </table>
+                  {isEmpty && <ColaVacia />}
+                </div>
+              </>
+            );
+          })()}
         </div>
 
         {/* Actividad reciente */}
-        <div className="rounded-3xl border p-5" style={{ borderColor: "#eaecf0", backgroundColor: "#ffffff", boxShadow: "0 18px 50px rgba(15,23,42,0.05)" }}>
+        <div className="rounded-3xl border p-4 sm:p-5" style={{ borderColor: "#eaecf0", backgroundColor: "#ffffff", boxShadow: "0 18px 50px rgba(15,23,42,0.05)" }}>
           <h2 className="text-base font-semibold" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
             Actividad reciente
           </h2>

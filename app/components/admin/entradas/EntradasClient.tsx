@@ -218,7 +218,7 @@ export default function EntradasClient() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
         {[
           { label: "Total", value: kpis.total, color: "#0b3d91" },
           { label: "Pendientes", value: kpis.pendientes, color: "#b45309" },

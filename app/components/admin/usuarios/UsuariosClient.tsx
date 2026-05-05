@@ -167,7 +167,7 @@ export default function UsuariosClient() {
             style={{
               borderColor: toast.tipo === "ok" ? "#bbf7d0" : "#fecaca",
               backgroundColor: toast.tipo === "ok" ? "#f0fdf4" : "#fef2f2",
-              minWidth: 300,
+              minWidth: 240, maxWidth: "calc(100vw - 2.5rem)",
             }}>
             {toast.tipo === "ok"
               ? <CheckCircle2 size={16} style={{ color: "#16a34a", flexShrink: 0 }} />
@@ -223,7 +223,7 @@ export default function UsuariosClient() {
       </div>
 
       {/* ── KPI CARDS ──────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
         {[
           { label: "Total",         value: total,   color: "#7c3aed", bg: "#f5f3ff", icon: <Users size={18} />      },
           { label: "Administradores", value: admins, color: "#0b3d91", bg: "#eff6ff", icon: <ShieldCheck size={18} /> },
@@ -267,7 +267,7 @@ export default function UsuariosClient() {
             style={{ ...inp(), paddingLeft: 38, fontSize: 13 }}
             onFocus={focusOn} onBlur={focusOff} />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {(["TODOS", "ADMIN", "USER", "BODEGA", "INSTITUCION"] as const).map(rol => {
             const cfg = rol !== "TODOS" ? ROL_CONFIG[rol] : null;
             const active = filtroRol === rol;

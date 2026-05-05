@@ -107,7 +107,7 @@ export default function PrediccionClient() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Indicador de estado del servicio */}
             <ServiceStatusBadge activo={servicioActivo} />
 
@@ -184,15 +184,15 @@ export default function PrediccionClient() {
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.07 }}
               onClick={() => setFiltroRiesgo(label === "Críticos" ? "CRITICO" : label === "Alto Riesgo" ? "ALTO" : label === "Medio Riesgo" ? "MEDIO" : "ESTABLE")}
-              className="flex items-center gap-4 rounded-2xl px-5 py-4 cursor-pointer transition-transform hover:scale-[1.02]"
+              className="flex items-center gap-2 sm:gap-4 rounded-2xl px-3 sm:px-5 py-3 sm:py-4 cursor-pointer transition-transform hover:scale-[1.02]"
               style={{ backgroundColor: "#fff", boxShadow: "0 1px 12px rgba(0,0,0,0.07)", borderLeft: `4px solid ${badge}` }}>
               <div className="flex items-center justify-center rounded-xl flex-shrink-0"
                 style={{ width: 42, height: 42, backgroundColor: bg }}>
                 <span style={{ color: badge }}>{React.cloneElement(icon as React.ReactElement, { size: 20 } as Record<string, unknown>)}</span>
               </div>
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide" style={{ color: badge, fontFamily: "'Poppins', sans-serif" }}>{label}</p>
-                <p className="text-2xl font-bold" style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}>{value}</p>
+                <p className="text-xs font-medium uppercase tracking-wide leading-tight" style={{ color: badge, fontFamily: "'Poppins', sans-serif" }}>{label}</p>
+                <p className="text-xl sm:text-2xl font-bold" style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}>{value}</p>
               </div>
             </motion.div>
           ))}
@@ -470,7 +470,7 @@ function DetalleModal({ prediccion: p, onClose }: { prediccion: PrediccionRespon
         style={{ backgroundColor: "#fff", boxShadow: "0 25px 80px rgba(0,0,0,0.2)" }}>
 
         {/* Header modal */}
-        <div className="flex items-center justify-between px-6 py-5"
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5"
           style={{ background: `linear-gradient(135deg, ${cfg.bg} 0%, #fff 100%)`, borderBottom: "1px solid #f0f0f4" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl"
@@ -496,10 +496,10 @@ function DetalleModal({ prediccion: p, onClose }: { prediccion: PrediccionRespon
         </div>
 
         <div className="overflow-y-auto max-h-[70vh]">
-          <div className="px-6 py-5 flex flex-col gap-5">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 flex flex-col gap-4 sm:gap-5">
 
             {/* Stock info */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {[
                 { label: "Stock Actual", value: `${(p.stock_actual ?? 0).toLocaleString()} ${p.unidad_medida}`, color: (p.stock_actual ?? 0) === 0 ? "#dc2626" : "#111827" },
                 { label: "Stock Mínimo", value: `${p.stock_minimo} ${p.unidad_medida}`, color: "#6b7280" },
@@ -525,7 +525,7 @@ function DetalleModal({ prediccion: p, onClose }: { prediccion: PrediccionRespon
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-0 divide-x divide-y" style={{ divideColor: "#f0f0f4" }}>
+              <div className="grid grid-cols-1 gap-0 sm:grid-cols-2 divide-y divide-[#f3f4f6] sm:divide-x">
                 {[
                   { label: "Alerta estimada",        value: fmtFecha(p.prophet?.fecha_alerta_estimada) },
                   { label: "Agotamiento estimado",   value: fmtFecha(p.prophet?.fecha_agotamiento_estimada) },
@@ -534,7 +534,7 @@ function DetalleModal({ prediccion: p, onClose }: { prediccion: PrediccionRespon
                   { label: "Confianza",              value: pct(p.prophet?.confianza) },
                   { label: "Historial suficiente",   value: p.prophet?.suficiente_historial == null ? "—" : p.prophet.suficiente_historial ? "Sí" : "No" },
                 ].map(({ label, value }) => (
-                  <div key={label} className="px-4 py-3" style={{ borderBottom: "1px solid #f3f4f6", borderRight: "1px solid #f3f4f6" }}>
+                  <div key={label} className="px-4 py-3">
                     <p className="text-xs" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>{label}</p>
                     <p className="mt-0.5 text-sm font-semibold" style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}>{value}</p>
                   </div>
@@ -624,7 +624,7 @@ function EntrenarModal({
         style={{ backgroundColor: "#fff", boxShadow: "0 25px 80px rgba(0,0,0,0.2)" }}>
 
         {/* Header */}
-        <div className="flex items-center gap-3 px-6 py-5"
+        <div className="flex items-center gap-3 px-4 sm:px-6 py-4 sm:py-5"
           style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", borderBottom: "1px solid #ddd6fe" }}>
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl" style={{ backgroundColor: "#ede9fe" }}>
             <Cpu size={20} style={{ color: "#7c3aed" }} />
@@ -639,7 +639,7 @@ function EntrenarModal({
           </div>
         </div>
 
-        <div className="px-6 py-6 flex flex-col gap-5">
+        <div className="px-4 sm:px-6 py-5 sm:py-6 flex flex-col gap-4 sm:gap-5">
           {!resultado && !loading && !error && (
             <div>
               <p className="text-sm" style={{ color: "#374151", fontFamily: "'Poppins', sans-serif" }}>

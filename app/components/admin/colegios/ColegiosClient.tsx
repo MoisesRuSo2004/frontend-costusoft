@@ -528,7 +528,7 @@ function DetalleModal({ colegio, detalle, loading, onClose }: {
       <ModalHeader icon={<Building2 size={20} style={{ color: "#0b3d91" }} />} titulo={colegio.nombre} onClose={onClose} />
       <div className="px-6 py-5 flex flex-col gap-4">
         {/* Info básica */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 sm:grid-cols-2">
           {[
             { label: "Dirección", value: colegio.direccion || "—" },
             { label: "Uniformes", value: `${colegio.totalUniformes} tipo(s)` },

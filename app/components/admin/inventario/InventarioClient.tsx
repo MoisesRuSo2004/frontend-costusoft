@@ -417,7 +417,7 @@ export default function InventarioClient() {
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
         {[
           { label: "Total insumos", value: totalElements, color: "#0b3d91", bg: "rgba(11,61,145,0.08)" },
           { label: "Disponibles", value: insumos.filter(i => estadoStock(i) === "Disponible").length, color: "#16a34a", bg: "rgba(22,163,74,0.08)" },

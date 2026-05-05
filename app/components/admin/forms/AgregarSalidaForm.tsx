@@ -39,6 +39,7 @@ export default function AgregarSalidaForm({ returnPath = "/salidas" }: { returnP
   const [success, setSuccess] = useState(false);
   const [apiError, setApiError] = useState("");
   const [validationError, setValidationError] = useState("");
+  const [agregarError, setAgregarError] = useState("");
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const buscarInsumos = useCallback(async (query: string) => {
@@ -60,27 +61,30 @@ export default function AgregarSalidaForm({ returnPath = "/salidas" }: { returnP
     setInsumoSeleccionado(insumo);
     setBusqueda(insumo.nombre);
     setSugerencias([]);
-    // Sugiere cantidad máxima disponible
+    setAgregarError("");
     const yaEnLista = lineas.find(l => l.insumoId === insumo.id);
     const disponible = insumo.stock - (yaEnLista?.cantidad ?? 0);
     setCantidadInput(disponible > 0 ? "1" : "0");
   };
 
   const agregarLinea = () => {
-    if (!insumoSeleccionado) { setValidationError("Selecciona un insumo de la lista."); return; }
+    if (!insumoSeleccionado) { setAgregarError("Selecciona un insumo de la lista antes de agregar."); return; }
     const cant = Number(cantidadInput);
-    if (!cant || cant <= 0) { setValidationError("La cantidad debe ser mayor a 0."); return; }
-    if (cant > insumoSeleccionado.stock) { setValidationError(`Stock insuficiente. Disponible: ${insumoSeleccionado.stock} ${insumoSeleccionado.unidadMedida}.`); return; }
-    if (lineas.some(l => l.insumoId === insumoSeleccionado.id)) { setValidationError("Este insumo ya fue agregado. Elimínalo y vuelve a agregarlo."); return; }
+    if (!cant || cant <= 0) { setAgregarError("La cantidad debe ser mayor a 0."); return; }
+    if (cant > insumoSeleccionado.stock) {
+      setAgregarError(`Stock insuficiente. Solo hay ${insumoSeleccionado.stock} ${insumoSeleccionado.unidadMedida} disponibles de "${insumoSeleccionado.nombre}".`);
+      return;
+    }
+    if (lineas.some(l => l.insumoId === insumoSeleccionado.id)) { setAgregarError("Este insumo ya fue agregado. Elimínalo de la lista y vuelve a agregarlo."); return; }
     setLineas(ls => [...ls, { insumoId: insumoSeleccionado.id, nombre: insumoSeleccionado.nombre, unidadMedida: insumoSeleccionado.unidadMedida, stockActual: insumoSeleccionado.stock, cantidad: cant }]);
-    setBusqueda(""); setInsumoSeleccionado(null); setSugerencias([]); setCantidadInput("1"); setValidationError("");
+    setBusqueda(""); setInsumoSeleccionado(null); setSugerencias([]); setCantidadInput("1"); setAgregarError("");
   };
 
   const quitarLinea = (id: number) => setLineas(ls => ls.filter(l => l.insumoId !== id));
 
   const limpiar = () => {
     setFecha(""); setDescripcion(""); setColegioId(""); setLineas([]); setBusqueda(""); setInsumoSeleccionado(null); setSugerencias([]); setCantidadInput("1");
-    setValidationError(""); setApiError("");
+    setValidationError(""); setApiError(""); setAgregarError("");
   };
 
   async function handleSubmit(e: React.FormEvent) {
@@ -199,7 +203,7 @@ export default function AgregarSalidaForm({ returnPath = "/salidas" }: { returnP
         <div className="rounded-3xl border p-6" style={{ borderColor: "#eaecf0", backgroundColor: "#fff", boxShadow: "0 2px 20px rgba(15,23,42,0.05)" }}>
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide" style={{ color: "#374151", fontFamily: "'Poppins', sans-serif" }}>Insumos a despachar</h2>
 
-          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_160px_auto]">
+          <div className="mb-1 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_160px_auto]">
             <div className="relative">
               <label style={lbl}>Buscar insumo</label>
               <div className="relative">
@@ -244,7 +248,7 @@ export default function AgregarSalidaForm({ returnPath = "/salidas" }: { returnP
             <div>
               <label style={lbl}>Cantidad</label>
               <input type="number" min={1} max={insumoSeleccionado?.stock ?? 9999} value={cantidadInput}
-                onChange={e => setCantidadInput(e.target.value)} style={inp()}
+                onChange={e => { setCantidadInput(e.target.value); setAgregarError(""); }} style={inp()}
                 onFocus={e => { e.currentTarget.style.borderColor = "#b45309"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(180,83,9,0.10)"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.boxShadow = "none"; }} />
               {insumoSeleccionado && (
@@ -262,6 +266,18 @@ export default function AgregarSalidaForm({ returnPath = "/salidas" }: { returnP
               </button>
             </div>
           </div>
+
+          {/* Error inline del botón Agregar */}
+          <AnimatePresence>
+            {agregarError && (
+              <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                className="mb-3 flex items-center gap-2.5 rounded-2xl border px-4 py-3"
+                style={{ borderColor: "#fca5a5", backgroundColor: "#fef2f2" }}>
+                <AlertTriangle size={15} style={{ color: "#dc2626", flexShrink: 0 }} />
+                <p className="text-sm" style={{ color: "#b42318", fontFamily: "'Poppins', sans-serif" }}>{agregarError}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Lista */}
           {lineas.length === 0 ? (

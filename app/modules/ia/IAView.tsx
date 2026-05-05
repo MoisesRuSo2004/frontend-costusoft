@@ -895,7 +895,7 @@ export default function IAView({ canOrdenCompra = false }: IAViewProps) {
         </div>
 
         {/* ── Quick actions — scroll horizontal en móvil ── */}
-        <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
+        <div className="scrollbar-thin-x flex gap-2 overflow-x-auto pb-2">
           {/* Briefing del día — destacado */}
           <button
             type="button"

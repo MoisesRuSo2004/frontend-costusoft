@@ -208,6 +208,19 @@ export const pedidoService = {
     });
   },
 
+  /**
+   * PATCH /api/pedidos/{id}/fecha-entrega
+   * Actualiza solo la fecha estimada de entrega.
+   * Válido en cualquier estado activo (no ENTREGADO, no CANCELADO).
+   * @param fecha formato "yyyy-MM-dd" o null para borrar la fecha
+   */
+  async actualizarFechaEntrega(id: number, fecha: string | null): Promise<PedidoResponse> {
+    return apiFetch<PedidoResponse>(`${BASE}/${id}/fecha-entrega`, {
+      method: "PATCH",
+      body: JSON.stringify({ fechaEstimadaEntrega: fecha }),
+    });
+  },
+
   // ── 3. Historial ───────────────────────────────────────────────────────
 
   /**

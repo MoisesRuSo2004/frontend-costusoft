@@ -446,7 +446,7 @@ function TablaGeneral({ items }: { items: any[] }) {
   return (
     <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "#eaecf0", backgroundColor: "#fff" }}>
       <div className="overflow-x-auto">
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 640 }}>
           <thead>
             <tr style={{ backgroundColor: "#f9fafb", borderBottom: "1px solid #eaecf0" }}>
               {["Insumo", "Unidad", "Tipo", "Entradas", "Salidas", "Stock Actual", "Stock Mín.", "Estado"].map(h => (
@@ -493,7 +493,7 @@ function TablaRotacion({ items }: { items: any[] }) {
   return (
     <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "#eaecf0", backgroundColor: "#fff" }}>
       <div className="overflow-x-auto">
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 640 }}>
           <thead>
             <tr style={{ backgroundColor: "#f9fafb", borderBottom: "1px solid #eaecf0" }}>
               {["Insumo", "Stock Actual", "Salidas Período", "Índice Rotación", "Días Cobertura", "Categoría", "Estado"].map(h => (
@@ -539,7 +539,7 @@ function TablaConsumo({ items }: { items: any[] }) {
   return (
     <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "#eaecf0", backgroundColor: "#fff" }}>
       <div className="overflow-x-auto">
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 580 }}>
           <thead>
             <tr style={{ backgroundColor: "#f9fafb", borderBottom: "1px solid #eaecf0" }}>
               {["Insumo", "Consumo Diario", "Consumo Semanal", "Consumo Mensual", "Días Cobertura", "Tendencia"].map(h => (
@@ -595,7 +595,7 @@ function TablaPedidos({ items }: { items: any[] }) {
   return (
     <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "#eaecf0", backgroundColor: "#fff" }}>
       <div className="overflow-x-auto">
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 680 }}>
           <thead>
             <tr style={{ backgroundColor: "#f9fafb", borderBottom: "1px solid #eaecf0" }}>
               {["#", "Colegio", "Fecha Pedido", "Entrega Est.", "Días Rest.", "Semáforo", "Cumplimiento", "Estado"].map(h => (

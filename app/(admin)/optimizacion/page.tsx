@@ -108,21 +108,21 @@ export default function OptimizacionPage() {
   };
 
   return (
-    <div style={{ padding: "24px", maxWidth: "1200px", margin: "0 auto" }}>
+    <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
       {/* ── Encabezado ── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
           <div
             style={{
-              width: 44, height: 44, borderRadius: 12,
+              width: 44, height: 44, borderRadius: 12, flexShrink: 0,
               background: "linear-gradient(135deg, #2563EB, #7C3AED)",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}
           >
             <TrendingUp size={22} color="white" />
           </div>
-          <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: "#111827", margin: 0 }}>
+          <div style={{ minWidth: 0 }}>
+            <h1 style={{ fontSize: 20, fontWeight: 700, color: "#111827", margin: 0 }}>
               Optimización de Producción
             </h1>
             <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>
@@ -135,7 +135,7 @@ export default function OptimizacionPage() {
         <div
           style={{
             display: "flex", alignItems: "center", gap: "6px",
-            padding: "6px 14px", borderRadius: 20,
+            padding: "6px 14px", borderRadius: 20, flexShrink: 0,
             background: online === true ? "#DCFCE7" : online === false ? "#FEE2E2" : "#F3F4F6",
             color: online === true ? "#166534" : online === false ? "#991B1B" : "#6B7280",
             fontSize: 13, fontWeight: 500,
@@ -143,7 +143,7 @@ export default function OptimizacionPage() {
         >
           <span
             style={{
-              width: 8, height: 8, borderRadius: "50%",
+              width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
               background: online === true ? "#16A34A" : online === false ? "#DC2626" : "#9CA3AF",
             }}
           />
@@ -212,7 +212,7 @@ export default function OptimizacionPage() {
 
         <div
           style={{
-            marginLeft: "auto", display: "flex", alignItems: "center", gap: "8px",
+            display: "flex", alignItems: "center", gap: "8px",
             fontSize: 12, color: "#9CA3AF",
           }}
         >
@@ -277,7 +277,7 @@ export default function OptimizacionPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               style={{
-                textAlign: "center", padding: "60px 24px",
+                textAlign: "center", padding: "48px 16px",
                 background: "white", borderRadius: 16, border: "1px solid #E5E7EB",
               }}
             >
@@ -507,7 +507,7 @@ function ResultadoPanel({ resultado }: { resultado: OptimizacionResponse }) {
               </p>
               <iframe
                 srcDoc={resultado.grafica_html}
-                style={{ width: "100%", height: 420, border: "none", borderRadius: 8 }}
+                className="w-full h-[260px] sm:h-[380px] lg:h-[420px] rounded-lg border-none"
                 title="Gráfica de optimización"
                 sandbox="allow-scripts"
               />
@@ -531,7 +531,7 @@ function ResultadoPanel({ resultado }: { resultado: OptimizacionResponse }) {
               </p>
               <iframe
                 srcDoc={resultado.grafica_region_html}
-                style={{ width: "100%", height: 520, border: "none", borderRadius: 8 }}
+                className="w-full h-[300px] sm:h-[440px] lg:h-[520px] rounded-lg border-none"
                 title="Región factible"
                 sandbox="allow-scripts"
               />
@@ -592,48 +592,54 @@ function HistorialPanel({
           >
             <button
               onClick={() => setExpandido(isOpen ? null : item.id)}
+              className="w-full text-left"
               style={{
-                width: "100%", padding: "14px 16px", border: "none",
+                padding: "12px 16px", border: "none",
                 background: "transparent", cursor: "pointer",
-                display: "flex", alignItems: "center", gap: "12px",
               }}
             >
-              <span
-                style={{
-                  display: "flex", alignItems: "center", gap: "6px",
-                  padding: "3px 10px", borderRadius: 20,
-                  background: bg, color: text, fontSize: 12, fontWeight: 600,
-                }}
-              >
-                {icon} {item.estado_solucion}
-              </span>
-              <span style={{ fontSize: 13, color: "#374151", fontWeight: 500 }}>
-                Talla {item.talla}
-              </span>
-              {item.utilidad_total != null && (
-                <span style={{ fontSize: 13, color: "#2563EB", fontWeight: 600 }}>
-                  {formatCOP(item.utilidad_total)}
+              {/* Fila superior: badge + talla + utilidad + chevron */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                <span
+                  style={{
+                    display: "flex", alignItems: "center", gap: "6px",
+                    padding: "3px 10px", borderRadius: 20,
+                    background: bg, color: text, fontSize: 12, fontWeight: 600, flexShrink: 0,
+                  }}
+                >
+                  {icon} {item.estado_solucion}
                 </span>
-              )}
-              <span style={{ fontSize: 12, color: "#9CA3AF", marginLeft: "auto" }}>
-                {item.fecha_ejecucion ? formatDate(item.fecha_ejecucion) : "—"}
-              </span>
-              <button
-                onClick={(e) => { e.stopPropagation(); optimizacionService.downloadPdf(item.id).catch(() => alert("Error PDF")); }}
-                title="Descargar PDF"
-                style={{
-                  display: "flex", alignItems: "center", padding: "4px 8px",
-                  borderRadius: 6, border: "1px solid #E5E7EB",
-                  background: "white", cursor: "pointer", color: "#1D4ED8",
-                }}
-              >
-                <Download size={14} />
-              </button>
-              <ChevronDown
-                size={16}
-                color="#9CA3AF"
-                style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: "0.2s" }}
-              />
+                <span style={{ fontSize: 13, color: "#374151", fontWeight: 500 }}>
+                  Talla {item.talla}
+                </span>
+                {item.utilidad_total != null && (
+                  <span style={{ fontSize: 13, color: "#2563EB", fontWeight: 600 }}>
+                    {formatCOP(item.utilidad_total)}
+                  </span>
+                )}
+                <ChevronDown
+                  size={16}
+                  color="#9CA3AF"
+                  style={{ marginLeft: "auto", transform: isOpen ? "rotate(180deg)" : "none", transition: "0.2s", flexShrink: 0 }}
+                />
+              </div>
+              {/* Fila inferior: fecha + botón PDF */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
+                <span style={{ fontSize: 12, color: "#9CA3AF" }}>
+                  {item.fecha_ejecucion ? formatDate(item.fecha_ejecucion) : "—"}
+                </span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); optimizacionService.downloadPdf(item.id).catch(() => alert("Error PDF")); }}
+                  title="Descargar PDF"
+                  style={{
+                    display: "flex", alignItems: "center", gap: "4px", padding: "4px 8px",
+                    borderRadius: 6, border: "1px solid #E5E7EB",
+                    background: "white", cursor: "pointer", color: "#1D4ED8", fontSize: 12,
+                  }}
+                >
+                  <Download size={13} /> PDF
+                </button>
+              </div>
             </button>
 
             {isOpen && (

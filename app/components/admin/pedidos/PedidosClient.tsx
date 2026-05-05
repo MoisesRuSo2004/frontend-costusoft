@@ -17,6 +17,7 @@ import {
   History,
   Package,
   PackageCheck,
+  Pencil,
   Play,
   Plus,
   RefreshCw,
@@ -560,6 +561,10 @@ export default function PedidosClient() {
   const [newTalla, setNewTalla] = useState("");
   const [newCantidad, setNewCantidad] = useState(1);
 
+  // Editor inline de fecha de entrega (panel de detalle)
+  const [editingFecha, setEditingFecha] = useState(false);
+  const [fechaInput, setFechaInput] = useState("");
+
   const {
     pedidos,
     pedidosPorEstado,
@@ -603,6 +608,7 @@ export default function PedidosClient() {
     marcarListo,
     entregar,
     cancelar,
+    actualizarFecha,
     goToPage,
     nextPage,
     prevPage,
@@ -638,6 +644,7 @@ export default function PedidosClient() {
     setPedidoToCancel(pedido);
     setCancelMotivo("");
     setCancelModalOpen(true);
+    setEditingFecha(false);
   };
 
   const handleConfirmCancel = async () => {
@@ -1113,12 +1120,63 @@ export default function PedidosClient() {
                   <div className="px-6 py-4" style={{ backgroundColor: "#fafafa" }}>
                     <div className="flex flex-wrap items-center gap-3 mb-3">
                       <BadgeEstado estado={pedidoSeleccionado.estado} />
-                      {pedidoSeleccionado.fechaEstimadaEntrega && (
+
+                      {/* ── Fecha de entrega editable ── */}
+                      {!["ENTREGADO","CANCELADO"].includes(pedidoSeleccionado.estado) && (
+                        editingFecha ? (
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="date"
+                              value={fechaInput}
+                              onChange={(e) => setFechaInput(e.target.value)}
+                              className="rounded-lg border px-2 py-1 text-xs outline-none"
+                              style={{ borderColor: "#bfdbfe", fontFamily: "var(--font-poppins)", color: "#344054" }}
+                              autoFocus
+                            />
+                            <button
+                              disabled={submitting}
+                              onClick={async () => {
+                                const ok = await actualizarFecha(pedidoSeleccionado.id, fechaInput || null);
+                                if (ok) setEditingFecha(false);
+                              }}
+                              className="rounded-lg px-2.5 py-1 text-xs font-semibold text-white transition disabled:opacity-60"
+                              style={{ backgroundColor: "#1d4ed8" }}
+                            >
+                              {submitting ? "…" : "Guardar"}
+                            </button>
+                            <button
+                              onClick={() => setEditingFecha(false)}
+                              className="rounded-lg border px-2 py-1 text-xs transition hover:bg-gray-50"
+                              style={{ borderColor: "#d0d5dd", color: "#6b7280" }}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setFechaInput(pedidoSeleccionado.fechaEstimadaEntrega ?? "");
+                              setEditingFecha(true);
+                            }}
+                            className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition hover:border-blue-300 hover:bg-blue-50"
+                            style={{ borderColor: pedidoSeleccionado.fechaEstimadaEntrega ? "#bfdbfe" : "#d0d5dd", color: pedidoSeleccionado.fechaEstimadaEntrega ? "#1d4ed8" : "#6b7280", fontFamily: "var(--font-poppins)" }}
+                            title="Editar fecha estimada de entrega"
+                          >
+                            <Clock size={11} />
+                            {pedidoSeleccionado.fechaEstimadaEntrega
+                              ? `Entrega: ${new Date(pedidoSeleccionado.fechaEstimadaEntrega).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })}`
+                              : "Fijar fecha de entrega"}
+                            <Pencil size={10} style={{ opacity: 0.6 }} />
+                          </button>
+                        )
+                      )}
+                      {["ENTREGADO","CANCELADO"].includes(pedidoSeleccionado.estado) && pedidoSeleccionado.fechaEstimadaEntrega && (
                         <span className="flex items-center gap-1 text-xs" style={{ color: "#667085", fontFamily: "var(--font-poppins)" }}>
                           <Clock size={11} />
                           Entrega: {new Date(pedidoSeleccionado.fechaEstimadaEntrega).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })}
                         </span>
                       )}
+
                       <span className="text-xs" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins)" }}>
                         Creado: {new Date(pedidoSeleccionado.fechaCreacion).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })}
                       </span>

@@ -62,13 +62,13 @@ export default function WarehouseQueueTable({
       }}
     >
       <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse">
+        <table className="w-full min-w-[680px] border-collapse">
           <thead style={{ backgroundColor: "#f8fafc" }}>
             <tr>
               {["Codigo", "Tipo", "Solicitante", "Detalle", "Estado", "Acciones"].map((label) => (
                 <th
                   key={label}
-                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.12em]"
+                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em]"
                   style={{
                     color: "#667085",
                     fontFamily: "var(--font-poppins), sans-serif",
@@ -86,7 +86,7 @@ export default function WarehouseQueueTable({
 
               return (
                 <tr key={request.id} className="border-t" style={{ borderColor: "#f2f4f7" }}>
-                  <td className="px-6 py-4 align-top">
+                  <td className="px-4 py-3 align-top">
                     <p className="text-sm font-semibold" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
                       {request.code}
                     </p>
@@ -94,7 +94,7 @@ export default function WarehouseQueueTable({
                       {formatDate(request.createdAt)}
                     </p>
                   </td>
-                  <td className="px-6 py-4 align-top">
+                  <td className="px-4 py-3 align-top">
                     <span
                       className="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
                       style={{
@@ -106,7 +106,7 @@ export default function WarehouseQueueTable({
                       {typeLabel(request.type)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 align-top">
+                  <td className="px-4 py-3 align-top">
                     <p className="text-sm font-medium" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
                       {request.requestedBy.name}
                     </p>
@@ -114,7 +114,7 @@ export default function WarehouseQueueTable({
                       {request.requestedBy.email}
                     </p>
                   </td>
-                  <td className="px-6 py-4 align-top">
+                  <td className="px-4 py-3 align-top">
                     <div className="space-y-1">
                       <p className="text-sm font-medium" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
                         {request.lines.map((line) => `${line.itemName} (${line.quantity} ${line.unit})`).join(", ")}
@@ -129,7 +129,7 @@ export default function WarehouseQueueTable({
                       ) : null}
                     </div>
                   </td>
-                  <td className="px-6 py-4 align-top">
+                  <td className="px-4 py-3 align-top">
                     <div className="space-y-2">
                       <WarehouseStatusBadge status={request.status} />
                       {request.confirmedBy ? (
@@ -139,7 +139,7 @@ export default function WarehouseQueueTable({
                       ) : null}
                     </div>
                   </td>
-                  <td className="px-6 py-4 align-top">
+                  <td className="px-4 py-3 align-top">
                     <WarehouseRequestActions
                       requestId={request.id}
                       disabled={!isPending}

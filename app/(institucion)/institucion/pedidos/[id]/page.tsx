@@ -164,7 +164,7 @@ function Timeline({ historial }: { historial: HistorialPedidoResponse[] }) {
 function PrendasTable({ detalles }: { detalles: DetallePedidoResponse[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full">
+      <table className="w-full min-w-[480px]">
         <thead>
           <tr style={{ borderBottom: "1px solid #f3f4f6" }}>
             {["Prenda", "Tipo", "Talla", "Género", "Cantidad"].map((h) => (

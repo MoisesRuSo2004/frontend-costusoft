@@ -53,7 +53,7 @@ function MotivoModal({ titulo, descripcion, submitting, onClose, onConfirm }: Mo
       onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-md rounded-3xl bg-white p-7"
+        className="w-full max-w-md rounded-3xl bg-white p-5 sm:p-7"
         style={{ boxShadow: "0 24px 64px rgba(15,23,42,0.20)" }}
         onClick={e => e.stopPropagation()}>
         <div className="flex items-center gap-3 mb-5">
@@ -122,7 +122,7 @@ function Seccion({ titulo, count, loading, color, bg, icon, children }: SeccionP
     <div className="rounded-2xl border bg-white overflow-hidden"
       style={{ borderColor: "#f3f4f6", boxShadow: "0 2px 12px rgba(15,23,42,0.05)" }}>
       <button onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-6 py-4 transition hover:bg-gray-50"
+        className="w-full flex items-center justify-between px-4 sm:px-6 py-4 transition hover:bg-gray-50"
         style={{ cursor: "pointer" }}>
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ backgroundColor: bg }}>
@@ -171,15 +171,15 @@ function PedidoCard({ pedido, submitting, onConfirmar, onCancelar }: PedidoCardP
   const pct = pedido.porcentajeCumplimiento ?? 0;
 
   return (
-    <div className="px-6 py-4" style={{ borderBottom: "1px solid #f9fafb" }}>
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="px-4 sm:px-6 py-4" style={{ borderBottom: "1px solid #f9fafb" }}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
         {/* Info principal */}
-        <div className="flex items-start gap-4 flex-1 min-w-0">
+        <div className="flex items-start gap-3 min-w-0">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl flex-shrink-0"
             style={{ backgroundColor: "#eff6ff" }}>
             <ShoppingCart size={18} style={{ color: "#1d4ed8" }} />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <span className="text-sm font-bold" style={{ color: "#101828", fontFamily: "'Poppins', sans-serif" }}>
                 {pedido.numeroPedido}
@@ -189,7 +189,7 @@ function PedidoCard({ pedido, submitting, onConfirmar, onCancelar }: PedidoCardP
                 {disponible ? "Stock disponible" : `${pct.toFixed(0)}% disponible`}
               </span>
             </div>
-            <div className="flex flex-wrap gap-3 text-xs" style={{ color: "#667085", fontFamily: "'Poppins', sans-serif" }}>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs" style={{ color: "#667085", fontFamily: "'Poppins', sans-serif" }}>
               <span className="inline-flex items-center gap-1"><Building2 size={11} />{pedido.colegio.nombre}</span>
               <span className="inline-flex items-center gap-1"><User size={11} />{pedido.creadoPor}</span>
               <span className="inline-flex items-center gap-1"><Calendar size={11} />{fmtDate(pedido.fechaCreacion)}</span>
@@ -203,7 +203,7 @@ function PedidoCard({ pedido, submitting, onConfirmar, onCancelar }: PedidoCardP
           </div>
         </div>
         {/* Acciones */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-wrap">
           <button onClick={() => setOpen(o => !o)}
             className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition"
             style={{ borderColor: "#e5e7eb", color: "#374151", cursor: "pointer", fontFamily: "'Poppins', sans-serif" }}>
@@ -287,14 +287,14 @@ function EntradaCard({ entrada, submitting, onConfirmar, onRechazar }: EntradaCa
   const total = entrada.detalles.reduce((s, d) => s + d.cantidad, 0);
 
   return (
-    <div className="px-6 py-4" style={{ borderBottom: "1px solid #f9fafb" }}>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-4 flex-1 min-w-0">
+    <div className="px-4 sm:px-6 py-4" style={{ borderBottom: "1px solid #f9fafb" }}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+        <div className="flex items-start gap-3 min-w-0">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl flex-shrink-0"
             style={{ backgroundColor: "#f0fdf4" }}>
             <ArrowDownToLine size={18} style={{ color: "#16a34a" }} />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <span className="text-sm font-bold" style={{ color: "#101828", fontFamily: "'Poppins', sans-serif" }}>
                 Entrada #{entrada.id}
@@ -304,7 +304,7 @@ function EntradaCard({ entrada, submitting, onConfirmar, onRechazar }: EntradaCa
                 <Clock size={11} />Pendiente
               </span>
             </div>
-            <div className="flex flex-wrap gap-3 text-xs" style={{ color: "#667085", fontFamily: "'Poppins', sans-serif" }}>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs" style={{ color: "#667085", fontFamily: "'Poppins', sans-serif" }}>
               {entrada.proveedorNombre && (
                 <span className="inline-flex items-center gap-1"><Building2 size={11} />{entrada.proveedorNombre}</span>
               )}
@@ -312,13 +312,13 @@ function EntradaCard({ entrada, submitting, onConfirmar, onRechazar }: EntradaCa
               <span className="inline-flex items-center gap-1"><Package size={11} />{entrada.detalles.length} insumo{entrada.detalles.length !== 1 ? "s" : ""} · {total} unid.</span>
             </div>
             {entrada.descripcion && (
-              <p className="mt-1 text-xs truncate max-w-sm" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
+              <p className="mt-1 text-xs truncate" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
                 {entrada.descripcion}
               </p>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-wrap">
           <button onClick={() => setOpen(o => !o)}
             className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold"
             style={{ borderColor: "#e5e7eb", color: "#374151", cursor: "pointer", fontFamily: "'Poppins', sans-serif" }}>
@@ -387,14 +387,14 @@ function SalidaCard({ salida, submitting, onConfirmar, onRechazar }: SalidaCardP
   const total = salida.detalles.reduce((s, d) => s + d.cantidad, 0);
 
   return (
-    <div className="px-6 py-4" style={{ borderBottom: "1px solid #f9fafb" }}>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-4 flex-1 min-w-0">
+    <div className="px-4 sm:px-6 py-4" style={{ borderBottom: "1px solid #f9fafb" }}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+        <div className="flex items-start gap-3 min-w-0">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl flex-shrink-0"
             style={{ backgroundColor: "#fef3c7" }}>
             <ArrowUpFromLine size={18} style={{ color: "#d97706" }} />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <span className="text-sm font-bold" style={{ color: "#101828", fontFamily: "'Poppins', sans-serif" }}>
                 Salida #{salida.id}
@@ -404,7 +404,7 @@ function SalidaCard({ salida, submitting, onConfirmar, onRechazar }: SalidaCardP
                 <Clock size={11} />Pendiente
               </span>
             </div>
-            <div className="flex flex-wrap gap-3 text-xs" style={{ color: "#667085", fontFamily: "'Poppins', sans-serif" }}>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs" style={{ color: "#667085", fontFamily: "'Poppins', sans-serif" }}>
               {salida.colegioNombre && (
                 <span className="inline-flex items-center gap-1"><Building2 size={11} />{salida.colegioNombre}</span>
               )}
@@ -413,13 +413,13 @@ function SalidaCard({ salida, submitting, onConfirmar, onRechazar }: SalidaCardP
               <span className="inline-flex items-center gap-1"><Package size={11} />{salida.detalles.length} insumo{salida.detalles.length !== 1 ? "s" : ""} · {total} unid.</span>
             </div>
             {salida.descripcion && (
-              <p className="mt-1 text-xs truncate max-w-sm" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
+              <p className="mt-1 text-xs truncate" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
                 {salida.descripcion}
               </p>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-wrap">
           <button onClick={() => setOpen(o => !o)}
             className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold"
             style={{ borderColor: "#e5e7eb", color: "#374151", cursor: "pointer", fontFamily: "'Poppins', sans-serif" }}>
@@ -537,7 +537,7 @@ export default function SolicitudesClient() {
       </div>
 
       {/* ── KPI cards ── */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { label: "Pedidos", value: sol.pedidosCalculados.length, loading: sol.loadingPedidos, color: "#1d4ed8", bg: "#eff6ff", icon: <ShoppingCart size={16} /> },
           { label: "Entradas", value: sol.entradasPendientes.length, loading: sol.loadingEntradas, color: "#16a34a", bg: "#f0fdf4", icon: <ArrowDownToLine size={16} /> },
@@ -713,7 +713,7 @@ export default function SolicitudesClient() {
       </AnimatePresence>
 
       {/* ── Toast stack ── */}
-      <div className="fixed bottom-6 right-6 z-[200] flex flex-col gap-2 items-end">
+      <div className="fixed bottom-6 right-4 left-4 sm:left-auto sm:right-6 z-[200] flex flex-col gap-2 items-end">
         <AnimatePresence>
           {toasts.map(t => (
             <motion.div key={t.id}
@@ -725,7 +725,7 @@ export default function SolicitudesClient() {
                 backgroundColor: t.type === "success" ? "#ecfdf5" : "#fef2f2",
                 border: `1.5px solid ${t.type === "success" ? "#6ee7b7" : "#fecaca"}`,
                 boxShadow: "0 8px 24px rgba(15,23,42,0.12)",
-                minWidth: 260, maxWidth: 380,
+                minWidth: 220, maxWidth: "100%",
               }}>
               {t.type === "success"
                 ? <CheckCircle2 size={16} style={{ color: "#059669", flexShrink: 0 }} />

@@ -67,7 +67,7 @@ function Toast({ msg, type, onDone }: { msg: string; type: "success" | "error"; 
       initial={{ opacity: 0, y: 20, x: 20 }}
       animate={{ opacity: 1, y: 0, x: 0 }}
       exit={{ opacity: 0, y: 20, x: 20 }}
-      className="fixed bottom-6 right-6 z-[60] min-w-[320px] overflow-hidden rounded-2xl border shadow-lg"
+      className="fixed bottom-6 right-4 left-4 sm:left-auto sm:right-6 sm:min-w-[320px] z-[60] overflow-hidden rounded-2xl border shadow-lg"
       style={{
         borderColor: type === "success" ? "#abefc6" : "#fecaca",
         backgroundColor: type === "success" ? "#ecfdf3" : "#fef2f2",
