@@ -12,6 +12,7 @@ import {
   Truck,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 import { useDashboard } from "@/app/hooks/useDashboard";
 import type { DashboardData, MovimientoReciente } from "@/app/types/dashboard";
 
@@ -480,15 +481,57 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
               </p>
             </div>
           ) : (
-            <div>
-              {data.ultimosMovimientos.map((mov, idx) => (
-                <MovimientoItem
-                  key={idx}
-                  mov={mov}
-                  isLast={idx === data.ultimosMovimientos.length - 1}
-                />
-              ))}
-            </div>
+            <>
+              <div>
+                {data.ultimosMovimientos.slice(0, 2).map((mov, idx) => (
+                  <MovimientoItem
+                    key={idx}
+                    mov={mov}
+                    isLast={idx === Math.min(1, data.ultimosMovimientos.length - 1)}
+                  />
+                ))}
+              </div>
+
+              {data.ultimosMovimientos.length > 2 && (
+                <div
+                  className="mt-4 flex items-center justify-between gap-3 rounded-2xl px-4 py-3"
+                  style={{ backgroundColor: "#f8fafc" }}
+                >
+                  <span
+                    className="text-xs"
+                    style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}
+                  >
+                    Ver más actividad:
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href="/admin/entradas"
+                      className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors"
+                      style={{
+                        backgroundColor: "rgba(11,61,145,0.08)",
+                        color: "#0b3d91",
+                        fontFamily: "var(--font-poppins), sans-serif",
+                      }}
+                    >
+                      <ArrowDownToLine size={12} />
+                      Entradas
+                    </Link>
+                    <Link
+                      href="/admin/salidas"
+                      className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors"
+                      style={{
+                        backgroundColor: "rgba(73,194,27,0.10)",
+                        color: "#2d7d0e",
+                        fontFamily: "var(--font-poppins), sans-serif",
+                      }}
+                    >
+                      <ArrowUpFromLine size={12} />
+                      Salidas
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
