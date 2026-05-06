@@ -48,7 +48,7 @@ function DetalleModal({ entrada, onClose }: { entrada: EntradaResponse; onClose:
             </div>
             <div>
               <h3 className="text-base font-semibold" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
-                Entrada #{entrada.id}
+                Detalle de entrada
               </h3>
               <p className="text-xs" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
                 {formatDate(entrada.fecha)}
@@ -127,7 +127,7 @@ function EliminarModal({ id, onClose, onConfirm, saving }: { id: number; onClose
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl" style={{ backgroundColor: "#fef2f2" }}>
           <Trash2 size={20} style={{ color: "#dc2626" }} />
         </div>
-        <h3 className="mb-2 text-base font-semibold" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>Eliminar entrada #{id}</h3>
+        <h3 className="mb-2 text-base font-semibold" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>Eliminar entrada</h3>
         <p className="mb-5 text-sm" style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>
           Solo se pueden eliminar entradas en estado PENDIENTE o RECHAZADA.
         </p>
@@ -179,8 +179,7 @@ export default function EntradasClient() {
   // Filtro local por búsqueda de texto (descripción, creadoPor)
   const filtered = search.trim()
     ? entradas.filter(e =>
-        e.descripcion.toLowerCase().includes(search.toLowerCase()) ||
-        String(e.id).includes(search)
+        e.descripcion.toLowerCase().includes(search.toLowerCase())
       )
     : entradas;
 
@@ -301,11 +300,11 @@ export default function EntradasClient() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(entrada => (
+                {filtered.map((entrada, idx) => (
                   <tr key={entrada.id} style={{ borderBottom: "1px solid #f9fafb" }}
                     onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#fafafa")}
                     onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}>
-                    <td className="px-5 py-4 text-sm font-medium" style={{ color: "#0b3d91", fontFamily: "var(--font-poppins), sans-serif" }}>#{entrada.id}</td>
+                    <td className="px-5 py-4 text-sm font-medium" style={{ color: "#0b3d91", fontFamily: "var(--font-poppins), sans-serif" }}>#{idx + 1}</td>
                     <td className="px-5 py-4 text-sm" style={{ color: "#475467", fontFamily: "var(--font-poppins), sans-serif" }}>{formatDate(entrada.fecha)}</td>
                     <td className="px-5 py-4 max-w-[200px]">
                       <p className="truncate text-sm" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>{entrada.descripcion}</p>

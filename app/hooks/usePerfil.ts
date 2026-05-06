@@ -1,10 +1,12 @@
 "use client";
 
+"use client";
+
 import { useCallback, useEffect, useState } from "react";
 import { authService } from "@/app/services/auth.service";
-import { usuarioService } from "@/app/services/usuario.service";
 import type { UsuarioInfo } from "@/app/types/auth";
 import type { ChangePasswordRequest } from "@/app/types/usuario";
+import { usuarioService } from "@/app/services/usuario.service";
 
 interface PerfilFormState {
   passwordActual: string;
@@ -117,6 +119,13 @@ export function usePerfil() {
     setSuccessMessage(null);
   }, []);
 
+  // ── Foto de perfil ────────────────────────────────────────────────────
+
+  const updateFotoUrl = useCallback((url: string | null) => {
+    setUsuario(prev => prev ? { ...prev, fotoUrl: url } : prev);
+    setSuccessMessage(url ? "Foto de perfil actualizada." : "Foto de perfil eliminada.");
+  }, []);
+
   // ── Return ────────────────────────────────────────────────────────────
 
   return {
@@ -138,5 +147,8 @@ export function usePerfil() {
     resetPasswordForm,
     changePassword,
     clearMessages,
+
+    // Foto
+    updateFotoUrl,
   };
 }

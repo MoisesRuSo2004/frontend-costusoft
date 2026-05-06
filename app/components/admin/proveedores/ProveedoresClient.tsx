@@ -233,7 +233,7 @@ export default function ProveedoresClient() {
                               {p.nombre}
                             </p>
                             <p className="text-xs" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
-                              ID #{p.id}
+                              {p.nit}
                             </p>
                           </div>
                         </div>

@@ -15,12 +15,9 @@ export const optimizacionService = {
   },
 
   /** Ejecuta el modelo ILP y retorna el plan óptimo */
-  async optimizar(
-    talla = "M",
-    incluirDemanda = true
-  ): Promise<OptimizacionResponse> {
+  async optimizar(incluirDemanda = true): Promise<OptimizacionResponse> {
     return apiFetch<OptimizacionResponse>(
-      `${BASE}?talla=${talla}&incluirDemanda=${incluirDemanda}`,
+      `${BASE}?incluirDemanda=${incluirDemanda}`,
       { method: "POST" }
     );
   },

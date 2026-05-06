@@ -25,11 +25,11 @@ export function useOptimizacion() {
   }, []);
 
   const ejecutar = useCallback(
-    async (talla = "M", incluirDemanda = true) => {
+    async (incluirDemanda = true) => {
       setLoading(true);
       setError(null);
       try {
-        const data = await optimizacionService.optimizar(talla, incluirDemanda);
+        const data = await optimizacionService.optimizar(incluirDemanda);
         setResultado(data);
         return data;
       } catch (e: unknown) {

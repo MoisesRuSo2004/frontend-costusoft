@@ -314,11 +314,11 @@ export default function NuevoPedidoPage() {
                     type="number"
                     min={1}
                     max={10000}
-                    value={cantidad}
-                    onChange={(e) => setCantidad(Number(e.target.value))}
+                    value={cantidad || ""}
+                    onChange={(e) => setCantidad(e.target.value === "" ? 0 : Number(e.target.value))}
                     style={inputStyle}
                     onFocus={(e) => Object.assign(e.currentTarget.style, FOCUS)}
-                    onBlur={(e) => Object.assign(e.currentTarget.style, BLUR)}
+                    onBlur={(e) => { setCantidad(c => Math.max(1, c || 1)); Object.assign(e.currentTarget.style, BLUR); }}
                   />
                 </div>
               </div>

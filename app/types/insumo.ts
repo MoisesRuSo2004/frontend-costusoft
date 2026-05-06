@@ -10,6 +10,8 @@ export interface InsumoResponse {
   stockBajo?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  /** true = no tiene movimientos y puede eliminarse físicamente */
+  puedeEliminar?: boolean;
 }
 
 export interface InsumoRequest {

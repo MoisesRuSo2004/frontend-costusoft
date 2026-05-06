@@ -37,6 +37,8 @@ interface AuthContextValue {
   login: (username: string, password: string, rememberMe?: boolean) => Promise<void>;
   /** Cierra sesión, limpia cookies y redirige a /login */
   logout: () => void;
+  /** Actualiza campos del usuario en el contexto (ej. foto de perfil) */
+  updateUser: (patch: Partial<UsuarioInfo>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -107,6 +109,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/login");
   }, [router]);
 
+  const updateUser = useCallback((patch: Partial<UsuarioInfo>) => {
+    setUser(prev => prev ? { ...prev, ...patch } : prev);
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -116,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         rememberedUsername,
         login,
         logout,
+        updateUser,
       }}
     >
       {children}

@@ -1617,8 +1617,9 @@ export default function PedidosClient() {
                               <div style={{ width: 80 }}>
                                 <p className="text-xs font-medium mb-1" style={{ color: "#374151" }}>Cantidad</p>
                                 <input
-                                  type="number" min={1} value={newCantidad}
-                                  onChange={(e) => setNewCantidad(Math.max(1, Number(e.target.value)))}
+                                  type="number" min={1} value={newCantidad || ""}
+                                  onChange={(e) => setNewCantidad(e.target.value === "" ? 0 : Number(e.target.value))}
+                                  onBlur={() => setNewCantidad(c => Math.max(1, c || 1))}
                                   className="w-full rounded-lg border px-2.5 py-2 text-sm outline-none"
                                   style={{ borderColor: "#d0d5dd", fontFamily: "var(--font-poppins)", color: "#344054" }}
                                 />

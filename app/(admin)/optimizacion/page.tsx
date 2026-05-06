@@ -21,29 +21,36 @@ import type { HistorialItem, OptimizacionResponse } from "@/app/types/optimizaci
 // ── Constantes de presentación ────────────────────────────────────────────────
 const NOMBRES_PRENDAS: Record<string, string> = {
   pantalon_diario: "Pantalón Diario",
-  camisa_diario: "Camisa Diaria",
-  pantalon_ef: "Pantalón E.F.",
-  sueter_ef: "Suéter E.F.",
+  camisa_diario:   "Camisa Diaria",
+  sueter_diario:   "Suéter Diario",
+  pantalon_ef:     "Pantalón E.F.",
+  sueter_ef:       "Suéter E.F.",
 };
 
 const UTILIDADES_DEFAULT: Record<string, number> = {
   pantalon_diario: 20000,
-  camisa_diario: 15000,
-  pantalon_ef: 12000,
-  sueter_ef: 11000,
+  camisa_diario:   15000,
+  sueter_diario:   13000,
+  pantalon_ef:     12000,
+  sueter_ef:       11000,
 };
 
 const NOMBRES_INSUMOS: Record<string, string> = {
-  drill: "Tela Drill",
-  popelina: "Tela Popelina",
-  licra: "Tela Licra",
-  hilo: "Hilo",
-  botones: "Botones",
+  drill:     "Tela Drill",
+  popelina:  "Tela Popelina",
+  licra:     "Tela Licra",
+  lana:      "Tela Lana",
+  hilo:      "Hilo",
+  botones:   "Botones",
+  entretela: "Entretela",
+  cierres:   "Cierres",
+  elastico:  "Elástico",
+  cinta:     "Cinta",
+  etiquetas: "Etiquetas",
 };
 
-const COLORES_PRENDA = ["#2563EB", "#7C3AED", "#059669", "#D97706"];
+const COLORES_PRENDA = ["#2563EB", "#7C3AED", "#EC4899", "#059669", "#D97706"];
 
-const TALLAS = ["XS", "S", "M", "L", "XL", "06-08", "10-12", "14-16", "UNICA"];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function colorEstado(estado: string) {
@@ -90,7 +97,6 @@ export default function OptimizacionPage() {
     checkStatus,
   } = useOptimizacion();
 
-  const [talla, setTalla] = useState("M");
   const [incluirDemanda, setIncluirDemanda] = useState(true);
   const [vistaActiva, setVistaActiva] = useState<"resultado" | "historial">("resultado");
 
@@ -100,7 +106,7 @@ export default function OptimizacionPage() {
   }, [checkStatus, cargarHistorial]);
 
   const handleEjecutar = async () => {
-    const res = await ejecutar(talla, incluirDemanda);
+    const res = await ejecutar(incluirDemanda);
     if (res) {
       setVistaActiva("resultado");
       cargarHistorial();
@@ -159,24 +165,6 @@ export default function OptimizacionPage() {
           display: "flex", alignItems: "flex-end", gap: "16px", flexWrap: "wrap",
         }}
       >
-        <div>
-          <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>
-            TALLA A OPTIMIZAR
-          </label>
-          <select
-            value={talla}
-            onChange={(e) => setTalla(e.target.value)}
-            style={{
-              padding: "8px 12px", borderRadius: 8, border: "1px solid #D1D5DB",
-              fontSize: 14, color: "#111827", background: "white", cursor: "pointer",
-            }}
-          >
-            {TALLAS.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-        </div>
-
         <div style={{ display: "flex", alignItems: "center", gap: "8px", paddingBottom: 4 }}>
           <input
             type="checkbox"
@@ -338,8 +326,8 @@ function ResultadoPanel({ resultado }: { resultado: OptimizacionResponse }) {
           color="#166534"
         />
         <KpiCard
-          label="Talla"
-          value={resultado.talla}
+          label="Cobertura"
+          value="Todas las tallas"
           icon={<Info size={18} />}
           bg="#FAF5FF"
           color="#6D28D9"
@@ -426,7 +414,13 @@ function ResultadoPanel({ resultado }: { resultado: OptimizacionResponse }) {
                       {NOMBRES_INSUMOS[key] ?? key}
                     </span>
                     <span style={{ color: "#6B7280" }}>
-                      {rec.usado} / {rec.disponible} &nbsp;
+                      {rec.usado} / {rec.disponible}
+                      {rec.unidad_medida && (
+                        <span style={{ fontSize: 11, color: "#9CA3AF", marginLeft: 3 }}>
+                          {rec.unidad_medida}
+                        </span>
+                      )}
+                      &nbsp;&nbsp;
                       <span style={{ color, fontWeight: 700 }}>{pct.toFixed(1)}%</span>
                     </span>
                   </div>
@@ -610,7 +604,7 @@ function HistorialPanel({
                   {icon} {item.estado_solucion}
                 </span>
                 <span style={{ fontSize: 13, color: "#374151", fontWeight: 500 }}>
-                  Talla {item.talla}
+                  Todas las tallas
                 </span>
                 {item.utilidad_total != null && (
                   <span style={{ fontSize: 13, color: "#2563EB", fontWeight: 600 }}>
@@ -656,6 +650,7 @@ function HistorialPanel({
                   {[
                     { label: "Pantalón Diario", val: item.x1_pantalon_diario },
                     { label: "Camisa Diaria",   val: item.x2_camisa_diario },
+                    { label: "Suéter Diario",   val: item.x5_sueter_diario },
                     { label: "Pantalón E.F.",   val: item.x3_pantalon_ef },
                     { label: "Suéter E.F.",     val: item.x4_sueter_ef },
                   ].map(({ label, val }) => (

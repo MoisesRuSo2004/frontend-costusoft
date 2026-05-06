@@ -38,8 +38,12 @@ export interface UsuarioResponse {
   activo: boolean;
   /** true = el usuario ya activó su cuenta y puede iniciar sesión */
   cuentaActivada: boolean;
+  /** URL de la foto de perfil en Cloudinary. Null si no tiene foto. */
+  fotoUrl?: string | null;
   createdAt: string;
   updatedAt: string;
+  /** true = no tiene registros de negocio asociados y puede ser eliminado */
+  puedeEliminar: boolean;
 }
 
 export type PageUsuarios = PageData<UsuarioResponse>;

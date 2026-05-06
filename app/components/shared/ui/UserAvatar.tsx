@@ -1,10 +1,4 @@
-/**
- * UserAvatar — Muestra las iniciales del usuario en un círculo de color.
- *
- * Por defecto mientras no haya integración con nube de imágenes.
- * Cuando se integre la foto, basta con agregar la prop `src` y
- * el componente hará fallback a iniciales si la imagen falla.
- */
+import React from "react";
 
 export interface UserAvatarProps {
   /** Nombre o username del usuario para generar las iniciales */
@@ -49,8 +43,11 @@ export default function UserAvatar({
   shadow,
   className = "",
 }: UserAvatarProps) {
+  const [imgError, setImgError] = React.useState(false);
+
   const initials = getInitials(name || "?");
   const fontSize = size * 0.36;
+  const showPhoto = !!src && !imgError;
 
   const containerStyle: React.CSSProperties = {
     width: size,
@@ -76,28 +73,19 @@ export default function UserAvatar({
     letterSpacing: "0.03em",
   };
 
-  // Cuando se integre nube de imágenes, usar <img> con onError fallback
-  if (src) {
-    return (
-      <div style={containerStyle} className={className}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+  return (
+    <div style={containerStyle} className={className}>
+      {showPhoto ? (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}
           alt={name}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          onError={(e) => {
-            // Fallback: ocultar imagen y mostrar el div con iniciales
-            (e.target as HTMLImageElement).style.display = "none";
-          }}
+          onError={() => setImgError(true)}
         />
-        <span style={{ ...textStyle, position: "absolute" }}>{initials}</span>
-      </div>
-    );
-  }
-
-  return (
-    <div style={containerStyle} className={className}>
-      <span style={textStyle}>{initials}</span>
+      ) : (
+        <span style={textStyle}>{initials}</span>
+      )}
     </div>
   );
 }

@@ -8,11 +8,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell, ChevronDown, LogOut, Menu, UserCircle,
   ShoppingCart, ArrowDownToLine, ArrowUpFromLine,
-  RefreshCw, Inbox, Building2, MessageSquare,
+  RefreshCw, Inbox, Building2, MessageSquare, CheckCheck,
 } from "lucide-react";
 import { useSidebar } from "@/app/context/SidebarContext";
 import { useAuth } from "@/app/context/AuthContext";
-import type { NotifItem } from "@/app/context/NotificacionesContext";
+import { useNotificaciones, type NotifItem } from "@/app/context/NotificacionesContext";
 
 interface RoleTopbarProps {
   pageTitles: Record<string, string>;
@@ -81,7 +81,8 @@ export default function RoleTopbar({
   const userRef = useRef<HTMLDivElement>(null);
   const bellRef = useRef<HTMLDivElement>(null);
 
-  const alertCount = notifTotal;
+  const { leidasIds, unreadCount, marcarLeida, marcarTodasLeidas } = useNotificaciones();
+  const alertCount = unreadCount;
 
   // Datos reales del usuario autenticado, con fallback a los props
   const displayName = user?.username ?? userName;
@@ -214,6 +215,18 @@ export default function RoleTopbar({
                     )}
                   </div>
                   <div className="flex items-center gap-1">
+                    {alertCount > 0 && (
+                      <button
+                        onClick={marcarTodasLeidas}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg transition"
+                        style={{ color: "#9ca3af" }}
+                        title="Marcar todas como leídas"
+                        onMouseEnter={e => { e.currentTarget.style.color = "#16a34a"; }}
+                        onMouseLeave={e => { e.currentTarget.style.color = "#9ca3af"; }}
+                      >
+                        <CheckCheck size={14} />
+                      </button>
+                    )}
                     <button
                       onClick={() => { onNotifRefetch?.(); }}
                       disabled={notifLoading}
@@ -253,11 +266,13 @@ export default function RoleTopbar({
                     {notifItems.map((item, i) => {
                       const cfg = NOTIF_CONFIG[item.tipo];
                       const Icn = cfg.icon;
+                      const leida = leidasIds.has(item.id);
                       return (
                         <button
                           key={item.id}
                           type="button"
                           onClick={() => {
+                            marcarLeida(item.id);
                             setBellOpen(false);
                             const href =
                               item.tipo === "pedido_institucion" || item.tipo === "pedido"
@@ -267,23 +282,27 @@ export default function RoleTopbar({
                                 : notifHref;
                             router.push(href);
                           }}
-                          className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition"
+                          className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors"
                           style={{
                             borderTop: i > 0 ? "1px solid #f9fafb" : undefined,
                             fontFamily: "var(--font-poppins), sans-serif",
+                            backgroundColor: leida ? "transparent" : `${cfg.color}08`,
                           }}
                           onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#f9fafb"; }}
-                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = leida ? "transparent" : `${cfg.color}08`; }}
                         >
                           <div
                             className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl"
-                            style={{ backgroundColor: cfg.bg }}
+                            style={{ backgroundColor: cfg.bg, opacity: leida ? 0.6 : 1 }}
                           >
                             <Icn size={15} style={{ color: cfg.color }} />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold"
-                              style={{ color: "#101828" }}>
+                            <p className="truncate text-sm"
+                              style={{
+                                color: leida ? "#6b7280" : "#101828",
+                                fontWeight: leida ? 400 : 600,
+                              }}>
                               {item.titulo}
                             </p>
                             <p className="truncate text-xs mt-0.5"
@@ -291,7 +310,9 @@ export default function RoleTopbar({
                               {item.subtitulo}
                             </p>
                           </div>
-                          <span className="flex-shrink-0 mt-1 h-2 w-2 rounded-full" style={{ backgroundColor: cfg.color }} />
+                          {!leida && (
+                            <span className="flex-shrink-0 mt-1.5 h-2 w-2 rounded-full" style={{ backgroundColor: cfg.color }} />
+                          )}
                         </button>
                       );
                     })}
@@ -339,6 +360,7 @@ export default function RoleTopbar({
               name={displayName}
               size={32}
               accentColor={accentColor}
+              src={user?.fotoUrl ?? undefined}
               borderWidth={2}
               borderColor="#e5e7eb"
             />
@@ -378,6 +400,7 @@ export default function RoleTopbar({
                       name={displayName}
                       size={40}
                       accentColor={accentColor}
+                      src={user?.fotoUrl ?? undefined}
                       borderWidth={2}
                       borderColor={accentColor + "33"}
                       shadow="0 2px 8px rgba(0,0,0,0.10)"

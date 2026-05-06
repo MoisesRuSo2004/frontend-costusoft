@@ -415,13 +415,32 @@ export default function UsuariosClient() {
                           </button>
 
                           {/* Eliminar */}
-                          <button onClick={() => setEliminando(u)} disabled={esSelf} title="Eliminar"
-                            className="flex h-7 w-7 items-center justify-center rounded-lg transition-all"
-                            style={{ backgroundColor: "#fef2f2", border: "none", cursor: esSelf ? "not-allowed" : "pointer", opacity: esSelf ? 0.4 : 1 }}
-                            onMouseEnter={e => { if (!esSelf) e.currentTarget.style.backgroundColor = "#fecaca"; }}
-                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#fef2f2"; }}>
-                            <Trash2 size={13} style={{ color: "#dc2626" }} />
-                          </button>
+                          {(() => {
+                            const bloqueado = esSelf || !u.puedeEliminar;
+                            const titulo = esSelf
+                              ? "No puedes eliminar tu propia cuenta"
+                              : !u.puedeEliminar
+                              ? "Tiene registros en el sistema — usa Inhabilitar"
+                              : "Eliminar usuario";
+                            return (
+                              <button
+                                onClick={() => { if (!bloqueado) setEliminando(u); }}
+                                disabled={bloqueado}
+                                title={titulo}
+                                className="flex h-7 w-7 items-center justify-center rounded-lg transition-all"
+                                style={{
+                                  backgroundColor: bloqueado ? "#f3f4f6" : "#fef2f2",
+                                  border: "none",
+                                  cursor: bloqueado ? "not-allowed" : "pointer",
+                                  opacity: bloqueado ? 0.5 : 1,
+                                }}
+                                onMouseEnter={e => { if (!bloqueado) e.currentTarget.style.backgroundColor = "#fecaca"; }}
+                                onMouseLeave={e => { e.currentTarget.style.backgroundColor = bloqueado ? "#f3f4f6" : "#fef2f2"; }}
+                              >
+                                <Trash2 size={13} style={{ color: bloqueado ? "#9ca3af" : "#dc2626" }} />
+                              </button>
+                            );
+                          })()}
                         </div>
                       </td>
                     </motion.tr>

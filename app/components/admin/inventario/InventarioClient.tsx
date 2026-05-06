@@ -238,7 +238,7 @@ function EditarInsumoModal({ insumo, onClose, onConfirm, saving }: {
               Editar insumo
             </h3>
             <p className="text-xs" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
-              ID: {insumo.id}
+              Modificar datos del insumo
             </p>
           </div>
           <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-xl transition"
@@ -571,13 +571,35 @@ export default function InventarioClient() {
                             <Power size={13} />
                           </button>
                         ) : (
-                          <button onClick={() => setDeleteInsumo(insumo)} title="Eliminar"
-                            className="flex h-8 w-8 items-center justify-center rounded-xl border transition"
-                            style={{ borderColor: "#e5e7eb", color: "#374151" }}
-                            onMouseEnter={e => { e.currentTarget.style.borderColor = "#fecaca"; e.currentTarget.style.color = "#dc2626"; }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#374151"; }}>
-                            <Trash2 size={13} />
-                          </button>
+                          (() => {
+                            const bloqueado = insumo.puedeEliminar === false;
+                            return (
+                              <button
+                                onClick={() => { if (!bloqueado) setDeleteInsumo(insumo); }}
+                                disabled={bloqueado}
+                                title={bloqueado ? "Tiene movimientos — usa Inhabilitar" : "Eliminar insumo"}
+                                className="flex h-8 w-8 items-center justify-center rounded-xl border transition"
+                                style={{
+                                  borderColor: "#e5e7eb",
+                                  color: bloqueado ? "#d1d5db" : "#374151",
+                                  cursor: bloqueado ? "not-allowed" : "pointer",
+                                  opacity: bloqueado ? 0.6 : 1,
+                                }}
+                                onMouseEnter={e => {
+                                  if (!bloqueado) {
+                                    e.currentTarget.style.borderColor = "#fecaca";
+                                    e.currentTarget.style.color = "#dc2626";
+                                  }
+                                }}
+                                onMouseLeave={e => {
+                                  e.currentTarget.style.borderColor = "#e5e7eb";
+                                  e.currentTarget.style.color = bloqueado ? "#d1d5db" : "#374151";
+                                }}
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            );
+                          })()
                         )}
                       </div>
                     </td>

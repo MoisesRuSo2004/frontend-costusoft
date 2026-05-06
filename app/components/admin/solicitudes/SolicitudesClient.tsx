@@ -297,7 +297,7 @@ function EntradaCard({ entrada, submitting, onConfirmar, onRechazar }: EntradaCa
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <span className="text-sm font-bold" style={{ color: "#101828", fontFamily: "'Poppins', sans-serif" }}>
-                Entrada #{entrada.id}
+                Entrada
               </span>
               <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold"
                 style={{ backgroundColor: "#fef9c3", color: "#a16207" }}>
@@ -397,7 +397,7 @@ function SalidaCard({ salida, submitting, onConfirmar, onRechazar }: SalidaCardP
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <span className="text-sm font-bold" style={{ color: "#101828", fontFamily: "'Poppins', sans-serif" }}>
-                Salida #{salida.id}
+                Salida
               </span>
               <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold"
                 style={{ backgroundColor: "#fef9c3", color: "#a16207" }}>
@@ -641,12 +641,12 @@ export default function SolicitudesClient() {
               submitting={sol.submitting}
               onConfirmar={() => withToast(
                 () => sol.confirmarEntrada(e.id),
-                `Entrada #${e.id} confirmada. Stock incrementado.`,
+                "Entrada confirmada. Stock incrementado.",
                 "Error al confirmar la entrada"
               )}
               onRechazar={() => openMotivo(
                 "Rechazar entrada",
-                `Entrada #${e.id}${e.proveedorNombre ? ` — ${e.proveedorNombre}` : ""}`,
+                `Entrada${e.proveedorNombre ? ` — ${e.proveedorNombre}` : ""}`,
                 async (motivo) => {
                   await withToast(
                     () => sol.rechazarEntrada(e.id, motivo),
@@ -679,12 +679,12 @@ export default function SolicitudesClient() {
               submitting={sol.submitting}
               onConfirmar={() => withToast(
                 () => sol.confirmarSalida(s.id),
-                `Salida #${s.id} confirmada. Stock descontado.`,
+                "Salida confirmada. Stock descontado.",
                 "Error al confirmar la salida"
               )}
               onRechazar={() => openMotivo(
                 "Rechazar salida",
-                `Salida #${s.id}${s.colegioNombre ? ` — ${s.colegioNombre}` : ""}`,
+                `Salida${s.colegioNombre ? ` — ${s.colegioNombre}` : ""}`,
                 async (motivo) => {
                   await withToast(
                     () => sol.rechazarSalida(s.id, motivo),

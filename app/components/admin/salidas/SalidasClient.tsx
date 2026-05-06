@@ -49,7 +49,7 @@ function DetalleModal({ salida, onClose }: { salida: SalidaResponse; onClose: ()
             </div>
             <div>
               <h3 className="text-base font-semibold" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
-                Salida #{salida.id}
+                Detalle de salida
               </h3>
               <p className="text-xs" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
                 {formatDate(salida.fecha)}
@@ -183,8 +183,7 @@ export default function SalidasClient() {
   const filtered = search.trim()
     ? salidas.filter(s =>
         s.descripcion.toLowerCase().includes(search.toLowerCase()) ||
-        s.creadoPor.toLowerCase().includes(search.toLowerCase()) ||
-        String(s.id).includes(search)
+        s.creadoPor?.toLowerCase().includes(search.toLowerCase())
       )
     : salidas;
 
@@ -303,11 +302,11 @@ export default function SalidasClient() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(salida => (
+                {filtered.map((salida, idx) => (
                   <tr key={salida.id} style={{ borderBottom: "1px solid #f9fafb" }}
                     onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#fafafa")}
                     onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}>
-                    <td className="px-5 py-4 text-sm font-medium" style={{ color: "#b45309", fontFamily: "var(--font-poppins), sans-serif" }}>#{salida.id}</td>
+                    <td className="px-5 py-4 text-sm font-medium" style={{ color: "#b45309", fontFamily: "var(--font-poppins), sans-serif" }}>#{idx + 1}</td>
                     <td className="px-5 py-4 text-sm" style={{ color: "#475467", fontFamily: "var(--font-poppins), sans-serif" }}>{formatDate(salida.fecha)}</td>
                     <td className="px-5 py-4 max-w-[200px]">
                       <p className="truncate text-sm" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>{salida.descripcion}</p>

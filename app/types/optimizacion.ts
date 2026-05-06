@@ -1,6 +1,7 @@
 export interface PlanProduccion {
   pantalon_diario: number;
   camisa_diario: number;
+  sueter_diario: number;
   pantalon_ef: number;
   sueter_ef: number;
 }
@@ -10,6 +11,7 @@ export interface RecursoInfo {
   disponible: number;
   holgura: number;
   utilizacion_pct: number;
+  unidad_medida?: string;
 }
 
 export interface DemandaInfo {
@@ -26,7 +28,6 @@ export interface OptimizacionResponse {
   plan: PlanProduccion;
   recursos: Record<string, RecursoInfo>;
   demanda: Record<string, DemandaInfo>;
-  talla: string;
   mensaje: string;
   grafica_html?: string;
   grafica_region_html?: string;
@@ -38,11 +39,11 @@ export interface HistorialItem {
   fecha_ejecucion: string;
   estado_solucion: string;
   utilidad_total?: number;
-  talla: string;
   x1_pantalon_diario?: number;
   x2_camisa_diario?: number;
   x3_pantalon_ef?: number;
   x4_sueter_ef?: number;
+  x5_sueter_diario?: number;
   mensaje?: string;
   created_at?: string;
 }

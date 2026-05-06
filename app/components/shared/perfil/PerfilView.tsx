@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import UserAvatar from "@/app/components/shared/ui/UserAvatar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Mail, Shield, Lock,
@@ -9,6 +8,8 @@ import {
   KeyRound, RefreshCw, TriangleAlert,
 } from "lucide-react";
 import { usePerfil } from "@/app/hooks/usePerfil";
+import { useAuth } from "@/app/context/AuthContext";
+import FotoPerfilEditor from "@/app/components/shared/perfil/FotoPerfilEditor";
 
 // ─── Config por rol ───────────────────────────────────────────────────────────
 
@@ -155,7 +156,7 @@ function CambiarPassword({
 
   return (
     <form onSubmit={e => { e.preventDefault(); onSubmit(); }} className="flex flex-col gap-5">
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
         <PasswordInput
           label="Contraseña actual"
           placeholder="••••••••"
@@ -233,7 +234,15 @@ export default function PerfilView({ accentColor, accentSoft, gradient }: Perfil
   const {
     usuario, loading, formPassword, changingPassword,
     error, successMessage, setPasswordField, changePassword, clearMessages, loadUser,
+    updateFotoUrl,
   } = usePerfil();
+
+  const { updateUser } = useAuth();
+
+  const handleFotoUpdated = (url: string | null) => {
+    updateFotoUrl(url);
+    updateUser({ fotoUrl: url });
+  };
 
   const passwordForm = {
     actual:    formPassword.passwordActual,
@@ -304,15 +313,14 @@ export default function PerfilView({ accentColor, accentSoft, gradient }: Perfil
                 </svg>
               </div>
 
-              {/* Avatar */}
+              {/* Avatar — editable */}
               <div className="relative -mt-16 flex justify-center">
-                <UserAvatar
-                  name={usuario.username}
-                  size={96}
+                <FotoPerfilEditor
+                  username={usuario.username}
+                  fotoUrl={usuario.fotoUrl}
                   accentColor={accentColor}
-                  borderWidth={4}
-                  borderColor="#ffffff"
-                  shadow="0 4px 24px rgba(0,0,0,0.18)"
+                  size={96}
+                  onFotoUpdated={handleFotoUpdated}
                 />
               </div>
 
@@ -375,7 +383,6 @@ export default function PerfilView({ accentColor, accentSoft, gradient }: Perfil
                 <ReadonlyField label="Usuario"      value={usuario.username} icon={<User size={16} />} />
                 <ReadonlyField label="Correo"       value={usuario.correo}   icon={<Mail size={16} />} />
                 <ReadonlyField label="Rol"          value={rolLabel}         icon={<Shield size={16} />} />
-                <ReadonlyField label="ID de usuario" value={String(usuario.id)} icon={<User size={16} />} />
               </div>
             </motion.div>
 

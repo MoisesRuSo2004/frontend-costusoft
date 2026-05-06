@@ -5,6 +5,7 @@ export interface UsuarioInfo {
   username: string;
   correo: string;
   rol: UserRole;
+  fotoUrl?: string | null;
 }
 
 export interface AuthData {

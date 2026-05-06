@@ -168,7 +168,7 @@ function UniformeRow({
                 className="text-xs"
                 style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}
               >
-                ID: {uniforme.id}
+                {uniforme.genero}
               </p>
             </div>
           </div>
