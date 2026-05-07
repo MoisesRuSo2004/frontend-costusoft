@@ -513,8 +513,8 @@ type TabType = "TODAS" | "ENTRADAS" | "SALIDAS";
 
 export default function BodegaDashboard() {
   const {
-    entradas, salidas,
     entradasPendientes, salidasPendientes,
+    recientes,
     stats, loading, actionKey, error, successMsg,
     clearSuccess, recargar,
     confirmarEntrada, rechazarEntrada,
@@ -542,15 +542,6 @@ export default function BodegaDashboard() {
     );
     return { ent, sal };
   }, [entradasPendientes, salidasPendientes, search]);
-
-  // Actividad reciente: últimas 6 entradas+salidas procesadas (no PENDIENTE)
-  const recientes = useMemo(() => {
-    const processed = [
-      ...entradas.filter(e => e.estado !== "PENDIENTE").map(e => ({ tipo: "entrada" as const, id: e.id, estado: e.estado, fecha: e.createdAt ?? e.fecha, label: `Entrada #${e.id}`, sub: e.proveedorNombre ?? e.descripcion })),
-      ...salidas.filter(s => s.estado !== "PENDIENTE").map(s => ({ tipo: "salida" as const, id: s.id, estado: s.estado, fecha: s.createdAt ?? s.fecha, label: `Salida #${s.id}`, sub: s.colegioNombre ?? s.descripcion })),
-    ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).slice(0, 6);
-    return processed;
-  }, [entradas, salidas]);
 
   const TABS: { id: TabType; label: string; count: number }[] = [
     { id: "TODAS",   label: "Todas",   count: entradasPendientes.length + salidasPendientes.length },
@@ -589,7 +580,7 @@ export default function BodegaDashboard() {
         <KpiCard label="Pendientes totales" value={stats.totalPendientes} sub="Esperando validación física" accent="#f59e0b" icon={ClipboardList} />
         <KpiCard label="Entradas pendientes" value={stats.entradasPendientes} sub="Ingresos por validar" accent="#1d4ed8" icon={ArrowDownToLine} />
         <KpiCard label="Salidas pendientes" value={stats.salidasPendientes} sub="Despachos por validar" accent="#d97706" icon={ArrowUpFromLine} />
-        <KpiCard label="Procesadas" value={stats.confirmadas + stats.rechazadas} sub={`${stats.confirmadas} conf. · ${stats.rechazadas} rech.`} accent="#15803d" icon={CheckCheck} />
+        <KpiCard label="Procesadas hoy" value={stats.procesadasEnSesion} sub="Confirmadas o rechazadas en esta sesión" accent="#15803d" icon={CheckCheck} />
       </div>
 
       {/* Mensajes */}

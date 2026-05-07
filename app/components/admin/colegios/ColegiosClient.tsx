@@ -4,12 +4,13 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Building2, Plus, Search, Pencil, Trash2, X, Save, Loader2,
-  AlertTriangle, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight,
-  MapPin, Shirt, RefreshCw, Eye,
+  AlertTriangle, CheckCircle2, AlertCircle,
+  MapPin, Shirt, RefreshCw, Eye, Phone, Mail,
 } from "lucide-react";
 import { useColegios, useColegiosCrud } from "@/app/hooks/useColegios";
 import type { ColegioResponse, ColegioRequest } from "@/app/types/colegio";
 import { useAuth } from "@/app/context/AuthContext";
+import Paginator from "@/app/components/shared/ui/Paginator";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
@@ -212,11 +213,11 @@ export default function ColegiosClient() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table style={{ width: "100%", minWidth: 520, borderCollapse: "collapse" }}>
+            <table style={{ width: "100%", minWidth: 720, borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ backgroundColor: "#f9fafb" }}>
-                  {["Colegio", "Dirección", "Uniformes", "Creado", "Acciones"].map(h => (
-                    <th key={h} className="px-5 py-3 text-left text-xs font-semibold uppercase"
+                  {["Colegio", "Dirección", "Contacto", "Uniformes", "Creado", "Acciones"].map(h => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase"
                       style={{ color: "#6b7280", fontFamily: "'Poppins', sans-serif", borderBottom: "1px solid #eaecf0", whiteSpace: "nowrap" }}>
                       {h}
                     </th>
@@ -232,24 +233,24 @@ export default function ColegiosClient() {
                     onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}>
 
                     {/* Nombre */}
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl flex-shrink-0"
+                    <td className="px-4 py-3.5" style={{ maxWidth: 200 }}>
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-xl flex-shrink-0"
                           style={{ backgroundColor: "rgba(11,61,145,0.08)" }}>
-                          <Building2 size={15} style={{ color: "#0b3d91" }} />
+                          <Building2 size={14} style={{ color: "#0b3d91" }} />
                         </div>
-                        <p className="text-sm font-semibold" style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}>
+                        <p className="text-sm font-semibold truncate" style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}>
                           {c.nombre}
                         </p>
                       </div>
                     </td>
 
                     {/* Dirección */}
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 py-3.5" style={{ maxWidth: 180 }}>
                       {c.direccion ? (
-                        <div className="flex items-center gap-1.5">
-                          <MapPin size={12} style={{ color: "#9ca3af", flexShrink: 0 }} />
-                          <span className="text-sm" style={{ color: "#6b7280", fontFamily: "'Poppins', sans-serif" }}>
+                        <div className="flex items-start gap-1.5">
+                          <MapPin size={11} style={{ color: "#9ca3af", flexShrink: 0, marginTop: 2 }} />
+                          <span className="text-xs truncate" style={{ color: "#6b7280", fontFamily: "'Poppins', sans-serif" }}>
                             {c.direccion}
                           </span>
                         </div>
@@ -258,28 +259,60 @@ export default function ColegiosClient() {
                       )}
                     </td>
 
+                    {/* Contacto: teléfono + correo */}
+                    <td className="px-4 py-3.5" style={{ maxWidth: 170 }}>
+                      <div className="flex flex-col gap-1">
+                        {c.telefono ? (
+                          <div className="flex items-center gap-1.5">
+                            <Phone size={11} style={{ color: "#9ca3af", flexShrink: 0 }} />
+                            <span className="text-xs" style={{ color: "#374151", fontFamily: "'Poppins', sans-serif" }}>
+                              {c.telefono}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <Phone size={11} style={{ color: "#e5e7eb", flexShrink: 0 }} />
+                            <span className="text-xs" style={{ color: "#d1d5db" }}>—</span>
+                          </div>
+                        )}
+                        {c.correo ? (
+                          <div className="flex items-center gap-1.5">
+                            <Mail size={11} style={{ color: "#9ca3af", flexShrink: 0 }} />
+                            <span className="text-xs truncate" style={{ color: "#374151", fontFamily: "'Poppins', sans-serif", maxWidth: 140 }}>
+                              {c.correo}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <Mail size={11} style={{ color: "#e5e7eb", flexShrink: 0 }} />
+                            <span className="text-xs" style={{ color: "#d1d5db" }}>—</span>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+
                     {/* Uniformes */}
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 py-3.5">
                       <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
                         style={{
                           backgroundColor: c.totalUniformes > 0 ? "rgba(11,61,145,0.08)" : "#f3f4f6",
                           color: c.totalUniformes > 0 ? "#0b3d91" : "#9ca3af",
                         }}>
                         <Shirt size={11} />
-                        {c.totalUniformes} uniforme{c.totalUniformes !== 1 ? "s" : ""}
+                        {c.totalUniformes}
                       </span>
                     </td>
 
                     {/* Fecha */}
-                    <td className="px-5 py-3.5">
-                      <span className="text-xs" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
+                    <td className="px-4 py-3.5">
+                      <span className="text-xs" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif", whiteSpace: "nowrap" }}>
                         {fmtDate(c.createdAt)}
                       </span>
                     </td>
 
                     {/* Acciones */}
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-2">
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-1.5">
                         <ActionBtn onClick={() => handleVerDetalle(c)} color="#0b3d91" title="Ver detalle">
                           <Eye size={13} />
                         </ActionBtn>
@@ -301,19 +334,17 @@ export default function ColegiosClient() {
         )}
 
         {/* Paginación */}
-        {!loading && totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-3"
-            style={{ borderTop: "1px solid #f3f4f6", backgroundColor: "#fafafa" }}>
-            <p className="text-xs" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
-              Página {page + 1} de {totalPages} · {total} colegios
-            </p>
-            <div className="flex items-center gap-1">
-              <PagBtn onClick={() => recargar(page - 1)} disabled={page === 0}><ChevronLeft size={14} /></PagBtn>
-              {Array.from({ length: totalPages }, (_, i) => (
-                <PagBtn key={i} onClick={() => recargar(i)} active={i === page}>{i + 1}</PagBtn>
-              ))}
-              <PagBtn onClick={() => recargar(page + 1)} disabled={page >= totalPages - 1}><ChevronRight size={14} /></PagBtn>
-            </div>
+        {!loading && (
+          <div className="px-5 pb-4">
+            <Paginator
+              page={page}
+              totalPages={totalPages}
+              totalElements={total}
+              pageSize={10}
+              label="colegios"
+              accentColor="#0b3d91"
+              onChange={(p) => recargar(p)}
+            />
           </div>
         )}
       </div>
@@ -335,7 +366,12 @@ export default function ColegiosClient() {
         {editando && (
           <ColegioFormModal
             titulo="Editar Colegio"
-            inicial={{ nombre: editando.nombre, direccion: editando.direccion ?? "" }}
+            inicial={{
+              nombre: editando.nombre,
+              direccion: editando.direccion ?? "",
+              telefono: editando.telefono ?? "",
+              correo: editando.correo ?? "",
+            }}
             submitting={crud.submitting}
             onClose={() => setEditando(null)}
             onSubmit={handleEditar}
@@ -389,24 +425,6 @@ function ActionBtn({ onClick, color, title, danger, children }: {
   );
 }
 
-function PagBtn({ onClick, disabled, active, children }: {
-  onClick: () => void; disabled?: boolean; active?: boolean; children: React.ReactNode;
-}) {
-  return (
-    <button onClick={onClick} disabled={disabled}
-      style={{
-        width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 12, fontWeight: active ? 700 : 500, fontFamily: "'Poppins', sans-serif",
-        backgroundColor: active ? "#0b3d91" : "transparent",
-        color: active ? "#fff" : "#6b7280",
-        border: active ? "none" : "1px solid #e5e7eb",
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.4 : 1,
-      }}>
-      {children}
-    </button>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODAL FORMULARIO (CREAR / EDITAR)
@@ -416,33 +434,44 @@ function ColegioFormModal({
   titulo, inicial, submitting, onClose, onSubmit,
 }: {
   titulo: string;
-  inicial?: { nombre: string; direccion: string };
+  inicial?: { nombre: string; direccion: string; telefono: string; correo: string };
   submitting: boolean;
   onClose: () => void;
   onSubmit: (data: ColegioRequest) => Promise<void>;
 }) {
-  const [nombre, setNombre] = useState(inicial?.nombre ?? "");
+  const [nombre,    setNombre]    = useState(inicial?.nombre    ?? "");
   const [direccion, setDireccion] = useState(inicial?.direccion ?? "");
-  const [errors, setErrors] = useState<{ nombre?: string }>({});
+  const [telefono,  setTelefono]  = useState(inicial?.telefono  ?? "");
+  const [correo,    setCorreo]    = useState(inicial?.correo    ?? "");
+  const [errors, setErrors] = useState<{ nombre?: string; correo?: string }>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errs: { nombre?: string } = {};
+    const errs: { nombre?: string; correo?: string } = {};
     if (!nombre.trim()) errs.nombre = "El nombre es obligatorio";
     if (nombre.trim().length > 150) errs.nombre = "Máximo 150 caracteres";
+    if (correo.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo.trim()))
+      errs.correo = "Formato de correo inválido";
     setErrors(errs);
     if (Object.keys(errs).length) return;
-    await onSubmit({ nombre: nombre.trim(), direccion: direccion.trim() || undefined });
+    await onSubmit({
+      nombre:    nombre.trim(),
+      direccion: direccion.trim()  || undefined,
+      telefono:  telefono.trim()   || undefined,
+      correo:    correo.trim()     || undefined,
+    });
   };
 
   return (
     <ModalOverlay onClose={onClose}>
       <ModalHeader icon={<Building2 size={20} style={{ color: "#0b3d91" }} />} titulo={titulo} onClose={onClose} />
       <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-4">
+
+        {/* Nombre */}
         <div>
           <label style={lbl}>Nombre del colegio <span style={{ color: "#ef4444" }}>*</span></label>
           <input
-            value={nombre} onChange={e => { setNombre(e.target.value); setErrors({}); }}
+            value={nombre} onChange={e => { setNombre(e.target.value); setErrors(p => ({ ...p, nombre: undefined })); }}
             placeholder="Ej. Colegio San Martín"
             maxLength={150}
             style={inp(!!errors.nombre)}
@@ -451,19 +480,55 @@ function ColegioFormModal({
           {errors.nombre && <p className="mt-1 text-xs" style={{ color: "#dc2626", fontFamily: "'Poppins', sans-serif" }}>{errors.nombre}</p>}
         </div>
 
+        {/* Dirección */}
         <div>
           <label style={lbl}>Dirección <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none" }}>(opcional)</span></label>
           <textarea
             value={direccion} onChange={e => setDireccion(e.target.value)}
             placeholder="Ej. Cra. 15 # 23-45, Bogotá"
-            rows={2}
-            maxLength={250}
+            rows={2} maxLength={250}
             style={{ ...inp(), resize: "none", height: "auto" }}
             onFocus={focusOn} onBlur={e => focusOff(e)}
           />
           <p className="mt-1 text-xs text-right" style={{ color: "#9ca3af" }}>{direccion.length}/250</p>
         </div>
 
+        {/* Teléfono y Correo en fila */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label style={lbl}>
+              <span className="flex items-center gap-1.5">
+                <Phone size={11} /> Teléfono
+                <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none", fontWeight: 400 }}>(opcional)</span>
+              </span>
+            </label>
+            <input
+              value={telefono} onChange={e => setTelefono(e.target.value)}
+              placeholder="Ej. 3001234567"
+              maxLength={20} type="tel"
+              style={inp()}
+              onFocus={focusOn} onBlur={e => focusOff(e)}
+            />
+          </div>
+          <div>
+            <label style={lbl}>
+              <span className="flex items-center gap-1.5">
+                <Mail size={11} /> Correo
+                <span style={{ color: "#9ca3af", fontSize: 11, textTransform: "none", fontWeight: 400 }}>(opcional)</span>
+              </span>
+            </label>
+            <input
+              value={correo} onChange={e => { setCorreo(e.target.value); setErrors(p => ({ ...p, correo: undefined })); }}
+              placeholder="Ej. rector@colegio.edu.co"
+              maxLength={100} type="email"
+              style={inp(!!errors.correo)}
+              onFocus={focusOn} onBlur={e => focusOff(e, !!errors.correo)}
+            />
+            {errors.correo && <p className="mt-1 text-xs" style={{ color: "#dc2626", fontFamily: "'Poppins', sans-serif" }}>{errors.correo}</p>}
+          </div>
+        </div>
+
+        {/* Acciones */}
         <div className="flex gap-3 pt-2">
           <button type="button" onClick={onClose} disabled={submitting}
             className="flex-1 rounded-xl border py-2.5 text-sm font-medium transition-all"
@@ -528,16 +593,18 @@ function DetalleModal({ colegio, detalle, loading, onClose }: {
       <ModalHeader icon={<Building2 size={20} style={{ color: "#0b3d91" }} />} titulo={colegio.nombre} onClose={onClose} />
       <div className="px-6 py-5 flex flex-col gap-4">
         {/* Info básica */}
-        <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "Dirección", value: colegio.direccion || "—" },
-            { label: "Uniformes", value: `${colegio.totalUniformes} tipo(s)` },
-            { label: "Creado", value: fmtDate(colegio.createdAt) },
+            { label: "Dirección",   value: colegio.direccion  || "—" },
+            { label: "Uniformes",   value: `${colegio.totalUniformes} tipo(s)` },
+            { label: "Teléfono",    value: colegio.telefono   || "—" },
+            { label: "Correo",      value: colegio.correo     || "—" },
+            { label: "Creado",      value: fmtDate(colegio.createdAt) },
             { label: "Actualizado", value: fmtDate(colegio.updatedAt) },
           ].map(({ label, value }) => (
             <div key={label} className="rounded-xl border px-4 py-3" style={{ borderColor: "#f0f0f4", backgroundColor: "#fafafa" }}>
               <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>{label}</p>
-              <p className="mt-1 text-sm font-semibold" style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}>{value}</p>
+              <p className="mt-1 text-sm font-semibold truncate" style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}>{value}</p>
             </div>
           ))}
         </div>

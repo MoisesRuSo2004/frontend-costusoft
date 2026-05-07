@@ -4,11 +4,12 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Truck, Plus, Search, Pencil, Trash2, X, Save, Loader2,
-  AlertCircle, CheckCircle2, ChevronLeft, ChevronRight,
+  AlertCircle, CheckCircle2,
   Phone, MapPin, Hash, Mail, RefreshCw, Building2, Eye,
 } from "lucide-react";
 import { useProveedores, useProveedoresCrud } from "@/app/hooks/useProveedores";
 import type { ProveedorResponse, ProveedorRequest } from "@/app/types/proveedor";
+import Paginator from "@/app/components/shared/ui/Paginator";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS DE ESTILO
@@ -362,24 +363,17 @@ export default function ProveedoresClient() {
         )}
 
         {/* ── Paginación ── */}
-        {!loading && totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-4"
-            style={{ borderTop: "1px solid #f3f4f6" }}>
-            <p className="text-sm" style={{ color: "#667085", fontFamily: "'Poppins', sans-serif" }}>
-              Página {page + 1} de {totalPages} · {total} resultados
-            </p>
-            <div className="flex items-center gap-2">
-              <button onClick={() => recargar(page - 1)} disabled={page === 0}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border transition disabled:opacity-40"
-                style={{ borderColor: "#e5e7eb", color: "#374151", cursor: page === 0 ? "not-allowed" : "pointer" }}>
-                <ChevronLeft size={15} />
-              </button>
-              <button onClick={() => recargar(page + 1)} disabled={page + 1 >= totalPages}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border transition disabled:opacity-40"
-                style={{ borderColor: "#e5e7eb", color: "#374151", cursor: page + 1 >= totalPages ? "not-allowed" : "pointer" }}>
-                <ChevronRight size={15} />
-              </button>
-            </div>
+        {!loading && (
+          <div className="px-5 pb-4">
+            <Paginator
+              page={page}
+              totalPages={totalPages}
+              totalElements={total}
+              pageSize={10}
+              label="proveedores"
+              accentColor="#0b3d91"
+              onChange={(p) => recargar(p)}
+            />
           </div>
         )}
       </div>

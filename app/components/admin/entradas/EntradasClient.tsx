@@ -5,10 +5,11 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Search, RefreshCw, ArrowDownToLine, AlertCircle, Package,
-  ChevronLeft, ChevronRight, X, Eye, Trash2, CheckCircle2, Filter,
+  X, Eye, Trash2, CheckCircle2, Filter,
 } from "lucide-react";
 import { useEntradas } from "@/app/hooks/useEntradas";
 import type { EntradaResponse, EstadoMovimiento } from "@/app/types/entrada";
+import Paginator from "@/app/components/shared/ui/Paginator";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -141,27 +142,6 @@ function EliminarModal({ id, onClose, onConfirm, saving }: { id: number; onClose
           </button>
         </div>
       </motion.div>
-    </div>
-  );
-}
-
-// ─── Paginación ───────────────────────────────────────────────────────────────
-
-function Pagination({ page, totalPages, totalElements, onChange }: { page: number; totalPages: number; totalElements: number; onChange: (p: number) => void }) {
-  if (totalPages <= 1) return null;
-  return (
-    <div className="flex items-center justify-between border-t px-2 pt-4" style={{ borderColor: "#f0f0f4" }}>
-      <span className="text-xs" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
-        {totalElements} entrada{totalElements !== 1 ? "s" : ""} · Página {page + 1} de {totalPages}
-      </span>
-      <div className="flex gap-2">
-        <button onClick={() => onChange(page - 1)} disabled={page === 0}
-          className="flex h-8 w-8 items-center justify-center rounded-xl border transition disabled:opacity-40"
-          style={{ borderColor: "#e5e7eb", color: "#374151" }}><ChevronLeft size={15} /></button>
-        <button onClick={() => onChange(page + 1)} disabled={page >= totalPages - 1}
-          className="flex h-8 w-8 items-center justify-center rounded-xl border transition disabled:opacity-40"
-          style={{ borderColor: "#e5e7eb", color: "#374151" }}><ChevronRight size={15} /></button>
-      </div>
     </div>
   );
 }
@@ -345,8 +325,16 @@ export default function EntradasClient() {
           </div>
         )}
 
-        <div className="p-5">
-          <Pagination page={page} totalPages={data?.totalPages ?? 0} totalElements={data?.totalElements ?? 0} onChange={setPage} />
+        <div className="px-5 pb-5">
+          <Paginator
+            page={page}
+            totalPages={data?.totalPages ?? 0}
+            totalElements={data?.totalElements ?? 0}
+            pageSize={10}
+            label="entradas"
+            accentColor="#16a34a"
+            onChange={setPage}
+          />
         </div>
       </div>
 

@@ -15,6 +15,9 @@ import {
 } from "@/app/hooks/usePrediccion";
 import type { PrediccionResponse } from "@/app/types/prediccion";
 import { useAuth } from "@/app/context/AuthContext";
+import Paginator from "@/app/components/shared/ui/Paginator";
+
+const PAGE_SIZE = 15;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
@@ -65,6 +68,7 @@ export default function PrediccionClient() {
   const entrenamiento = useEntrenamiento();
   const [filtroRiesgo, setFiltroRiesgo] = useState<string>("TODOS");
   const [busqueda, setBusqueda] = useState("");
+  const [predPage, setPredPage] = useState(0);
   const [detalleAbierto, setDetalleAbierto] = useState<PrediccionResponse | null>(null);
   const [showEntrenar, setShowEntrenar] = useState(false);
 
@@ -72,12 +76,20 @@ export default function PrediccionClient() {
 
   const predicciones = data?.predicciones ?? [];
 
-  const filtradas = predicciones.filter((p) => {
-    const nivel = nivelRiesgo(p);
-    const matchFiltro = filtroRiesgo === "TODOS" || nivel === filtroRiesgo;
-    const matchBusqueda = p.nombre.toLowerCase().includes(busqueda.toLowerCase());
-    return matchFiltro && matchBusqueda;
-  });
+  const filtradas = React.useMemo(() => {
+    return predicciones.filter((p) => {
+      const nivel = nivelRiesgo(p);
+      const matchFiltro = filtroRiesgo === "TODOS" || nivel === filtroRiesgo;
+      const matchBusqueda = p.nombre.toLowerCase().includes(busqueda.toLowerCase());
+      return matchFiltro && matchBusqueda;
+    });
+  }, [predicciones, filtroRiesgo, busqueda]);
+
+  // Reset to page 0 whenever the filter changes
+  React.useEffect(() => { setPredPage(0); }, [filtroRiesgo, busqueda]);
+
+  const totalPredPages = Math.max(1, Math.ceil(filtradas.length / PAGE_SIZE));
+  const filtradasPagina = filtradas.slice(predPage * PAGE_SIZE, (predPage + 1) * PAGE_SIZE);
 
   // KPIs
   const criticos = predicciones.filter(p => nivelRiesgo(p) === "CRITICO").length;
@@ -269,7 +281,7 @@ export default function PrediccionClient() {
                       </td>
                     </tr>
                   ) : (
-                    filtradas.map((p, i) => {
+                    filtradasPagina.map((p, i) => {
                       const nivel = nivelRiesgo(p);
                       const cfg = RIESGO_CONFIG[nivel];
                       return (
@@ -360,13 +372,19 @@ export default function PrediccionClient() {
             </div>
 
             {/* Footer tabla */}
-            <div className="px-5 py-3 flex items-center justify-between"
-              style={{ borderTop: "1px solid #f3f4f6", backgroundColor: "#fafafa" }}>
-              <p className="text-xs" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
-                Mostrando {filtradas.length} de {predicciones.length} insumos
-              </p>
+            <div className="px-5 py-3"
+              style={{ backgroundColor: "#fafafa", borderTop: "1px solid #f3f4f6" }}>
+              <Paginator
+                page={predPage}
+                totalPages={totalPredPages}
+                totalElements={filtradas.length}
+                pageSize={PAGE_SIZE}
+                label="insumos"
+                accentColor="#8b5cf6"
+                onChange={setPredPage}
+              />
               {(data.en_riesgo ?? 0) > 0 && (
-                <p className="text-xs font-semibold" style={{ color: "#dc2626", fontFamily: "'Poppins', sans-serif" }}>
+                <p className="text-xs font-semibold mt-2" style={{ color: "#dc2626", fontFamily: "'Poppins', sans-serif" }}>
                   ⚠ {data.en_riesgo} insumo(s) en riesgo requieren atención
                 </p>
               )}

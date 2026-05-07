@@ -4,13 +4,14 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, UserPlus, Search, Pencil, Trash2, X, Save, Loader2,
-  AlertCircle, CheckCircle2, AlertTriangle, ChevronLeft, ChevronRight,
+  AlertCircle, CheckCircle2, AlertTriangle,
   Shield, ShieldCheck, User, Mail, Lock, Eye, EyeOff, RefreshCw,
   ToggleLeft, ToggleRight, KeyRound,
 } from "lucide-react";
 import { useUsuarios, useUsuariosCrud } from "@/app/hooks/useUsuarios";
 import type { UsuarioResponse, UsuarioCreateRequest, UsuarioUpdateRequest, ChangePasswordRequest, UserRol } from "@/app/types/usuario";
 import { useAuth } from "@/app/context/AuthContext";
+import Paginator from "@/app/components/shared/ui/Paginator";
 import { colegiosService } from "@/app/services/colegios.service";
 import type { ColegioResponse } from "@/app/types/colegio";
 
@@ -452,21 +453,17 @@ export default function UsuariosClient() {
         )}
 
         {/* Paginación */}
-        {!loading && totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-3"
-            style={{ borderTop: "1px solid #f3f4f6", backgroundColor: "#fafafa" }}>
-            <p className="text-xs" style={{ color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
-              Página {page + 1} de {totalPages} · {total} usuarios
-            </p>
-            <div className="flex items-center gap-1">
-              <PagBtn onClick={() => recargar(page - 1)} disabled={page === 0}><ChevronLeft size={14} /></PagBtn>
-              {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-                const p = totalPages <= 7 ? i : (page < 4 ? i : page - 3 + i);
-                if (p < 0 || p >= totalPages) return null;
-                return <PagBtn key={p} onClick={() => recargar(p)} active={p === page}>{p + 1}</PagBtn>;
-              })}
-              <PagBtn onClick={() => recargar(page + 1)} disabled={page >= totalPages - 1}><ChevronRight size={14} /></PagBtn>
-            </div>
+        {!loading && (
+          <div className="px-5 pb-4">
+            <Paginator
+              page={page}
+              totalPages={totalPages}
+              totalElements={total}
+              pageSize={10}
+              label="usuarios"
+              accentColor="#7c3aed"
+              onChange={(p) => recargar(p)}
+            />
           </div>
         )}
       </div>
@@ -495,23 +492,6 @@ export default function UsuariosClient() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PAGINACIÓN
-// ─────────────────────────────────────────────────────────────────────────────
-
-function PagBtn({ onClick, disabled, active, children }: {
-  onClick: () => void; disabled?: boolean; active?: boolean; children: React.ReactNode;
-}) {
-  return (
-    <button onClick={onClick} disabled={disabled} style={{
-      width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: 12, fontWeight: active ? 700 : 500, fontFamily: "'Poppins', sans-serif",
-      backgroundColor: active ? "#7c3aed" : "transparent",
-      color: active ? "#fff" : "#6b7280",
-      border: active ? "none" : "1px solid #e5e7eb",
-      cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.4 : 1,
-    }}>{children}</button>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODAL CREAR / EDITAR

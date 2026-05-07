@@ -198,6 +198,14 @@ export function useUniformes() {
 
   const save = useCallback(async (): Promise<boolean> => {
     // Validaciones
+    if (!form.tipo) {
+      setError("El tipo de uniforme es obligatorio.");
+      return false;
+    }
+    if (!form.genero) {
+      setError("El género es obligatorio.");
+      return false;
+    }
     if (!form.prenda.trim()) {
       setError("El nombre de la prenda es obligatorio.");
       return false;
@@ -230,18 +238,25 @@ export function useUniformes() {
 
       if (editingId) {
         await uniformeService.actualizar(editingId, request);
+        if (form.colegioId) await loadUniformes(form.colegioId);
         setSuccessMessage("Uniforme actualizado exitosamente.");
+        closeModal();
       } else {
         await uniformeService.crear(request);
-        setSuccessMessage("Uniforme creado exitosamente.");
+        if (form.colegioId) await loadUniformes(form.colegioId);
+        // No cerrar el modal: resetear form para seguir creando en el mismo colegio
+        const colegioActual = form.colegioId;
+        const tipoActual = form.tipo;
+        setForm({
+          prenda: "",
+          tipo: tipoActual,
+          genero: "",
+          colegioId: colegioActual,
+          insumosPorTalla: [],
+        });
+        setSuccessMessage("✓ Uniforme creado. Puedes seguir agregando más.");
       }
 
-      // Recargar uniformes
-      if (form.colegioId) {
-        await loadUniformes(form.colegioId);
-      }
-
-      closeModal();
       return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "No fue posible guardar el uniforme.";

@@ -22,6 +22,7 @@ import {
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUniformes } from "@/app/hooks/useUniformes";
+import { useAuth } from "@/app/context/AuthContext";
 import type { UniformeResponse } from "@/app/types/uniforme";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -31,8 +32,13 @@ import type { UniformeResponse } from "@/app/types/uniforme";
 const TALLAS_PREDEFINIDAS = ["S", "M", "L", "XL", "XXL", "UNICA"];
 const TALLAS_NUMERICAS = ["04", "06-08", "10-12", "14-16", "18-20"];
 
-const TIPOS_UNIFORME = ["Diario", "Educación Física", "Especial"];
-const GENEROS = ["Hombre", "Mujer", "Unisex"];
+const TIPOS_UNIFORME = ["Diario", "Educación Física"];
+
+/** Géneros disponibles según el tipo de uniforme */
+function getGenerosPorTipo(tipo: string): string[] {
+  if (tipo === "Educación Física") return ["Masculino", "Femenino", "Unisex"];
+  return ["Masculino", "Femenino"];
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // COMPONENTE: Badge de Rol/Estado
@@ -121,10 +127,12 @@ function UniformeRow({
   uniforme,
   onEdit,
   onDelete,
+  esAdmin,
 }: {
   uniforme: UniformeResponse;
   onEdit: (u: UniformeResponse) => void;
   onDelete: (id: number) => void;
+  esAdmin: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -228,15 +236,17 @@ function UniformeRow({
             >
               <Edit2 size={16} />
             </button>
-            <button
-              type="button"
-              onClick={() => onDelete(uniforme.id)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-red-50"
-              style={{ color: "#dc2626" }}
-              title="Eliminar"
-            >
-              <Trash2 size={16} />
-            </button>
+            {esAdmin && (
+              <button
+                type="button"
+                onClick={() => onDelete(uniforme.id)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-red-50"
+                style={{ color: "#dc2626" }}
+                title="Eliminar"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
           </div>
         </td>
       </tr>
@@ -313,6 +323,7 @@ function UniformeModal({
   tallasUnicas,
   submitting,
   error,
+  successMessage,
   onSetField,
   onAddInsumo,
   onRemoveInsumo,
@@ -328,6 +339,7 @@ function UniformeModal({
   tallasUnicas: string[];
   submitting: boolean;
   error: string | null;
+  successMessage: string | null;
   onSetField: (field: keyof typeof form, value: (typeof form)[keyof typeof form]) => void;
   onAddInsumo: (insumoId: number, nombre: string, unidad: string, talla: string, cantidad: number) => void;
   onRemoveInsumo: (id: string) => void;
@@ -339,8 +351,21 @@ function UniformeModal({
   const [busquedaInsumo, setBusquedaInsumo]     = useState("");
   const [insumoSeleccionado, setInsumoSeleccionado] = useState<number | "">("");
   const [cantidadInsumo, setCantidadInsumo]     = useState<number | "">(1);
+  const [tallaError, setTallaError]             = useState(false);
 
   if (!isOpen) return null;
+
+  // Géneros disponibles para el tipo seleccionado
+  const generoOptions = getGenerosPorTipo(form.tipo);
+
+  // Cuando cambia el tipo, si el género actual no está en las opciones → limpiar
+  const handleTipoChange = (nuevoTipo: string) => {
+    onSetField("tipo", nuevoTipo);
+    const opciones = getGenerosPorTipo(nuevoTipo);
+    if (form.genero && !opciones.includes(form.genero)) {
+      onSetField("genero", "");
+    }
+  };
 
   // Talla efectiva: la custom tiene prioridad si hay texto
   const tallaEfectiva = tallaCustom.trim() || tallaSelect;
@@ -358,7 +383,13 @@ function UniformeModal({
   const puedeAgregar = !!insumoSeleccionado && !!tallaEfectiva && cantidadValida;
 
   const agregarInsumo = () => {
+    // Validar talla antes de todo
+    if (!tallaEfectiva) {
+      setTallaError(true);
+      return;
+    }
     if (!puedeAgregar || !insumoElegido) return;
+    setTallaError(false);
     onAddInsumo(
       insumoElegido.id,
       insumoElegido.nombre,
@@ -422,54 +453,36 @@ function UniformeModal({
             </div>
           )}
 
+          {/* ── Mensaje de éxito dentro del modal (solo en modo crear) ── */}
+          {!editingId && successMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 rounded-2xl border px-4 py-3"
+              style={{ borderColor: "#abefc6", backgroundColor: "#ecfdf3" }}
+            >
+              <CheckCircle2 size={16} style={{ color: "#027a48" }} />
+              <p className="text-sm flex-1" style={{ color: "#027a48", fontFamily: "var(--font-poppins), sans-serif" }}>
+                {successMessage}
+              </p>
+            </motion.div>
+          )}
+
           {/* ── Datos básicos ─────────────────────────────────────────── */}
           <div>
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em]" style={{ color: "#1d4ed8", fontFamily: "var(--font-poppins), sans-serif" }}>
               Datos de la prenda
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
-              {/* Prenda */}
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.1em]" style={labelStyle}>
-                  Nombre de la prenda *
-                </label>
-                <input
-                  type="text"
-                  value={form.prenda}
-                  onChange={(e) => onSetField("prenda", e.target.value)}
-                  placeholder="Ej: Suéter, Camisa, Pantalón"
-                  className="w-full rounded-2xl border px-4 py-2.5 text-sm outline-none transition focus:border-[#1d4ed8] focus:shadow-[0_0_0_3px_rgba(29,78,216,0.08)]"
-                  style={inputStyle}
-                />
-              </div>
 
-              {/* Colegio */}
+              {/* 1 — Tipo de uniforme */}
               <div>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.1em]" style={labelStyle}>
-                  Colegio *
-                </label>
-                <select
-                  value={form.colegioId || ""}
-                  onChange={(e) => onSetField("colegioId", Number(e.target.value) || null)}
-                  disabled={!!editingId}
-                  className="w-full rounded-2xl border px-4 py-2.5 text-sm outline-none transition disabled:cursor-not-allowed"
-                  style={{ ...inputStyle, backgroundColor: editingId ? "#f8fafc" : "#ffffff" }}
-                >
-                  <option value="">Selecciona un colegio</option>
-                  {colegios.map((c) => (
-                    <option key={c.id} value={c.id}>{c.nombre}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Tipo */}
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.1em]" style={labelStyle}>
-                  Tipo de uniforme
+                  Tipo de uniforme *
                 </label>
                 <select
                   value={form.tipo}
-                  onChange={(e) => onSetField("tipo", e.target.value)}
+                  onChange={(e) => handleTipoChange(e.target.value)}
                   className="w-full rounded-2xl border px-4 py-2.5 text-sm outline-none"
                   style={inputStyle}
                 >
@@ -477,10 +490,10 @@ function UniformeModal({
                 </select>
               </div>
 
-              {/* Género */}
+              {/* 2 — Género (depende del tipo) */}
               <div>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.1em]" style={labelStyle}>
-                  Género
+                  Género *
                 </label>
                 <select
                   value={form.genero}
@@ -488,10 +501,51 @@ function UniformeModal({
                   className="w-full rounded-2xl border px-4 py-2.5 text-sm outline-none"
                   style={inputStyle}
                 >
-                  <option value="">Sin especificar</option>
-                  {GENEROS.map((g) => <option key={g} value={g}>{g}</option>)}
+                  <option value="">Selecciona el género</option>
+                  {generoOptions.map((g) => <option key={g} value={g}>{g}</option>)}
                 </select>
+                {form.tipo === "Educación Física" && (
+                  <p className="mt-1 text-xs" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
+                    Unisex disponible solo para Educación Física
+                  </p>
+                )}
               </div>
+
+              {/* 3 — Nombre de la prenda (ancho completo) */}
+              <div className="sm:col-span-2">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.1em]" style={labelStyle}>
+                  Nombre de la prenda *
+                </label>
+                <input
+                  type="text"
+                  value={form.prenda}
+                  onChange={(e) => onSetField("prenda", e.target.value)}
+                  placeholder="Ej: Suéter, Camisa, Pantalón, Pantaloneta..."
+                  className="w-full rounded-2xl border px-4 py-2.5 text-sm outline-none transition focus:border-[#1d4ed8] focus:shadow-[0_0_0_3px_rgba(29,78,216,0.08)]"
+                  style={inputStyle}
+                />
+              </div>
+
+              {/* Colegio (solo visible si no hay colegio pre-seleccionado o en edición) */}
+              {(editingId || !form.colegioId) && (
+                <div className="sm:col-span-2">
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.1em]" style={labelStyle}>
+                    Colegio *
+                  </label>
+                  <select
+                    value={form.colegioId || ""}
+                    onChange={(e) => onSetField("colegioId", Number(e.target.value) || null)}
+                    disabled={!!editingId}
+                    className="w-full rounded-2xl border px-4 py-2.5 text-sm outline-none transition disabled:cursor-not-allowed"
+                    style={{ ...inputStyle, backgroundColor: editingId ? "#f8fafc" : "#ffffff" }}
+                  >
+                    <option value="">Selecciona un colegio</option>
+                    {colegios.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           </div>
 
@@ -523,13 +577,20 @@ function UniformeModal({
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-xs font-medium" style={labelStyle}>
-                      Talla *
+                      Talla <span style={{ color: "#ef4444" }}>*</span>
                     </label>
                     <select
                       value={tallaSelect}
-                      onChange={(e) => { setTallaSelect(e.target.value); setTallaCustom(""); }}
-                      className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                      style={inputStyle}
+                      onChange={(e) => {
+                        setTallaSelect(e.target.value);
+                        setTallaCustom("");
+                        if (e.target.value) setTallaError(false);
+                      }}
+                      className="w-full rounded-xl border px-3 py-2 text-sm outline-none transition"
+                      style={{
+                        ...inputStyle,
+                        borderColor: tallaError && !tallaEfectiva ? "#ef4444" : "#d0d5dd",
+                      }}
                     >
                       <option value="">Selecciona una talla...</option>
                       <optgroup label="Letras">
@@ -542,18 +603,38 @@ function UniformeModal({
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium" style={labelStyle}>
-                      O talla personalizada
+                      Talla personalizada{" "}
+                      <span style={{ color: "#9ca3af", fontWeight: 400 }}>
+                        {tallaSelect ? "(opcional)" : ""}
+                      </span>
                     </label>
                     <input
                       type="text"
                       value={tallaCustom}
-                      onChange={(e) => { setTallaCustom(e.target.value); if (e.target.value.trim()) setTallaSelect(""); }}
-                      placeholder="Ej: 08-10, T2, UNICA..."
-                      className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                      style={inputStyle}
+                      onChange={(e) => {
+                        setTallaCustom(e.target.value);
+                        if (e.target.value.trim()) { setTallaSelect(""); setTallaError(false); }
+                      }}
+                      placeholder={tallaSelect ? `Ya seleccionaste: ${tallaSelect}` : "Ej: 08-10, T2, UNICA..."}
+                      className="w-full rounded-xl border px-3 py-2 text-sm outline-none transition"
+                      style={{
+                        ...inputStyle,
+                        borderColor: tallaError && !tallaEfectiva ? "#ef4444" : "#d0d5dd",
+                        backgroundColor: tallaSelect ? "#f8fafc" : "#ffffff",
+                      }}
                     />
                   </div>
                 </div>
+
+                {/* Error de talla */}
+                {tallaError && !tallaEfectiva && (
+                  <div className="flex items-center gap-2">
+                    <TriangleAlert size={13} style={{ color: "#ef4444" }} />
+                    <span className="text-xs font-medium" style={{ color: "#ef4444", fontFamily: "var(--font-poppins), sans-serif" }}>
+                      Debes seleccionar o ingresar una talla antes de agregar el insumo.
+                    </span>
+                  </div>
+                )}
 
                 {/* Indicador de talla activa */}
                 {tallaEfectiva && (
@@ -711,7 +792,7 @@ function UniformeModal({
             className="rounded-2xl border px-5 py-2.5 text-sm font-semibold transition hover:bg-[#f8fafc]"
             style={{ borderColor: "#d0d5dd", color: "#374151", fontFamily: "var(--font-poppins), sans-serif" }}
           >
-            Cancelar
+            {editingId ? "Cancelar" : "Cerrar"}
           </button>
           <button
             type="button"
@@ -722,8 +803,10 @@ function UniformeModal({
           >
             {submitting ? (
               <><RefreshCw size={15} className="animate-spin" /> Guardando...</>
+            ) : editingId ? (
+              <><Save size={15} /> Guardar cambios</>
             ) : (
-              <><Save size={15} /> {editingId ? "Guardar cambios" : "Crear uniforme"}</>
+              <><Plus size={15} /> Crear uniforme</>
             )}
           </button>
         </div>
@@ -737,6 +820,9 @@ function UniformeModal({
 // ═══════════════════════════════════════════════════════════════════════════
 
 export default function UniformesClient() {
+  const { user } = useAuth();
+  const esAdmin = user?.rol === "ADMIN";
+
   const {
     uniformes,
     colegios,
@@ -1038,6 +1124,7 @@ export default function UniformesClient() {
                       uniforme={uniforme}
                       onEdit={openEditModal}
                       onDelete={handleDelete}
+                      esAdmin={esAdmin}
                     />
                   ))}
                 </tbody>
@@ -1085,6 +1172,7 @@ export default function UniformesClient() {
             insumosPorTallaAgrupados={insumosPorTallaAgrupados}
             submitting={submitting}
             error={error}
+            successMessage={successMessage}
             onSetField={setFormField}
             onAddInsumo={addInsumoPorTalla}
             onRemoveInsumo={removeInsumoPorTalla}

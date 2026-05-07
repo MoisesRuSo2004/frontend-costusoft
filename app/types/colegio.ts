@@ -4,6 +4,8 @@ import type { PageData } from "./pagination";
 export interface ColegioRequest {
   nombre: string;          // requerido, max 150
   direccion?: string;      // opcional, max 250
+  telefono?: string;       // opcional, max 20
+  correo?: string;         // opcional, max 100
 }
 
 // ── Response básico (listado) ─────────────────────────────────────────────
@@ -11,6 +13,8 @@ export interface ColegioResponse {
   id: number;
   nombre: string;
   direccion: string | null;
+  telefono: string | null;
+  correo: string | null;
   totalUniformes: number;
   createdAt: string;
   updatedAt: string;
@@ -29,6 +33,8 @@ export interface ColegioConUniformes {
   id: number;
   nombre: string;
   direccion: string | null;
+  telefono: string | null;
+  correo: string | null;
   uniformes: UniformeResumen[];
   createdAt: string;
 }

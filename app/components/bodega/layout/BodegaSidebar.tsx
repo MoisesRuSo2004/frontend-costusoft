@@ -5,6 +5,7 @@ import {
   ArrowUpFromLine,
   BrainCircuit,
   LayoutDashboard,
+  Package,
 } from "lucide-react";
 import RoleSidebar, { type SidebarNavGroup } from "@/app/components/shared/layout/RoleSidebar";
 import { useNotificaciones } from "@/app/context/NotificacionesContext";
@@ -13,6 +14,7 @@ export default function BodegaSidebar() {
   const { total } = useNotificaciones();
 
   const NAV: SidebarNavGroup[] = [
+    // 1 — vista general y cola de trabajo activa
     {
       heading: "Principal",
       items: [
@@ -24,13 +26,22 @@ export default function BodegaSidebar() {
         },
       ],
     },
+    // 2 — accesos rápidos a filtros de la cola
     {
       heading: "Cola de trabajo",
       items: [
-        { label: "Entradas pendientes", href: "/bodega",    icon: ArrowDownToLine },
-        { label: "Salidas pendientes",  href: "/bodega",    icon: ArrowUpFromLine },
+        { label: "Entradas pendientes", href: "/bodega", icon: ArrowDownToLine },
+        { label: "Salidas pendientes",  href: "/bodega", icon: ArrowUpFromLine },
       ],
     },
+    // 3 — consulta de stock para validar disponibilidad física
+    {
+      heading: "Consultas",
+      items: [
+        { label: "Inventario", href: "/bodega/inventario", icon: Package },
+      ],
+    },
+    // 4 — apoyo, no esencial
     {
       heading: "Inteligencia",
       items: [

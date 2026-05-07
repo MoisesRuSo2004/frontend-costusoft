@@ -505,7 +505,7 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
                   </span>
                   <div className="flex items-center gap-2">
                     <Link
-                      href="/admin/entradas"
+                      href="/entradas"
                       className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors"
                       style={{
                         backgroundColor: "rgba(11,61,145,0.08)",
@@ -517,7 +517,7 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
                       Entradas
                     </Link>
                     <Link
-                      href="/admin/salidas"
+                      href="/salidas"
                       className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors"
                       style={{
                         backgroundColor: "rgba(73,194,27,0.10)",

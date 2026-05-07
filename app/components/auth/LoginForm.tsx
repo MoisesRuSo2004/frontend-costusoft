@@ -37,7 +37,9 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto px-8 py-12 mt-18">
+    <div className="flex flex-col flex-1 w-full max-w-md mx-auto px-6 sm:px-8">
+      {/* Bloque centrado: header + formulario */}
+      <div className="flex flex-col justify-center flex-1 py-8 lg:py-0">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -319,11 +321,12 @@ export default function LoginForm() {
         </button>
       </motion.form>
 
-      {/* Footer */}
+      </div>{/* fin bloque centrado */}
+
+      {/* Footer — fuera del bloque centrado para no afectar el centrado vertical */}
       <p
         style={{
-          marginTop: "auto",
-          paddingTop: 32,
+          paddingBottom: 24,
           fontSize: 11,
           color: "#d1d5db",
           textAlign: "center",

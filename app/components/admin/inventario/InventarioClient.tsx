@@ -5,11 +5,12 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, ArrowDownToLine, ArrowUpFromLine, Search, RefreshCw,
-  Package, AlertCircle, X, ChevronLeft, ChevronRight, SlidersHorizontal,
+  Package, AlertCircle, X, SlidersHorizontal,
   Trash2, Edit3, CheckCircle2, PowerOff, Power,
 } from "lucide-react";
 import { useInsumos } from "@/app/hooks/useInsumos";
 import type { InsumoResponse } from "@/app/types/insumo";
+import Paginator from "@/app/components/shared/ui/Paginator";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -330,31 +331,6 @@ function EditarInsumoModal({ insumo, onClose, onConfirm, saving }: {
   );
 }
 
-// ─── Paginación ───────────────────────────────────────────────────────────────
-
-function Pagination({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) {
-  if (totalPages <= 1) return null;
-  return (
-    <div className="flex items-center justify-between border-t px-2 pt-4" style={{ borderColor: "#f0f0f4" }}>
-      <span className="text-xs" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
-        Página {page + 1} de {totalPages}
-      </span>
-      <div className="flex gap-2">
-        <button onClick={() => onChange(page - 1)} disabled={page === 0}
-          className="flex h-8 w-8 items-center justify-center rounded-xl border transition disabled:opacity-40"
-          style={{ borderColor: "#e5e7eb", color: "#374151" }}>
-          <ChevronLeft size={15} />
-        </button>
-        <button onClick={() => onChange(page + 1)} disabled={page >= totalPages - 1}
-          className="flex h-8 w-8 items-center justify-center rounded-xl border transition disabled:opacity-40"
-          style={{ borderColor: "#e5e7eb", color: "#374151" }}>
-          <ChevronRight size={15} />
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function InventarioClient() {
@@ -611,8 +587,15 @@ export default function InventarioClient() {
           </div>
         )}
 
-        <div className="p-5">
-          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+        <div className="px-5 pb-5">
+          <Paginator
+            page={page}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            pageSize={10}
+            label="insumos"
+            onChange={setPage}
+          />
         </div>
       </div>
 

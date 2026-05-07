@@ -181,7 +181,7 @@ export default function RoleSidebar({
 
                   return (
                     <Link
-                      key={href}
+                      key={`${label}-${href}`}
                       href={href}
                       title={!showText ? label : undefined}
                       className="group relative flex items-center gap-3 rounded-2xl px-3 py-3 transition-all duration-300 ease-in-out"

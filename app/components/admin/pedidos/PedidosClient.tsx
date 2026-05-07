@@ -2,8 +2,6 @@
 
 import {
   AlertCircle,
-  ArrowLeft,
-  ArrowRight,
   Calculator,
   CheckCircle,
   ChevronDown,
@@ -41,6 +39,7 @@ import {
   type PedidoResponse,
   type EstadoPedido,
 } from "@/app/types/pedido";
+import Paginator from "@/app/components/shared/ui/Paginator";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONSTANTES Y UTILIDADES
@@ -946,32 +945,16 @@ export default function PedidosClient() {
           </div>
 
           {/* Paginación */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4">
-              <button
-                onClick={prevPage}
-                disabled={page === 0}
-                className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-50"
-                style={{ borderColor: "#d0d5dd", color: "#344054" }}
-              >
-                <ArrowLeft size={14} />
-                Anterior
-              </button>
-
-              <span className="text-sm" style={{ color: "#667085" }}>
-                Página {page + 1} de {totalPages}
-              </span>
-
-              <button
-                onClick={nextPage}
-                disabled={page >= totalPages - 1}
-                className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-50"
-                style={{ borderColor: "#d0d5dd", color: "#344054" }}
-              >
-                Siguiente
-                <ArrowRight size={14} />
-              </button>
-            </div>
+          {totalPages > 0 && (
+            <Paginator
+              page={page}
+              totalPages={totalPages}
+              totalElements={totalElements}
+              pageSize={10}
+              label="pedidos"
+              accentColor="#0b3d91"
+              onChange={goToPage}
+            />
           )}
         </>
       ) : (
