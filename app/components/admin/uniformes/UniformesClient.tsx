@@ -6,6 +6,7 @@ import {
   ChevronRight,
   ChevronUp,
   Edit2,
+  Info,
   Package,
   Plus,
   RefreshCw,
@@ -435,7 +436,9 @@ function UniformeModal({
                 {editingId ? "Editar uniforme" : "Nuevo uniforme"}
               </h2>
               <p className="text-xs" style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>
-                {editingId ? "Modifica los datos y los insumos por talla" : "Define la prenda y sus insumos por talla"}
+                {editingId
+                  ? "Modifica los datos y agrega o quita tallas e insumos"
+                  : "Una prenda · todas sus tallas · aquí mismo"}
               </p>
             </div>
           </div>
@@ -549,6 +552,25 @@ function UniformeModal({
             </div>
           </div>
 
+          {/* ── Banner informativo ────────────────────────────────────── */}
+          <div className="flex gap-3 rounded-2xl border px-4 py-3.5" style={{ borderColor: "#bfdbfe", backgroundColor: "#eff6ff" }}>
+            <div className="mt-0.5 flex-shrink-0">
+              <Info size={16} style={{ color: "#1d4ed8" }} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold mb-0.5" style={{ color: "#1e40af", fontFamily: "var(--font-poppins), sans-serif" }}>
+                Una sola prenda, todas sus tallas
+              </p>
+              <p className="text-xs leading-relaxed" style={{ color: "#3b82f6", fontFamily: "var(--font-poppins), sans-serif" }}>
+                No necesitas crear una prenda por cada talla. Aquí defines{" "}
+                <strong>todas las tallas de este uniforme</strong> de una vez: selecciona
+                la talla, agrega los insumos que requiere esa talla con su cantidad, y
+                repite para cada talla adicional (S, M, L, XL…). El sistema las agrupa
+                automáticamente.
+              </p>
+            </div>
+          </div>
+
           {/* ── Sección insumos por talla ──────────────────────────────── */}
           <div className="rounded-2xl border" style={{ borderColor: "#e2e8f0" }}>
             {/* Sub-header */}
@@ -556,11 +578,16 @@ function UniformeModal({
               <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ backgroundColor: "#eff6ff" }}>
                 <Package size={14} style={{ color: "#1d4ed8" }} />
               </div>
-              <p className="text-sm font-semibold" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
-                Insumos requeridos por talla
-              </p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold" style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}>
+                  Insumos requeridos por talla
+                </p>
+                <p className="text-xs" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
+                  Selecciona talla → elige insumo → indica cantidad → repite por cada talla
+                </p>
+              </div>
               {form.insumosPorTalla.length > 0 && (
-                <span className="ml-auto rounded-full px-2 py-0.5 text-xs font-semibold" style={{ backgroundColor: "#dbeafe", color: "#1d4ed8", fontFamily: "var(--font-poppins), sans-serif" }}>
+                <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold" style={{ backgroundColor: "#dbeafe", color: "#1d4ed8", fontFamily: "var(--font-poppins), sans-serif" }}>
                   {form.insumosPorTalla.length} agregado{form.insumosPorTalla.length !== 1 ? "s" : ""}
                 </span>
               )}
@@ -730,10 +757,33 @@ function UniformeModal({
 
               {/* ── Lista de insumos agrupados por talla ──────────────── */}
               {tallasUnicas.length === 0 ? (
-                <div className="rounded-xl border-2 border-dashed py-8 text-center" style={{ borderColor: "#e2e8f0" }}>
-                  <Package size={28} className="mx-auto mb-2" style={{ color: "#d0d5dd" }} />
-                  <p className="text-sm" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
-                    Todavía no hay insumos. Usa el formulario de arriba para agregar.
+                <div className="rounded-xl border-2 border-dashed py-6 px-4" style={{ borderColor: "#e2e8f0" }}>
+                  <div className="flex flex-col items-center text-center mb-4">
+                    <Package size={28} className="mb-2" style={{ color: "#d0d5dd" }} />
+                    <p className="text-sm font-semibold" style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>
+                      Sin tallas configuradas aún
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
+                      Sigue estos pasos para agregar las tallas del uniforme:
+                    </p>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-3 max-w-lg mx-auto">
+                    {[
+                      { n: "1", label: "Elige la talla", desc: "Ej: S, M, L, 06-08…" },
+                      { n: "2", label: "Selecciona el insumo", desc: "Tela, hilo, botones…" },
+                      { n: "3", label: "Indica la cantidad", desc: "Metros, unidades, etc." },
+                    ].map(({ n, label, desc }) => (
+                      <div key={n} className="flex flex-col items-center gap-1 rounded-xl px-3 py-3" style={{ backgroundColor: "#f8fafc" }}>
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white" style={{ backgroundColor: "#1d4ed8" }}>
+                          {n}
+                        </span>
+                        <span className="text-xs font-semibold" style={{ color: "#374151", fontFamily: "var(--font-poppins), sans-serif" }}>{label}</span>
+                        <span className="text-xs" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>{desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-center text-xs mt-3" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
+                    Pulsa <strong>Agregar</strong> y repite para cada talla que tenga la prenda.
                   </p>
                 </div>
               ) : (
