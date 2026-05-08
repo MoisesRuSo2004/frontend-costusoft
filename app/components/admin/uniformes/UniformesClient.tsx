@@ -30,7 +30,7 @@ import type { UniformeResponse } from "@/app/types/uniforme";
 // CONSTANTES
 // ═══════════════════════════════════════════════════════════════════════════
 
-const TALLAS_PREDEFINIDAS = ["S", "M", "L", "XL", "XXL", "UNICA"];
+const TALLAS_LETRAS    = ["XS", "S", "M", "L", "XL", "XXL", "UNICA"];
 const TALLAS_NUMERICAS = ["04", "06-08", "10-12", "14-16", "18-20"];
 
 const TIPOS_UNIFORME = ["Diario", "Educación Física"];
@@ -347,12 +347,12 @@ function UniformeModal({
   onSave: () => void | Promise<boolean>;
 }) {
   // ── Estado local del formulario de agregar insumo ────────────────────
-  const [tallaSelect, setTallaSelect]           = useState("");
-  const [tallaCustom, setTallaCustom]           = useState("");
-  const [busquedaInsumo, setBusquedaInsumo]     = useState("");
-  const [insumoSeleccionado, setInsumoSeleccionado] = useState<number | "">("");
-  const [cantidadInsumo, setCantidadInsumo]     = useState<number | "">(1);
-  const [tallaError, setTallaError]             = useState(false);
+  const [tallasSeleccionadas, setTallasSeleccionadas] = useState<string[]>([]);
+  const [tallaCustom, setTallaCustom]                 = useState("");
+  const [busquedaInsumo, setBusquedaInsumo]           = useState("");
+  const [insumoSeleccionado, setInsumoSeleccionado]   = useState<number | "">("");
+  const [cantidadInsumo, setCantidadInsumo]           = useState<number | "">(1);
+  const [tallaError, setTallaError]                   = useState(false);
 
   if (!isOpen) return null;
 
@@ -368,8 +368,25 @@ function UniformeModal({
     }
   };
 
-  // Talla efectiva: la custom tiene prioridad si hay texto
-  const tallaEfectiva = tallaCustom.trim() || tallaSelect;
+  // Qué grupo está activo: letras o numéricas (mutuamente excluyentes)
+  const tipoActivo: "letras" | "numericas" | null =
+    tallasSeleccionadas.some((t) => TALLAS_LETRAS.includes(t))    ? "letras"   :
+    tallasSeleccionadas.some((t) => TALLAS_NUMERICAS.includes(t)) ? "numericas" :
+    null;
+
+  const toggleTalla = (talla: string, grupo: "letras" | "numericas") => {
+    if (tipoActivo && tipoActivo !== grupo) return; // no mezclar grupos
+    setTallasSeleccionadas((prev) =>
+      prev.includes(talla) ? prev.filter((t) => t !== talla) : [...prev, talla],
+    );
+    setTallaError(false);
+  };
+
+  // Todas las tallas efectivas: chips marcados + custom si hay texto
+  const tallasEfectivas = [
+    ...tallasSeleccionadas,
+    ...(tallaCustom.trim() ? [tallaCustom.trim()] : []),
+  ];
 
   // Insumos filtrados por búsqueda
   const insumosFiltrados = busquedaInsumo.trim()
@@ -379,29 +396,32 @@ function UniformeModal({
       )
     : insumos;
 
-  const insumoElegido = insumos.find((i) => i.id === insumoSeleccionado);
+  const insumoElegido  = insumos.find((i) => i.id === insumoSeleccionado);
   const cantidadValida = typeof cantidadInsumo === "number" && cantidadInsumo > 0;
-  const puedeAgregar = !!insumoSeleccionado && !!tallaEfectiva && cantidadValida;
+  const puedeAgregar   = !!insumoSeleccionado && tallasEfectivas.length > 0 && cantidadValida;
 
   const agregarInsumo = () => {
-    // Validar talla antes de todo
-    if (!tallaEfectiva) {
+    if (tallasEfectivas.length === 0) {
       setTallaError(true);
       return;
     }
     if (!puedeAgregar || !insumoElegido) return;
     setTallaError(false);
-    onAddInsumo(
-      insumoElegido.id,
-      insumoElegido.nombre,
-      insumoElegido.unidadMedida,
-      tallaEfectiva,
-      cantidadInsumo as number,
-    );
-    // Solo resetear insumo y cantidad; mantener la talla para agregar más
+    // Agregar el insumo a CADA talla seleccionada de una sola vez
+    tallasEfectivas.forEach((talla) => {
+      onAddInsumo(
+        insumoElegido.id,
+        insumoElegido.nombre,
+        insumoElegido.unidadMedida,
+        talla,
+        cantidadInsumo as number,
+      );
+    });
+    // Limpiar solo insumo, cantidad y custom; mantener los chips para seguir agregando
     setInsumoSeleccionado("");
     setBusquedaInsumo("");
     setCantidadInsumo(1);
+    setTallaCustom("");
   };
 
   const inputStyle = {
@@ -559,14 +579,14 @@ function UniformeModal({
             </div>
             <div>
               <p className="text-sm font-semibold mb-0.5" style={{ color: "#1e40af", fontFamily: "var(--font-poppins), sans-serif" }}>
-                Una sola prenda, todas sus tallas
+                Agrega los insumos a varias tallas a la vez
               </p>
               <p className="text-xs leading-relaxed" style={{ color: "#3b82f6", fontFamily: "var(--font-poppins), sans-serif" }}>
-                No necesitas crear una prenda por cada talla. Aquí defines{" "}
-                <strong>todas las tallas de este uniforme</strong> de una vez: selecciona
-                la talla, agrega los insumos que requiere esa talla con su cantidad, y
-                repite para cada talla adicional (S, M, L, XL…). El sistema las agrupa
-                automáticamente.
+                Como todas las tallas usan los mismos insumos y cantidades, puedes{" "}
+                <strong>marcar varias tallas al mismo tiempo</strong> (S, M, L, XL…),
+                configurar el insumo con su cantidad y pulsar Agregar — el sistema lo
+                asigna a todas las tallas seleccionadas en un solo paso. Letras y
+                numéricas no se pueden mezclar en la misma prenda.
               </p>
             </div>
           </div>
@@ -600,76 +620,140 @@ function UniformeModal({
                   Agregar insumo
                 </p>
 
-                {/* Fila 1: Talla */}
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-xs font-medium" style={labelStyle}>
-                      Talla <span style={{ color: "#ef4444" }}>*</span>
+                {/* ── Selector de tallas múltiples ──────────────────────── */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium" style={labelStyle}>
+                      Tallas <span style={{ color: "#ef4444" }}>*</span>
+                      <span className="ml-1 font-normal" style={{ color: "#9ca3af" }}>
+                        — selecciona una o varias
+                      </span>
                     </label>
-                    <select
-                      value={tallaSelect}
-                      onChange={(e) => {
-                        setTallaSelect(e.target.value);
-                        setTallaCustom("");
-                        if (e.target.value) setTallaError(false);
-                      }}
-                      className="w-full rounded-xl border px-3 py-2 text-sm outline-none transition"
-                      style={{
-                        ...inputStyle,
-                        borderColor: tallaError && !tallaEfectiva ? "#ef4444" : "#d0d5dd",
-                      }}
-                    >
-                      <option value="">Selecciona una talla...</option>
-                      <optgroup label="Letras">
-                        {TALLAS_PREDEFINIDAS.map((t) => <option key={t} value={t}>{t}</option>)}
-                      </optgroup>
-                      <optgroup label="Numéricas">
-                        {TALLAS_NUMERICAS.map((t) => <option key={t} value={t}>{t}</option>)}
-                      </optgroup>
-                    </select>
+                    {tallasSeleccionadas.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setTallasSeleccionadas([])}
+                        className="text-xs underline"
+                        style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}
+                      >
+                        Limpiar
+                      </button>
+                    )}
                   </div>
+
+                  {/* Grupo letras */}
+                  <div>
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-[0.08em]"
+                       style={{ color: tipoActivo === "numericas" ? "#d1d5db" : "#475467", fontFamily: "var(--font-poppins), sans-serif" }}>
+                      Letras
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {TALLAS_LETRAS.map((talla) => {
+                        const selected  = tallasSeleccionadas.includes(talla);
+                        const disabled  = tipoActivo === "numericas";
+                        return (
+                          <button
+                            key={talla}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => toggleTalla(talla, "letras")}
+                            className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
+                            style={{
+                              backgroundColor: selected ? "#1d4ed8" : disabled ? "#f3f4f6" : "#f8fafc",
+                              color:           selected ? "#ffffff"  : disabled ? "#d1d5db" : "#374151",
+                              border: `1.5px solid ${selected ? "#1d4ed8" : disabled ? "#e5e7eb" : "#d0d5dd"}`,
+                              cursor: disabled ? "not-allowed" : "pointer",
+                              fontFamily: "var(--font-poppins), sans-serif",
+                            }}
+                          >
+                            {talla}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Grupo numérico */}
+                  <div>
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-[0.08em]"
+                       style={{ color: tipoActivo === "letras" ? "#d1d5db" : "#475467", fontFamily: "var(--font-poppins), sans-serif" }}>
+                      Numéricas
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {TALLAS_NUMERICAS.map((talla) => {
+                        const selected  = tallasSeleccionadas.includes(talla);
+                        const disabled  = tipoActivo === "letras";
+                        return (
+                          <button
+                            key={talla}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => toggleTalla(talla, "numericas")}
+                            className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
+                            style={{
+                              backgroundColor: selected ? "#7c3aed" : disabled ? "#f3f4f6" : "#f8fafc",
+                              color:           selected ? "#ffffff"  : disabled ? "#d1d5db" : "#374151",
+                              border: `1.5px solid ${selected ? "#7c3aed" : disabled ? "#e5e7eb" : "#d0d5dd"}`,
+                              cursor: disabled ? "not-allowed" : "pointer",
+                              fontFamily: "var(--font-poppins), sans-serif",
+                            }}
+                          >
+                            {talla}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Nota de exclusión */}
+                  {tipoActivo && (
+                    <p className="text-xs" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
+                      {tipoActivo === "letras"
+                        ? "Tallas numéricas deshabilitadas — no se pueden mezclar con letras en la misma prenda."
+                        : "Tallas en letra deshabilitadas — no se pueden mezclar con numéricas en la misma prenda."}
+                    </p>
+                  )}
+
+                  {/* Talla personalizada */}
                   <div>
                     <label className="mb-1 block text-xs font-medium" style={labelStyle}>
                       Talla personalizada{" "}
-                      <span style={{ color: "#9ca3af", fontWeight: 400 }}>
-                        {tallaSelect ? "(opcional)" : ""}
-                      </span>
+                      <span style={{ color: "#9ca3af", fontWeight: 400 }}>(opcional)</span>
                     </label>
                     <input
                       type="text"
                       value={tallaCustom}
-                      onChange={(e) => {
-                        setTallaCustom(e.target.value);
-                        if (e.target.value.trim()) { setTallaSelect(""); setTallaError(false); }
-                      }}
-                      placeholder={tallaSelect ? `Ya seleccionaste: ${tallaSelect}` : "Ej: 08-10, T2, UNICA..."}
+                      onChange={(e) => { setTallaCustom(e.target.value); if (e.target.value.trim()) setTallaError(false); }}
+                      placeholder="Ej: 08-10, T2, UNICA..."
                       className="w-full rounded-xl border px-3 py-2 text-sm outline-none transition"
-                      style={{
-                        ...inputStyle,
-                        borderColor: tallaError && !tallaEfectiva ? "#ef4444" : "#d0d5dd",
-                        backgroundColor: tallaSelect ? "#f8fafc" : "#ffffff",
-                      }}
+                      style={{ ...inputStyle, borderColor: tallaError && tallasEfectivas.length === 0 ? "#ef4444" : "#d0d5dd" }}
                     />
                   </div>
                 </div>
 
                 {/* Error de talla */}
-                {tallaError && !tallaEfectiva && (
+                {tallaError && tallasEfectivas.length === 0 && (
                   <div className="flex items-center gap-2">
                     <TriangleAlert size={13} style={{ color: "#ef4444" }} />
                     <span className="text-xs font-medium" style={{ color: "#ef4444", fontFamily: "var(--font-poppins), sans-serif" }}>
-                      Debes seleccionar o ingresar una talla antes de agregar el insumo.
+                      Selecciona al menos una talla antes de agregar el insumo.
                     </span>
                   </div>
                 )}
 
-                {/* Indicador de talla activa */}
-                {tallaEfectiva && (
-                  <div className="flex items-center gap-2">
+                {/* Resumen de tallas activas */}
+                {tallasEfectivas.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <Ruler size={13} style={{ color: "#1d4ed8" }} />
                     <span className="text-xs font-medium" style={{ color: "#1d4ed8", fontFamily: "var(--font-poppins), sans-serif" }}>
-                      Talla seleccionada: <strong>{tallaEfectiva}</strong>
+                      El insumo se asignará a:
                     </span>
+                    {tallasEfectivas.map((t) => (
+                      <span key={t} className="rounded-md px-2 py-0.5 text-xs font-semibold"
+                            style={{ backgroundColor: "#dbeafe", color: "#1d4ed8", fontFamily: "var(--font-poppins), sans-serif" }}>
+                        {t}
+                      </span>
+                    ))}
                   </div>
                 )}
 
@@ -769,7 +853,7 @@ function UniformeModal({
                   </div>
                   <div className="grid gap-2 sm:grid-cols-3 max-w-lg mx-auto">
                     {[
-                      { n: "1", label: "Elige la talla", desc: "Ej: S, M, L, 06-08…" },
+                      { n: "1", label: "Marca las tallas", desc: "S+M+L o 06-08+10-12…" },
                       { n: "2", label: "Selecciona el insumo", desc: "Tela, hilo, botones…" },
                       { n: "3", label: "Indica la cantidad", desc: "Metros, unidades, etc." },
                     ].map(({ n, label, desc }) => (
@@ -783,7 +867,7 @@ function UniformeModal({
                     ))}
                   </div>
                   <p className="text-center text-xs mt-3" style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}>
-                    Pulsa <strong>Agregar</strong> y repite para cada talla que tenga la prenda.
+                    Pulsa <strong>Agregar</strong> — se asigna a todas las tallas marcadas de una vez.
                   </p>
                 </div>
               ) : (

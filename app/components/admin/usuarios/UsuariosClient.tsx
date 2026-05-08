@@ -67,6 +67,38 @@ function initials(username: string) {
 const AVATAR_COLORS = ["#0b3d91", "#7c3aed", "#ca8a04", "#16a34a", "#c2410c", "#0891b2"];
 function avatarColor(id: number) { return AVATAR_COLORS[id % AVATAR_COLORS.length]; }
 
+/** Avatar que muestra la foto de perfil si existe, o las iniciales como fallback. */
+function UserAvatar({ usuario, size = 36 }: { usuario: UsuarioResponse; size?: number }) {
+  const [imgError, setImgError] = React.useState(false);
+  const showPhoto = !!usuario.fotoUrl && !imgError;
+
+  return showPhoto ? (
+    <img
+      src={usuario.fotoUrl!}
+      alt={usuario.username}
+      onError={() => setImgError(true)}
+      style={{
+        width: size, height: size, borderRadius: "50%",
+        objectFit: "cover", flexShrink: 0, display: "block",
+        border: "2px solid #e5e7eb",
+      }}
+    />
+  ) : (
+    <div
+      style={{
+        width: size, height: size, borderRadius: "50%",
+        backgroundColor: avatarColor(usuario.id),
+        display: "flex", alignItems: "center", justifyContent: "center",
+        flexShrink: 0, fontSize: size * 0.33,
+        fontWeight: 700, color: "#fff",
+        fontFamily: "'Poppins', sans-serif",
+      }}
+    >
+      {initials(usuario.username)}
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN CLIENT
 // ─────────────────────────────────────────────────────────────────────────────
@@ -330,10 +362,7 @@ export default function UsuariosClient() {
                       {/* Usuario */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-full flex-shrink-0 text-xs font-bold text-white"
-                            style={{ backgroundColor: avatarColor(u.id) }}>
-                            {initials(u.username)}
-                          </div>
+                          <UserAvatar usuario={u} size={36} />
                           <div>
                             <p className="text-sm font-semibold" style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}>
                               {u.username}
@@ -756,10 +785,7 @@ function ConfirmModal({ usuario, submitting, onConfirm, onClose }: {
       <div className="px-6 py-5 flex flex-col gap-5">
         <div className="flex items-center gap-3 rounded-2xl border px-4 py-4"
           style={{ borderColor: "#fde68a", backgroundColor: "#fefce8" }}>
-          <div className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white flex-shrink-0"
-            style={{ backgroundColor: avatarColor(usuario.id) }}>
-            {initials(usuario.username)}
-          </div>
+          <UserAvatar usuario={usuario} size={40} />
           <div>
             <p className="text-sm font-semibold" style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}>{usuario.username}</p>
             <p className="text-xs" style={{ color: "#6b7280", fontFamily: "'Poppins', sans-serif" }}>{usuario.correo}</p>
