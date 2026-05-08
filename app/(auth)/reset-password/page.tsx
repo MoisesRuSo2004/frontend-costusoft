@@ -153,7 +153,7 @@ function ResetPasswordForm() {
             />
           </div>
           <p style={{ marginTop: 5, fontSize: 11, color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
-            El token está disponible en el correo de recuperación o en la base de datos (entorno de prueba).
+            Copia el token que recibiste en tu correo electrónico y pégalo aquí.
           </p>
         </div>
 

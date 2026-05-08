@@ -91,19 +91,19 @@ export default function RecuperarPasswordPage() {
               Si la dirección <strong>{correo}</strong> está registrada, recibirás un enlace de recuperación en los próximos minutos.
             </p>
 
-            {/* Nota de entorno de desarrollo */}
+            {/* Instrucción de producción */}
             <div className="w-full rounded-xl border px-4 py-3 text-left"
-              style={{ borderColor: "#fde68a", backgroundColor: "#fefce8" }}>
-              <p className="text-xs font-semibold" style={{ color: "#92400e", fontFamily: "'Poppins', sans-serif", marginBottom: 4 }}>
-                🔧 Entorno de prueba
+              style={{ borderColor: "#bbf7d0", backgroundColor: "#f0fdf4" }}>
+              <p className="text-xs font-semibold" style={{ color: "#166534", fontFamily: "'Poppins', sans-serif", marginBottom: 4 }}>
+                ✉️ Revisa tu bandeja de entrada
               </p>
-              <p className="text-xs" style={{ color: "#b45309", fontFamily: "'Poppins', sans-serif", lineHeight: 1.6 }}>
-                El token de recuperación está disponible en la base de datos. Cópialo y úsalo en la página de restablecimiento de contraseña.
+              <p className="text-xs" style={{ color: "#15803d", fontFamily: "'Poppins', sans-serif", lineHeight: 1.6 }}>
+                Te enviamos un correo con el enlace de recuperación. Si no lo ves en unos minutos, revisa la carpeta de spam o correo no deseado.
               </p>
               <Link href="/reset-password"
                 className="mt-2 inline-block text-xs font-semibold underline"
-                style={{ color: "#b45309" }}>
-                → Ir a restablecer contraseña
+                style={{ color: "#166534" }}>
+                → Ya tengo el token, restablecer contraseña
               </Link>
             </div>
 
