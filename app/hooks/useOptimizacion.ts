@@ -24,30 +24,26 @@ export function useOptimizacion() {
     }
   }, []);
 
-  const ejecutar = useCallback(
-    async (incluirDemanda = true) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await optimizacionService.optimizar(incluirDemanda);
-        setResultado(data);
-        return data;
-      } catch (e: unknown) {
-        const msg =
-          e instanceof Error ? e.message : "Error al ejecutar la optimización";
-        setError(msg);
-        return null;
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+  const ejecutar = useCallback(async (colegioId: number, incluirDemanda = true) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await optimizacionService.optimizar(colegioId, incluirDemanda);
+      setResultado(data);
+      return data;
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Error al ejecutar la optimización";
+      setError(msg);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const cargarHistorial = useCallback(async (limit = 20) => {
+  const cargarHistorial = useCallback(async (limit = 20, colegioId?: number) => {
     setLoadingHistorial(true);
     try {
-      const data = await optimizacionService.historial(limit);
+      const data = await optimizacionService.historial(limit, colegioId);
       setHistorial(data);
     } catch {
       setHistorial(null);

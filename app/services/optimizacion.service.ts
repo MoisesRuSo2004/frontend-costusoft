@@ -14,19 +14,19 @@ export const optimizacionService = {
     return apiFetch<boolean>(`${BASE}/status`);
   },
 
-  /** Ejecuta el modelo ILP y retorna el plan óptimo */
-  async optimizar(incluirDemanda = true): Promise<OptimizacionResponse> {
+  /** Ejecuta el modelo ILP para el colegio indicado */
+  async optimizar(colegioId: number, incluirDemanda = true): Promise<OptimizacionResponse> {
     return apiFetch<OptimizacionResponse>(
-      `${BASE}?incluirDemanda=${incluirDemanda}`,
+      `${BASE}?colegioId=${colegioId}&incluirDemanda=${incluirDemanda}`,
       { method: "POST" }
     );
   },
 
-  /** Historial de ejecuciones del optimizador */
-  async historial(limit = 20): Promise<HistorialOptimizacion> {
-    return apiFetch<HistorialOptimizacion>(
-      `${BASE}/historial?limit=${limit}`
-    );
+  /** Historial de ejecuciones — opcionalmente filtrado por colegio */
+  async historial(limit = 20, colegioId?: number): Promise<HistorialOptimizacion> {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (colegioId != null) params.set("colegioId", String(colegioId));
+    return apiFetch<HistorialOptimizacion>(`${BASE}/historial?${params}`);
   },
 
   /** Descarga el PDF de una ejecución y dispara el browser download */
