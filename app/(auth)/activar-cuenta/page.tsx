@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Eye, EyeOff, KeyRound, Lock, ShieldCheck } from "lucide-react";
+import { AlertCircle, CheckCircle2, Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
 import { seguridadService } from "@/app/services/seguridad.service";
 
 // ─── Spinner para Suspense ────────────────────────────────────────────────────
@@ -26,14 +26,16 @@ function ActivarCuentaForm() {
   const router = useRouter();
   const params = useSearchParams();
 
-  const [token, setToken]                   = useState(params.get("token") ?? "");
-  const [password, setPassword]             = useState("");
+  // Token leído silenciosamente del URL — nunca se muestra al usuario
+  const token = params.get("token") ?? "";
+
+  const [password, setPassword]               = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
-  const [showPass, setShowPass]             = useState(false);
-  const [showConfirm, setShowConfirm]       = useState(false);
-  const [loading, setLoading]               = useState(false);
-  const [error, setError]                   = useState("");
-  const [success, setSuccess]               = useState(false);
+  const [showPass, setShowPass]               = useState(false);
+  const [showConfirm, setShowConfirm]         = useState(false);
+  const [loading, setLoading]                 = useState(false);
+  const [error, setError]                     = useState("");
+  const [success, setSuccess]                 = useState(false);
 
   const FOCUS_STYLE = (color = "#0b3d91") => ({
     borderColor: color,
@@ -41,7 +43,6 @@ function ActivarCuentaForm() {
   });
 
   const validate = (): string => {
-    if (!token.trim()) return "El token de activación es obligatorio.";
     if (!password) return "La contraseña es obligatoria.";
     if (password.length < 8) return "La contraseña debe tener al menos 8 caracteres.";
     if (password !== passwordConfirm) return "Las contraseñas no coinciden.";
@@ -60,7 +61,7 @@ function ActivarCuentaForm() {
       setSuccess(true);
       setTimeout(() => router.push("/login"), 3500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Token inválido o expirado. Solicita uno nuevo.");
+      setError(err instanceof Error ? err.message : "Token inválido o expirado. Solicita uno nuevo al administrador.");
     } finally {
       setLoading(false);
     }
@@ -75,6 +76,37 @@ function ActivarCuentaForm() {
     boxSizing: "border-box",
   };
 
+  // ── Sin token en la URL — enlace inválido ─────────────────────────────────
+  if (!token) {
+    return (
+      <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto px-8 py-12">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center text-center gap-4"
+        >
+          <div className="flex h-20 w-20 items-center justify-center rounded-full"
+            style={{ backgroundColor: "#fef2f2", border: "2px solid #fca5a5" }}>
+            <AlertCircle size={40} style={{ color: "#dc2626" }} />
+          </div>
+          <h2 className="text-2xl font-semibold" style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}>
+            Enlace inválido
+          </h2>
+          <p className="text-sm" style={{ color: "#6b7280", fontFamily: "'Poppins', sans-serif", lineHeight: 1.7 }}>
+            Este enlace de activación no es válido o ya expiró.
+            Contacta al administrador para que te envíe un nuevo correo de activación.
+          </p>
+          <Link href="/login"
+            className="mt-2 rounded-xl px-6 py-2.5 text-sm font-semibold text-white"
+            style={{ backgroundColor: "#0b3d91", fontFamily: "'Poppins', sans-serif" }}>
+            Ir al login
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ── Éxito ─────────────────────────────────────────────────────────────────
   if (success) {
     return (
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto px-8 py-12">
@@ -106,6 +138,7 @@ function ActivarCuentaForm() {
     );
   }
 
+  // ── Formulario ────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto px-8 py-12">
       {/* Header */}
@@ -118,7 +151,7 @@ function ActivarCuentaForm() {
           Activar cuenta
         </h1>
         <p style={{ color: "#6b7280", fontSize: 14, fontFamily: "'Poppins', sans-serif" }}>
-          Ingresa el token que recibiste y define tu contraseña para activar tu cuenta.
+          Define tu contraseña para activar tu cuenta en Costusoft.
         </p>
       </motion.div>
 
@@ -126,29 +159,10 @@ function ActivarCuentaForm() {
       <motion.form onSubmit={handleSubmit} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-        {/* Token */}
-        <div>
-          <label style={{ display: "block", marginBottom: 6, fontSize: 13, fontWeight: 500, color: "#374151", fontFamily: "'Poppins', sans-serif" }}>
-            Token de activación <span style={{ color: "#ef4444" }}>*</span>
-          </label>
-          <div style={{ position: "relative" }}>
-            <KeyRound size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }} />
-            <input type="text" value={token} onChange={e => setToken(e.target.value)}
-              placeholder="Pega aquí el token recibido"
-              style={{ ...inputBase, paddingLeft: 38, fontFamily: "monospace", fontSize: 13 }}
-              onFocus={e => Object.assign(e.currentTarget.style, FOCUS_STYLE())}
-              onBlur={e => Object.assign(e.currentTarget.style, { borderColor: "#e5e7eb", boxShadow: "none" })}
-            />
-          </div>
-          <p style={{ marginTop: 5, fontSize: 11, color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
-            El token está disponible en el correo de activación o en la base de datos (entorno de prueba).
-          </p>
-        </div>
-
         {/* Nueva contraseña */}
         <div>
           <label style={{ display: "block", marginBottom: 6, fontSize: 13, fontWeight: 500, color: "#374151", fontFamily: "'Poppins', sans-serif" }}>
-            Nueva contraseña <span style={{ color: "#ef4444" }}>*</span>
+            Contraseña <span style={{ color: "#ef4444" }}>*</span>
           </label>
           <div style={{ position: "relative" }}>
             <Lock size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }} />
@@ -235,7 +249,6 @@ function ActivarCuentaForm() {
           }
         </button>
 
-        {/* Link volver */}
         <p style={{ textAlign: "center", fontSize: 13, color: "#9ca3af", fontFamily: "'Poppins', sans-serif" }}>
           ¿Ya tienes cuenta?{" "}
           <Link href="/login" style={{ color: "#0b3d91", fontWeight: 600, textDecoration: "none" }}>

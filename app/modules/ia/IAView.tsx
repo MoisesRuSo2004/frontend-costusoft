@@ -12,7 +12,9 @@ import {
   BrainCircuit,
   ClipboardList,
   Copy,
+  Cpu,
   FileText,
+  FlaskConical,
   Loader2,
   RefreshCw,
   Send,
@@ -108,6 +110,22 @@ const TIPOS: {
     color: "#e11d48",
     bg: "#fff1f2",
     desc: "Picos y consumos inusuales",
+  },
+  {
+    tipo: "ANALISIS_OPTIMIZACION",
+    label: "Optimización",
+    icon: Cpu,
+    color: "#0f766e",
+    bg: "#f0fdfa",
+    desc: "Plan de producción óptimo ILP",
+  },
+  {
+    tipo: "MODELO_MATEMATICO",
+    label: "Modelo matemático",
+    icon: FlaskConical,
+    color: "#6d28d9",
+    bg: "#f5f3ff",
+    desc: "Variables, restricciones y coeficientes del modelo ILP",
   },
 ];
 

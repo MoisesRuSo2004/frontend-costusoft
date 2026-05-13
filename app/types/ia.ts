@@ -9,7 +9,9 @@ export type TipoConsulta =
   | "ANALISIS_GENERAL"
   | "PREDICCION_RIESGO"
   | "ANALISIS_PROVEEDORES"
-  | "ANOMALIAS_CONSUMO";
+  | "ANOMALIAS_CONSUMO"
+  | "ANALISIS_OPTIMIZACION"
+  | "MODELO_MATEMATICO";
 
 // ── Requests ──────────────────────────────────────────────────────────────────
 

@@ -100,11 +100,6 @@ export default function RecuperarPasswordPage() {
               <p className="text-xs" style={{ color: "#15803d", fontFamily: "'Poppins', sans-serif", lineHeight: 1.6 }}>
                 Te enviamos un correo con el enlace de recuperación. Si no lo ves en unos minutos, revisa la carpeta de spam o correo no deseado.
               </p>
-              <Link href="/reset-password"
-                className="mt-2 inline-block text-xs font-semibold underline"
-                style={{ color: "#166534" }}>
-                → Ya tengo el token, restablecer contraseña
-              </Link>
             </div>
 
             <button onClick={() => { setSent(false); setCorreo(""); }}

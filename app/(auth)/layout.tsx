@@ -15,16 +15,107 @@ export default function AuthLayout({
 
       {/* ── LADO IZQUIERDO: Formulario ── */}
       <div className="relative flex flex-col w-full lg:w-1/2 min-h-screen lg:h-screen bg-white overflow-y-auto">
-        {/* Logo visible solo en móvil/tablet (panel derecho oculto) */}
-        <div className="flex justify-center pt-8 pb-2 lg:hidden">
-          <Image
-            src="/logo/logo-login.svg"
-            alt="CostuSoft"
-            width={160}
-            height={60}
-            className="object-contain"
-            priority
+
+        {/* ── Mobile header: domo animado + logo ── */}
+        <div className="lg:hidden relative w-full overflow-hidden flex-shrink-0" style={{ height: 210 }}>
+
+          {/* Domo navy — círculo grande centrado, la mitad superior oculta */}
+          <motion.div
+            aria-hidden="true"
+            className="absolute pointer-events-none select-none"
+            style={{
+              width: 420,
+              height: 420,
+              borderRadius: "50%",
+              background: "linear-gradient(150deg, #0d4fa8 0%, #0b3d91 45%, #072d6e 100%)",
+              top: -210,
+              left: "50%",
+              x: "-50%",
+              boxShadow: "0 20px 60px rgba(11,61,145,0.45), 0 6px 20px rgba(11,61,145,0.25)",
+            }}
+            animate={{ scale: [1, 1.022, 1] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          >
+            {/* Grid pattern dentro del domo */}
+            <svg className="absolute inset-0 w-full h-full opacity-[0.07]" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="dmgrid" width="36" height="36" patternUnits="userSpaceOnUse">
+                  <path d="M 36 0 L 0 0 0 36" fill="none" stroke="white" strokeWidth="0.8" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#dmgrid)" />
+            </svg>
+
+            {/* Glow verde interior */}
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute", inset: 0, borderRadius: "50%",
+                background: "radial-gradient(circle at 55% 72%, rgba(73,194,27,0.28) 0%, transparent 52%)",
+              }}
+            />
+
+            {/* Anillo borde interior */}
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute", inset: 6, borderRadius: "50%",
+                border: "1px solid rgba(255,255,255,0.09)",
+              }}
+            />
+          </motion.div>
+
+          {/* Partículas flotantes sobre el domo */}
+          {(
+            [
+              { size: 6, color: "rgba(73,194,27,0.7)",   top: 88,  x: "32%",  side: "left",  dy: -14, dur: 3.2, delay: 0.4 },
+              { size: 4, color: "rgba(255,255,255,0.35)", top: 110, x: "28%",  side: "right", dy: -9,  dur: 4.0, delay: 1.1 },
+              { size: 5, color: "rgba(73,194,27,0.45)",   top: 65,  x: "40%",  side: "right", dy: -11, dur: 3.6, delay: 0.0 },
+              { size: 3, color: "rgba(255,255,255,0.25)", top: 140, x: "44%",  side: "left",  dy: -7,  dur: 4.5, delay: 1.8 },
+            ] as const
+          ).map((p, i) => (
+            <motion.span
+              key={i}
+              aria-hidden="true"
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                width: p.size, height: p.size,
+                backgroundColor: p.color,
+                top: p.top,
+                [p.side]: p.x,
+              }}
+              animate={{ y: [0, p.dy, 0], opacity: [0.3, 1, 0.3] }}
+              transition={{ duration: p.dur, repeat: Infinity, delay: p.delay, ease: "easeInOut" }}
+            />
+          ))}
+
+          {/* Fade inferior — solo suaviza el borde sin tocar el logo */}
+          <div
+            aria-hidden="true"
+            className="absolute bottom-0 left-0 right-0 pointer-events-none z-20"
+            style={{
+              height: 60,
+              background: "linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.5) 50%, #ffffff 100%)",
+            }}
           />
+
+          {/* Logo — centrado sobre el domo, con entrada animada */}
+          <motion.div
+            className="absolute inset-x-0 bottom-10 flex justify-center z-10"
+            initial={{ opacity: 0, y: 14, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0,  scale: 1    }}
+            transition={{ duration: 0.75, delay: 0.25, ease: [0.23, 1, 0.32, 1] }}
+          >
+            <Image
+              src="/logo/logo-login.svg"
+              alt="CostuSoft Control"
+              width={170}
+              height={65}
+              className="object-contain"
+              style={{ filter: "drop-shadow(0 4px 14px rgba(73,194,27,0.35))" }}
+              priority
+            />
+          </motion.div>
         </div>
         {children}
       </div>
