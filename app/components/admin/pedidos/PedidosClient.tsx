@@ -27,7 +27,7 @@ import {
   X,
   XCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePedidos } from "@/app/hooks/usePedidos";
@@ -549,7 +549,7 @@ function PedidoListRow({
 // COMPONENTE PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════
 
-export default function PedidosClient() {
+export default function PedidosClient({ initialPedidoId }: { initialPedidoId?: number }) {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelMotivo, setCancelMotivo] = useState("");
@@ -616,6 +616,13 @@ export default function PedidosClient() {
     loadPedidoDetalle,
     loadHistorial,
   } = usePedidos();
+
+  // ── Deep-link: abrir detalle desde notificación (?pedidoId=X) ─────────
+  useEffect(() => {
+    if (!initialPedidoId) return;
+    void openViewModal({ id: initialPedidoId } as PedidoResponse);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPedidoId]);
 
   // ── Handlers de acciones ───────────────────────────────────────────────
 

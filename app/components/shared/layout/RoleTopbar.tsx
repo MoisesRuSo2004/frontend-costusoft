@@ -274,13 +274,17 @@ export default function RoleTopbar({
                           onClick={() => {
                             marcarLeida(item.id);
                             setBellOpen(false);
-                            const href =
-                              item.tipo === "pedido_institucion" || item.tipo === "pedido"
-                                ? "/admin/pedidos"
-                                : item.tipo === "solicitud_especial"
-                                ? "/admin/solicitudes-institucionales"
-                                : notifHref;
-                            router.push(href);
+                            if (item.tipo === "pedido_institucion" || item.tipo === "pedido") {
+                              const match = item.id.match(/(\d+)$/);
+                              const pid = match ? match[1] : null;
+                              router.push(pid ? `/admin/pedidos?pedidoId=${pid}` : "/admin/pedidos");
+                            } else {
+                              router.push(
+                                item.tipo === "solicitud_especial"
+                                  ? "/admin/solicitudes-institucionales"
+                                  : notifHref
+                              );
+                            }
                           }}
                           className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors"
                           style={{
