@@ -20,7 +20,10 @@ import type { DashboardData, MovimientoReciente } from "@/app/types/dashboard";
 
 function formatTime(date: Date | null) {
   if (!date) return "—";
-  return date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString("es-CO", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function formatDate(iso: string) {
@@ -48,11 +51,23 @@ function SkeletonCard() {
     >
       <div className="flex items-start justify-between">
         <div className="flex flex-col gap-3 flex-1">
-          <div className="h-3 w-24 rounded-full" style={{ backgroundColor: "#e5e7eb" }} />
-          <div className="h-8 w-16 rounded-full" style={{ backgroundColor: "#e5e7eb" }} />
-          <div className="h-2.5 w-32 rounded-full" style={{ backgroundColor: "#e5e7eb" }} />
+          <div
+            className="h-3 w-24 rounded-full"
+            style={{ backgroundColor: "#e5e7eb" }}
+          />
+          <div
+            className="h-8 w-16 rounded-full"
+            style={{ backgroundColor: "#e5e7eb" }}
+          />
+          <div
+            className="h-2.5 w-32 rounded-full"
+            style={{ backgroundColor: "#e5e7eb" }}
+          />
         </div>
-        <div className="h-11 w-11 rounded-2xl" style={{ backgroundColor: "#e5e7eb" }} />
+        <div
+          className="h-11 w-11 rounded-2xl"
+          style={{ backgroundColor: "#e5e7eb" }}
+        />
       </div>
     </div>
   );
@@ -94,19 +109,28 @@ function KpiCard({
         <div className="min-w-0">
           <p
             className="text-xs font-medium uppercase tracking-[0.12em]"
-            style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}
+            style={{
+              color: "#667085",
+              fontFamily: "var(--font-poppins), sans-serif",
+            }}
           >
             {title}
           </p>
           <p
             className="mt-2 text-3xl font-bold"
-            style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}
+            style={{
+              color: "#101828",
+              fontFamily: "var(--font-poppins), sans-serif",
+            }}
           >
             {value}
           </p>
           <p
             className="mt-1.5 text-xs leading-relaxed"
-            style={{ color: "#98a2b3", fontFamily: "var(--font-poppins), sans-serif" }}
+            style={{
+              color: "#98a2b3",
+              fontFamily: "var(--font-poppins), sans-serif",
+            }}
           >
             {subtitle}
           </p>
@@ -233,7 +257,13 @@ function MovimientosChart({
 
 // ─── Movimiento Item ──────────────────────────────────────────────────────────
 
-function MovimientoItem({ mov, isLast }: { mov: MovimientoReciente; isLast: boolean }) {
+function MovimientoItem({
+  mov,
+  isLast,
+}: {
+  mov: MovimientoReciente;
+  isLast: boolean;
+}) {
   const isEntrada = mov.tipo === "ENTRADA";
   const color = isEntrada ? "#0b3d91" : "#49c21b";
   const bgColor = isEntrada ? "rgba(11,61,145,0.08)" : "rgba(73,194,27,0.10)";
@@ -250,7 +280,10 @@ function MovimientoItem({ mov, isLast }: { mov: MovimientoReciente; isLast: bool
           <Icon size={14} />
         </div>
         {!isLast && (
-          <div className="mt-1 w-px flex-1" style={{ backgroundColor: "#eaecf0", minHeight: 16 }} />
+          <div
+            className="mt-1 w-px flex-1"
+            style={{ backgroundColor: "#eaecf0", minHeight: 16 }}
+          />
         )}
       </div>
 
@@ -265,20 +298,29 @@ function MovimientoItem({ mov, isLast }: { mov: MovimientoReciente; isLast: bool
           </span>
           <span
             className="text-[10px]"
-            style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}
+            style={{
+              color: "#9ca3af",
+              fontFamily: "var(--font-poppins), sans-serif",
+            }}
           >
             {formatDate(mov.fecha)}
           </span>
         </div>
         <p
           className="mt-1 text-sm leading-relaxed"
-          style={{ color: "#374151", fontFamily: "var(--font-poppins), sans-serif" }}
+          style={{
+            color: "#374151",
+            fontFamily: "var(--font-poppins), sans-serif",
+          }}
         >
           {mov.descripcion}
         </p>
         <p
           className="mt-0.5 text-[11px]"
-          style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}
+          style={{
+            color: "#9ca3af",
+            fontFamily: "var(--font-poppins), sans-serif",
+          }}
         >
           {mov.totalItems} ítem{mov.totalItems !== 1 ? "s" : ""}
         </p>
@@ -291,7 +333,10 @@ function MovimientoItem({ mov, isLast }: { mov: MovimientoReciente; isLast: bool
 
 export default function AdminDashboard({ data }: { data: DashboardData }) {
   const stockCritico = data.insumosConStockBajo + data.insumosConStockCero;
-  const totalUniformes = Object.values(data.uniformesPorColegio).reduce((a, b) => a + b, 0);
+  const totalUniformes = Object.values(data.uniformesPorColegio).reduce(
+    (a, b) => a + b,
+    0,
+  );
 
   const kpiPrimary = [
     {
@@ -360,7 +405,6 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
 
   return (
     <section className="flex flex-col gap-6 pb-10">
-
       {/* ── Alerta de stock ───────────────────────────────────────────── */}
       {stockCritico === 0 ? (
         <div
@@ -373,9 +417,13 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
           <CheckCircle2 size={18} style={{ color: "#16a34a", flexShrink: 0 }} />
           <p
             className="text-sm font-medium"
-            style={{ color: "#15803d", fontFamily: "var(--font-poppins), sans-serif" }}
+            style={{
+              color: "#15803d",
+              fontFamily: "var(--font-poppins), sans-serif",
+            }}
           >
-            Todos los insumos tienen stock en niveles normales. Sin alertas activas.
+            Todos los insumos tienen stock en niveles normales. Sin alertas
+            activas.
           </p>
         </div>
       ) : (
@@ -383,16 +431,86 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
           className="flex items-center gap-3 rounded-2xl border px-5 py-3.5"
           style={{ borderColor: "#fecaca", backgroundColor: "#fef2f2" }}
         >
-          <AlertTriangle size={18} style={{ color: "#dc2626", flexShrink: 0 }} />
+          <AlertTriangle
+            size={18}
+            style={{ color: "#dc2626", flexShrink: 0 }}
+          />
           <p
             className="text-sm font-medium"
-            style={{ color: "#b42318", fontFamily: "var(--font-poppins), sans-serif" }}
+            style={{
+              color: "#b42318",
+              fontFamily: "var(--font-poppins), sans-serif",
+            }}
           >
             Atención: {data.insumosConStockCero} insumo(s) sin stock y{" "}
-            {data.insumosConStockBajo} por debajo del mínimo. Revisa el inventario.
+            {data.insumosConStockBajo} por debajo del mínimo. Revisa el
+            inventario.
           </p>
         </div>
       )}
+
+      {/* ── Power BI Analytics ──────────────────────────────────────── */}
+      <div
+        className="rounded-3xl border overflow-hidden"
+        style={{
+          borderColor: "#eaecf0",
+          backgroundColor: "#ffffff",
+          boxShadow: "0 2px 20px rgba(15,23,42,0.05)",
+        }}
+      >
+        <div
+          className="px-6 py-4 border-b flex items-center gap-3"
+          style={{ borderColor: "#f2f4f7" }}
+        >
+          <div
+            className="h-2 w-2 rounded-full"
+            style={{ backgroundColor: "#49c21b" }}
+          />
+          <h2
+            className="text-sm font-semibold"
+            style={{
+              color: "#101828",
+              fontFamily: "var(--font-poppins), sans-serif",
+            }}
+          >
+            Analytics — Power BI
+          </h2>
+          <span
+            className="ml-auto text-xs px-2.5 py-1 rounded-full font-medium"
+            style={{
+              backgroundColor: "rgba(11,61,145,0.07)",
+              color: "#0b3d91",
+              fontFamily: "var(--font-poppins), sans-serif",
+            }}
+          >
+            Tiempo real
+          </span>
+        </div>
+        {/* Contenedor responsivo: mantiene aspect-ratio 600/373.5 */}
+        <div
+          style={{
+            position: "relative",
+            paddingBottom: "62.25%",
+            height: 0,
+            overflow: "hidden",
+          }}
+        >
+          <iframe
+            title="ConstuSoft Control 2"
+            src="https://app.powerbi.com/view?r=eyJrIjoiOTJmZTgxYTktYTU3OS00ZjNmLTgzOGYtODA1MWFmODQxYmY5IiwidCI6IjlkMTJiZjNmLWU0ZjYtNDdhYi05MTJmLTFhMmYwZmM0OGFhNCIsImMiOjR9"
+            frameBorder={0}
+            allowFullScreen
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              border: "none",
+            }}
+          />
+        </div>
+      </div>
 
       {/* ── KPIs primarios ───────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
@@ -410,7 +528,6 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
 
       {/* ── Gráfico + Movimientos recientes ──────────────────────────── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-
         {/* Gráfico de barras */}
         <div
           className="col-span-1 rounded-3xl border p-6 lg:col-span-3"
@@ -424,13 +541,19 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
             <div>
               <h2
                 className="text-base font-semibold"
-                style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}
+                style={{
+                  color: "#101828",
+                  fontFamily: "var(--font-poppins), sans-serif",
+                }}
               >
                 Movimientos últimos 7 meses
               </h2>
               <p
                 className="mt-0.5 text-xs"
-                style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}
+                style={{
+                  color: "#9ca3af",
+                  fontFamily: "var(--font-poppins), sans-serif",
+                }}
               >
                 Entradas vs Salidas del almacén por mes
               </p>
@@ -438,12 +561,34 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
             {/* Leyenda */}
             <div className="flex items-center gap-4 flex-shrink-0">
               <div className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "#0b3d91" }} />
-                <span className="text-xs" style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>Entradas</span>
+                <span
+                  className="h-2.5 w-2.5 rounded-sm"
+                  style={{ backgroundColor: "#0b3d91" }}
+                />
+                <span
+                  className="text-xs"
+                  style={{
+                    color: "#667085",
+                    fontFamily: "var(--font-poppins), sans-serif",
+                  }}
+                >
+                  Entradas
+                </span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "#49c21b" }} />
-                <span className="text-xs" style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}>Salidas</span>
+                <span
+                  className="h-2.5 w-2.5 rounded-sm"
+                  style={{ backgroundColor: "#49c21b" }}
+                />
+                <span
+                  className="text-xs"
+                  style={{
+                    color: "#667085",
+                    fontFamily: "var(--font-poppins), sans-serif",
+                  }}
+                >
+                  Salidas
+                </span>
               </div>
             </div>
           </div>
@@ -465,7 +610,10 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
         >
           <h2
             className="mb-5 text-base font-semibold"
-            style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}
+            style={{
+              color: "#101828",
+              fontFamily: "var(--font-poppins), sans-serif",
+            }}
           >
             Actividad reciente
           </h2>
@@ -475,7 +623,10 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
               <Package size={28} style={{ color: "#d1d5db" }} />
               <p
                 className="text-sm"
-                style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}
+                style={{
+                  color: "#9ca3af",
+                  fontFamily: "var(--font-poppins), sans-serif",
+                }}
               >
                 Sin movimientos registrados
               </p>
@@ -487,7 +638,9 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
                   <MovimientoItem
                     key={idx}
                     mov={mov}
-                    isLast={idx === Math.min(1, data.ultimosMovimientos.length - 1)}
+                    isLast={
+                      idx === Math.min(1, data.ultimosMovimientos.length - 1)
+                    }
                   />
                 ))}
               </div>
@@ -499,7 +652,10 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
                 >
                   <span
                     className="text-xs"
-                    style={{ color: "#667085", fontFamily: "var(--font-poppins), sans-serif" }}
+                    style={{
+                      color: "#667085",
+                      fontFamily: "var(--font-poppins), sans-serif",
+                    }}
                   >
                     Ver más actividad:
                   </span>
@@ -548,43 +704,64 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
         <div className="mb-5">
           <h2
             className="text-base font-semibold"
-            style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}
+            style={{
+              color: "#101828",
+              fontFamily: "var(--font-poppins), sans-serif",
+            }}
           >
             Uniformes por colegio
           </h2>
           <p
             className="mt-0.5 text-xs"
-            style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}
+            style={{
+              color: "#9ca3af",
+              fontFamily: "var(--font-poppins), sans-serif",
+            }}
           >
             Distribución de referencias de uniforme registradas por institución
           </p>
         </div>
 
         {Object.keys(data.uniformesPorColegio).length === 0 ? (
-          <p className="text-sm" style={{ color: "#9ca3af" }}>Sin datos disponibles.</p>
+          <p className="text-sm" style={{ color: "#9ca3af" }}>
+            Sin datos disponibles.
+          </p>
         ) : (
           <div className="flex flex-col gap-4">
             {Object.entries(data.uniformesPorColegio).map(([nombre, count]) => {
-              const pct = totalUniformes === 0 ? 0 : Math.round((count / totalUniformes) * 100);
+              const pct =
+                totalUniformes === 0
+                  ? 0
+                  : Math.round((count / totalUniformes) * 100);
               return (
                 <div key={nombre}>
                   <div className="mb-1.5 flex items-center justify-between">
                     <span
                       className="text-sm font-medium truncate"
-                      style={{ color: "#374151", fontFamily: "var(--font-poppins), sans-serif", maxWidth: "70%" }}
+                      style={{
+                        color: "#374151",
+                        fontFamily: "var(--font-poppins), sans-serif",
+                        maxWidth: "70%",
+                      }}
                     >
                       {nombre}
                     </span>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span
                         className="text-xs font-semibold"
-                        style={{ color: "#101828", fontFamily: "var(--font-poppins), sans-serif" }}
+                        style={{
+                          color: "#101828",
+                          fontFamily: "var(--font-poppins), sans-serif",
+                        }}
                       >
                         {count} uniforme{count !== 1 ? "s" : ""}
                       </span>
                       <span
                         className="text-xs"
-                        style={{ color: "#9ca3af", fontFamily: "var(--font-poppins), sans-serif" }}
+                        style={{
+                          color: "#9ca3af",
+                          fontFamily: "var(--font-poppins), sans-serif",
+                        }}
                       >
                         {pct}%
                       </span>
@@ -598,7 +775,8 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
                       className="h-full rounded-full transition-all duration-700"
                       style={{
                         width: `${pct}%`,
-                        background: "linear-gradient(90deg, #0b3d91 0%, #49c21b 100%)",
+                        background:
+                          "linear-gradient(90deg, #0b3d91 0%, #49c21b 100%)",
                         minWidth: count > 0 ? "8px" : "0",
                       }}
                     />

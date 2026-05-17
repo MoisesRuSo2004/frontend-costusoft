@@ -2,12 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   typescript: {
-    // Los errores de tipo no bloquean el build en producción.
-    // Corregir localmente con: npx tsc --noEmit
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
+  turbopack: {
+    // Ancla Turbopack a este directorio para que no suba al package-lock.json
+    // del monorepo raíz y resuelva tailwindcss desde el node_modules correcto.
+    root: __dirname,
   },
 };
 
