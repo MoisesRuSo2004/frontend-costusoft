@@ -12,7 +12,7 @@ import RoleSidebar, { type SidebarNavGroup } from "@/app/components/shared/layou
 import { useNotificaciones } from "@/app/context/NotificacionesContext";
 
 export default function BodegaSidebar() {
-  const { total, pedidosConfirmadosCount } = useNotificaciones();
+  const { colaCount, pedidosConfirmadosCount } = useNotificaciones();
 
   const NAV: SidebarNavGroup[] = [
     // 1 — vista general y cola de trabajo activa
@@ -23,7 +23,7 @@ export default function BodegaSidebar() {
           label: "Dashboard",
           href: "/bodega",
           icon: LayoutDashboard,
-          badge: total > 0 ? total : undefined,
+          badge: colaCount > 0 ? colaCount : undefined,
         },
       ],
     },
@@ -39,12 +39,12 @@ export default function BodegaSidebar() {
         },
       ],
     },
-    // 3 — accesos rápidos a filtros de la cola
+    // 3 — accesos rápidos a la cola de trabajo
     {
       heading: "Cola de trabajo",
       items: [
-        { label: "Entradas pendientes", href: "/bodega", icon: ArrowDownToLine },
-        { label: "Salidas pendientes",  href: "/bodega", icon: ArrowUpFromLine },
+        { label: "Entradas pendientes", href: "/bodega/cola?tab=entradas", icon: ArrowDownToLine },
+        { label: "Salidas pendientes",  href: "/bodega/cola?tab=salidas",  icon: ArrowUpFromLine },
       ],
     },
     // 3 — consulta de stock para validar disponibilidad física

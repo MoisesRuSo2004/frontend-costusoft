@@ -6,6 +6,7 @@ import { useNotificaciones } from "@/app/context/NotificacionesContext";
 const PAGE_TITLES: Record<string, string> = {
   "/bodega":          "Dashboard",
   "/bodega/pedidos":  "Pedidos de Producción",
+  "/bodega/cola":     "Cola de Trabajo",
   "/bodega/perfil":   "Mi Perfil",
   "/bodega/ia":       "Asistente IA",
 };
