@@ -14,7 +14,7 @@ import { solicitudEspecialService } from "@/app/services/solicitudEspecialServic
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
-export type NotifTipo = "pedido" | "pedido_institucion" | "entrada" | "salida" | "solicitud_especial";
+export type NotifTipo = "pedido" | "pedido_institucion" | "pedido_produccion" | "entrada" | "salida" | "solicitud_especial";
 
 export interface NotifItem {
   id: string;
@@ -32,6 +32,8 @@ interface NotificacionesCtxValue {
   solicitudesCount: number;
   /** Pedidos CALCULADO + Entradas PENDIENTE + Salidas PENDIENTE (bandeja /solicitudes) */
   bandejaSolicitudesCount: number;
+  /** Pedidos CONFIRMADO esperando que BODEGA inicie producción */
+  pedidosConfirmadosCount: number;
   loading: boolean;
   refetch: () => void;
   /** IDs de notificaciones ya leídas */
@@ -50,6 +52,7 @@ const NotificacionesCtx = createContext<NotificacionesCtxValue>({
   pedidosCount: 0,
   solicitudesCount: 0,
   bandejaSolicitudesCount: 0,
+  pedidosConfirmadosCount: 0,
   loading: false,
   refetch: () => {},
   leidasIds: new Set(),
@@ -87,6 +90,7 @@ export function NotificacionesProvider({ children }: { children: React.ReactNode
   const [pedidosCount, setPedidosCount] = useState(0);
   const [solicitudesCount, setSolicitudesCount] = useState(0);
   const [bandejaSolicitudesCount, setBandejaSolicitudesCount] = useState(0);
+  const [pedidosConfirmadosCount, setPedidosConfirmadosCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [leidasIds, setLeidasIds] = useState<Set<string>>(() => {
     if (typeof window === "undefined") return new Set();
@@ -117,11 +121,12 @@ export function NotificacionesProvider({ children }: { children: React.ReactNode
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [pedidosCalculados, pedidosBorrador, entradas, salidas, solicitudesEspeciales] = await Promise.allSettled([
-        pedidoService.listarPorEstado("CALCULADO", { size: 5 }),
-        pedidoService.listarPorEstado("BORRADOR",  { size: 5 }),
+      const [pedidosCalculados, pedidosBorrador, pedidosConfirmados, entradas, salidas, solicitudesEspeciales] = await Promise.allSettled([
+        pedidoService.listarPorEstado("CALCULADO",  { size: 5 }),
+        pedidoService.listarPorEstado("BORRADOR",   { size: 5 }),
+        pedidoService.listarPorEstado("CONFIRMADO", { size: 5 }),
         entradaService.listarPorEstado("PENDIENTE", { size: 5 }),
-        salidaService.listarPorEstado("PENDIENTE", { size: 5 }),
+        salidaService.listarPorEstado("PENDIENTE",  { size: 5 }),
         solicitudEspecialService.listarPorEstado("PENDIENTE", { size: 5 }),
       ]);
 
@@ -148,6 +153,18 @@ export function NotificacionesProvider({ children }: { children: React.ReactNode
             tipo: "pedido",
             titulo: `Pedido ${p.numeroPedido}`,
             subtitulo: `${p.colegio?.nombre ?? "Sin colegio"} · Requiere confirmación`,
+          });
+        });
+      }
+
+      if (pedidosConfirmados.status === "fulfilled") {
+        count += pedidosConfirmados.value.totalElements;
+        pedidosConfirmados.value.content.slice(0, 3).forEach((p) => {
+          notifs.push({
+            id: `pedido-confirmado-${p.id}`,
+            tipo: "pedido_produccion",
+            titulo: `Pedido listo para producción`,
+            subtitulo: `${p.numeroPedido} · ${p.colegio?.nombre ?? "Sin colegio"}`,
           });
         });
       }
@@ -202,11 +219,15 @@ export function NotificacionesProvider({ children }: { children: React.ReactNode
         (entradas.status === "fulfilled" ? entradas.value.totalElements : 0) +
         (salidas.status === "fulfilled" ? salidas.value.totalElements : 0);
 
+      const newPedidosConfirmadosCount =
+        pedidosConfirmados.status === "fulfilled" ? pedidosConfirmados.value.totalElements : 0;
+
       setItems(notifs);
       setTotal(count);
       setPedidosCount(newPedidosCount);
       setSolicitudesCount(newSolicitudesCount);
       setBandejaSolicitudesCount(newBandejaSolicitudesCount);
+      setPedidosConfirmadosCount(newPedidosConfirmadosCount);
     } catch {
       // falla silenciosa
     } finally {
@@ -225,7 +246,7 @@ export function NotificacionesProvider({ children }: { children: React.ReactNode
   return (
     <NotificacionesCtx.Provider value={{
       items, total, pedidosCount, solicitudesCount, bandejaSolicitudesCount,
-      loading, refetch: fetchAll,
+      pedidosConfirmadosCount, loading, refetch: fetchAll,
       leidasIds, unreadCount, marcarLeida, marcarTodasLeidas,
     }}>
       {children}

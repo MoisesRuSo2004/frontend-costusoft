@@ -49,6 +49,7 @@ const ROLE_LABELS: Record<string, string> = {
 const NOTIF_CONFIG = {
   pedido:             { color: "#1d4ed8", bg: "#eff6ff",  icon: ShoppingCart,    label: "Pedido"       },
   pedido_institucion: { color: "#6366f1", bg: "#eef2ff",  icon: Building2,       label: "Institución"  },
+  pedido_produccion:  { color: "#15803d", bg: "#f0fdf4",  icon: ShoppingCart,    label: "Producción"   },
   entrada:            { color: "#16a34a", bg: "#f0fdf4",  icon: ArrowDownToLine, label: "Entrada"      },
   salida:             { color: "#d97706", bg: "#fef3c7",  icon: ArrowUpFromLine, label: "Salida"       },
   solicitud_especial: { color: "#7c3aed", bg: "#f5f3ff",  icon: MessageSquare,   label: "Solicitud"    },
@@ -274,10 +275,15 @@ export default function RoleTopbar({
                           onClick={() => {
                             marcarLeida(item.id);
                             setBellOpen(false);
+                            const match = item.id.match(/(\d+)$/);
+                            const pid = match ? match[1] : null;
                             if (item.tipo === "pedido_institucion" || item.tipo === "pedido") {
-                              const match = item.id.match(/(\d+)$/);
-                              const pid = match ? match[1] : null;
                               router.push(pid ? `/admin/pedidos?pedidoId=${pid}` : "/admin/pedidos");
+                            } else if (item.tipo === "pedido_produccion") {
+                              // BODEGA va a su página; ADMIN va al panel de admin
+                              const isAdmin = notifHref.startsWith("/admin") || notifHref === "/solicitudes";
+                              const base = isAdmin ? "/admin/pedidos" : "/bodega/pedidos";
+                              router.push(pid ? `${base}?pedidoId=${pid}` : base);
                             } else {
                               router.push(
                                 item.tipo === "solicitud_especial"

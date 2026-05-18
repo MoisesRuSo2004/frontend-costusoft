@@ -90,15 +90,12 @@ export function usePedidos() {
     setState((s) => ({ ...s, loading: true, error: null }));
 
     try {
-      let response: PageData<PedidoResponse>;
-
-      if (currentFiltros.estado) {
-        response = await pedidoService.listarPorEstado(currentFiltros.estado, { page, size: PAGE_SIZE });
-      } else if (currentFiltros.colegioId) {
-        response = await pedidoService.listarPorColegio(currentFiltros.colegioId, { page, size: PAGE_SIZE });
-      } else {
-        response = await pedidoService.listar({ page, size: PAGE_SIZE });
-      }
+      const response = await pedidoService.listar({
+        page,
+        size: PAGE_SIZE,
+        estado:    currentFiltros.estado,
+        colegioId: currentFiltros.colegioId,
+      });
 
       setState({
         pedidos: response.content,

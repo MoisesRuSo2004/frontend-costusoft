@@ -6,12 +6,13 @@ import {
   BrainCircuit,
   LayoutDashboard,
   Package,
+  ClipboardList,
 } from "lucide-react";
 import RoleSidebar, { type SidebarNavGroup } from "@/app/components/shared/layout/RoleSidebar";
 import { useNotificaciones } from "@/app/context/NotificacionesContext";
 
 export default function BodegaSidebar() {
-  const { total } = useNotificaciones();
+  const { total, pedidosConfirmadosCount } = useNotificaciones();
 
   const NAV: SidebarNavGroup[] = [
     // 1 — vista general y cola de trabajo activa
@@ -26,7 +27,19 @@ export default function BodegaSidebar() {
         },
       ],
     },
-    // 2 — accesos rápidos a filtros de la cola
+    // 2 — pedidos asignados a bodega
+    {
+      heading: "Producción",
+      items: [
+        {
+          label: "Pedidos",
+          href: "/bodega/pedidos",
+          icon: ClipboardList,
+          badge: pedidosConfirmadosCount > 0 ? pedidosConfirmadosCount : undefined,
+        },
+      ],
+    },
+    // 3 — accesos rápidos a filtros de la cola
     {
       heading: "Cola de trabajo",
       items: [

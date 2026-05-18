@@ -65,14 +65,14 @@ export const pedidoService = {
   async listar(params?: {
     page?: number;
     size?: number;
-    sortBy?: string;
-    sortDir?: "asc" | "desc";
+    estado?: string;
+    colegioId?: number;
   }): Promise<PageData<PedidoResponse>> {
     const q = buildQuery({
       page: params?.page ?? 0,
       size: params?.size ?? 10,
-      sortBy: params?.sortBy ?? "createdAt",
-      sortDir: params?.sortDir ?? "desc",
+      ...(params?.estado    && { estado:    params.estado }),
+      ...(params?.colegioId && { colegioId: params.colegioId }),
     });
     return apiFetch<PageData<PedidoResponse>>(`${BASE}${q}`);
   },
