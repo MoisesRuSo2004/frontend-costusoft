@@ -29,7 +29,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className={poppins.variable}>
-      <body className={`${poppins.className} antialiased`}>
+      {/* Extensiones del navegador (p. ej. ColorZilla: cz-shortcut-listen) agregan
+          atributos a <body> antes de que cargue React. Solo se ignoran las
+          diferencias de atributos de esta etiqueta, no las de su contenido. */}
+      <body className={`${poppins.className} antialiased`} suppressHydrationWarning>
         <AuthProvider>
           <SessionTimeoutManager />
           {children}
