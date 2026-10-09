@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import PrediccionClient from "@/app/components/admin/prediccion/PrediccionClient";
+import MineriaClient from "@/app/components/admin/mineria/MineriaClient";
 
 export const metadata: Metadata = {
-  title: "Predicción de Insumos",
+  title: "Minería de datos",
 };
 
-export default function PrediccionPage() {
-  return <PrediccionClient />;
+export default function MineriaPage() {
+  return <MineriaClient />;
 }

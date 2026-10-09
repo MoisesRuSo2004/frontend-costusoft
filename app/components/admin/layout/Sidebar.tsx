@@ -55,7 +55,7 @@ export default function Sidebar() {
       items: [
         { label: "Calculadora",   href: "/admin/calculadora", icon: Calculator },
         { label: "Reportes",      href: "/reporte",            icon: BarChart2 },
-        { label: "Prediccion",    href: "/prediccion",         icon: TrendingUp },
+        { label: "Minería de datos", href: "/prediccion",      icon: TrendingUp },
         { label: "Optimizacion",  href: "/optimizacion",       icon: Calculator },
         { label: "Asistente IA",  href: "/admin/ia",           icon: BrainCircuit },
       ],

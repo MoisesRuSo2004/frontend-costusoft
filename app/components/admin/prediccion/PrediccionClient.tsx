@@ -61,7 +61,12 @@ function diasLabel(dias: number | null | undefined): string {
 // COMPONENTE PRINCIPAL
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function PrediccionClient() {
+/**
+ * Riesgo de agotamiento de todos los insumos (Prophet + XGBoost).
+ * Con `embebido` se muestra dentro de "Minería de datos": sin el título
+ * propio, solo con sus acciones (estado del servicio, reentrenar, actualizar).
+ */
+export default function PrediccionClient({ embebido = false }: { embebido?: boolean } = {}) {
   const { user } = useAuth();
   const { data, loading, error, servicioActivo, recargar } = usePrediccionMasiva();
   const individual = usePrediccionIndividual();
@@ -101,9 +106,10 @@ export default function PrediccionClient() {
     <div className="flex flex-col gap-6 pb-12">
 
       {/* ── HEADER ─────────────────────────────────────────────────────── */}
-      <div className="rounded-[28px] border px-6 py-5"
-        style={{ borderColor: "#dbe4ff", background: "linear-gradient(135deg, rgba(11,61,145,0.07) 0%, rgba(139,92,246,0.07) 100%)" }}>
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className={embebido ? "" : "rounded-[28px] border px-6 py-5"}
+        style={embebido ? undefined : { borderColor: "#dbe4ff", background: "linear-gradient(135deg, rgba(11,61,145,0.07) 0%, rgba(139,92,246,0.07) 100%)" }}>
+        <div className={`flex flex-wrap items-center gap-4 ${embebido ? "justify-end" : "justify-between"}`}>
+          {!embebido && (
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl"
               style={{ backgroundColor: "rgba(139,92,246,0.12)" }}>
@@ -118,6 +124,7 @@ export default function PrediccionClient() {
               </p>
             </div>
           </div>
+          )}
 
           <div className="flex items-center gap-2 flex-wrap">
             {/* Indicador de estado del servicio */}
