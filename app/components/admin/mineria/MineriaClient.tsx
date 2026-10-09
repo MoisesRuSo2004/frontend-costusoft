@@ -2,19 +2,17 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Brain, ChartLine, Radar, ShieldAlert } from "lucide-react";
+import { Brain, Radar, ShieldAlert } from "lucide-react";
 import AnomaliasMovimientos from "./AnomaliasMovimientos";
-import PronosticoDinamico from "./PronosticoDinamico";
 import PrediccionClient from "@/app/components/admin/prediccion/PrediccionClient";
 
 const FUENTE = "'Poppins', sans-serif";
 
-type Pestana = "pronostico" | "anomalias" | "riesgo";
+type Pestana = "riesgo" | "anomalias";
 
 const PESTANAS: { id: Pestana; etiqueta: string; detalle: string; icono: React.ReactNode }[] = [
-  { id: "pronostico", etiqueta: "Pronóstico dinámico", detalle: "Elige qué predecir y simula pedidos", icono: <ChartLine size={16} /> },
-  { id: "anomalias", etiqueta: "Anomalías", detalle: "Movimientos fuera de lo habitual", icono: <Radar size={16} /> },
   { id: "riesgo", etiqueta: "Riesgo de agotamiento", detalle: "Todos los insumos · Prophet + XGBoost", icono: <ShieldAlert size={16} /> },
+  { id: "anomalias", etiqueta: "Anomalías", detalle: "Movimientos fuera de lo habitual", icono: <Radar size={16} /> },
 ];
 
 /**
@@ -22,11 +20,11 @@ const PESTANAS: { id: Pestana; etiqueta: string; detalle: string; icono: React.R
  * aprendizaje automático, calculado por el microservicio Python.
  */
 export default function MineriaClient() {
-  const [pestana, setPestana] = useState<Pestana>("pronostico");
+  const [pestana, setPestana] = useState<Pestana>("riesgo");
   // Cada pestaña se monta al visitarla por primera vez y luego solo se oculta:
   // se conserva lo que el usuario eligió y la tabla de riesgo (pesada) no se
   // carga hasta que alguien la abre.
-  const [visitadas, setVisitadas] = useState<Set<Pestana>>(() => new Set(["pronostico"]));
+  const [visitadas, setVisitadas] = useState<Set<Pestana>>(() => new Set(["riesgo"]));
 
   const abrir = (id: Pestana) => {
     setPestana(id);
@@ -44,7 +42,7 @@ export default function MineriaClient() {
           <div>
             <h1 className="text-xl font-semibold" style={{ color: "#101828", fontFamily: FUENTE }}>Minería de datos</h1>
             <p className="mt-0.5 text-sm" style={{ color: "#667085", fontFamily: FUENTE }}>
-              Pronóstico, anomalías y riesgo de agotamiento a partir del historial de movimientos
+              Riesgo de agotamiento y anomalías a partir del historial de movimientos
             </p>
           </div>
         </div>
@@ -76,7 +74,6 @@ export default function MineriaClient() {
         <motion.div key={p.id} role="tabpanel" hidden={pestana !== p.id}
           initial={false} animate={pestana === p.id ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
           transition={{ duration: 0.18 }}>
-          {p.id === "pronostico" && <PronosticoDinamico />}
           {p.id === "anomalias" && <AnomaliasMovimientos />}
           {p.id === "riesgo" && <PrediccionClient embebido />}
         </motion.div>
