@@ -1,5 +1,10 @@
 import { apiFetch } from "@/app/lib/api";
-import type { PronosticoRequest, PronosticoResponse } from "@/app/types/mineria";
+import type {
+  AnomaliasRequest,
+  AnomaliasResponse,
+  PronosticoRequest,
+  PronosticoResponse,
+} from "@/app/types/mineria";
 
 const BASE = "/api/mineria";
 
@@ -17,6 +22,19 @@ export const mineriaService = {
    */
   async pronostico(solicitud: PronosticoRequest): Promise<PronosticoResponse> {
     return apiFetch<PronosticoResponse>(`${BASE}/pronostico`, {
+      method: "POST",
+      body: JSON.stringify(solicitud),
+    });
+  },
+
+  /**
+   * Movimientos que se alejan de lo habitual para su insumo, con estadística
+   * robusta, Isolation Forest y LOF, más la validación del detector.
+   *
+   * POST /api/mineria/anomalias
+   */
+  async anomalias(solicitud: AnomaliasRequest): Promise<AnomaliasResponse> {
+    return apiFetch<AnomaliasResponse>(`${BASE}/anomalias`, {
       method: "POST",
       body: JSON.stringify(solicitud),
     });

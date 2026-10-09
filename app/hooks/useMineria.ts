@@ -3,7 +3,12 @@ import { mineriaService } from "@/app/services/mineria.service";
 import { insumoService } from "@/app/services/insumo.service";
 import { colegiosService } from "@/app/services/colegios.service";
 import { uniformeService } from "@/app/services/uniforme.service";
-import type { PronosticoRequest, PronosticoResponse } from "@/app/types/mineria";
+import type {
+  AnomaliasRequest,
+  AnomaliasResponse,
+  PronosticoRequest,
+  PronosticoResponse,
+} from "@/app/types/mineria";
 import type { InsumoResponse } from "@/app/types/insumo";
 import type { ColegioResponse } from "@/app/types/colegio";
 import type { UniformeResponse } from "@/app/types/uniforme";
@@ -41,6 +46,30 @@ export function usePronostico() {
   }, []);
 
   return { resultado, calculando, error, calcular };
+}
+
+/** Detección de anomalías. Ignora respuestas viejas si se pide otro análisis antes. */
+export function useAnomalias() {
+  const [resultado, setResultado] = useState<AnomaliasResponse | null>(null);
+  const [analizando, setAnalizando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const ultimaSolicitud = useRef(0);
+
+  const analizar = useCallback(async (solicitud: AnomaliasRequest) => {
+    const id = ++ultimaSolicitud.current;
+    setAnalizando(true);
+    setError(null);
+    try {
+      const respuesta = await mineriaService.anomalias(solicitud);
+      if (id === ultimaSolicitud.current) setResultado(respuesta);
+    } catch (err) {
+      if (id === ultimaSolicitud.current) setError(mensajeDeError(err, "No se pudo analizar los movimientos."));
+    } finally {
+      if (id === ultimaSolicitud.current) setAnalizando(false);
+    }
+  }, []);
+
+  return { resultado, analizando, error, analizar };
 }
 
 /** Insumos y colegios para los selectores; los uniformes se cargan por colegio y se guardan. */

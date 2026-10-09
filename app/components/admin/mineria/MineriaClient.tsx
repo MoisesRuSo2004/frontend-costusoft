@@ -2,16 +2,18 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Brain, ChartLine, ShieldAlert } from "lucide-react";
+import { Brain, ChartLine, Radar, ShieldAlert } from "lucide-react";
+import AnomaliasMovimientos from "./AnomaliasMovimientos";
 import PronosticoDinamico from "./PronosticoDinamico";
 import PrediccionClient from "@/app/components/admin/prediccion/PrediccionClient";
 
 const FUENTE = "'Poppins', sans-serif";
 
-type Pestana = "pronostico" | "riesgo";
+type Pestana = "pronostico" | "anomalias" | "riesgo";
 
 const PESTANAS: { id: Pestana; etiqueta: string; detalle: string; icono: React.ReactNode }[] = [
   { id: "pronostico", etiqueta: "Pronóstico dinámico", detalle: "Elige qué predecir y simula pedidos", icono: <ChartLine size={16} /> },
+  { id: "anomalias", etiqueta: "Anomalías", detalle: "Movimientos fuera de lo habitual", icono: <Radar size={16} /> },
   { id: "riesgo", etiqueta: "Riesgo de agotamiento", detalle: "Todos los insumos · Prophet + XGBoost", icono: <ShieldAlert size={16} /> },
 ];
 
@@ -42,7 +44,7 @@ export default function MineriaClient() {
           <div>
             <h1 className="text-xl font-semibold" style={{ color: "#101828", fontFamily: FUENTE }}>Minería de datos</h1>
             <p className="mt-0.5 text-sm" style={{ color: "#667085", fontFamily: FUENTE }}>
-              Pronóstico de consumo y riesgo de agotamiento a partir del historial de movimientos
+              Pronóstico, anomalías y riesgo de agotamiento a partir del historial de movimientos
             </p>
           </div>
         </div>
@@ -74,7 +76,9 @@ export default function MineriaClient() {
         <motion.div key={p.id} role="tabpanel" hidden={pestana !== p.id}
           initial={false} animate={pestana === p.id ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
           transition={{ duration: 0.18 }}>
-          {p.id === "pronostico" ? <PronosticoDinamico /> : <PrediccionClient embebido />}
+          {p.id === "pronostico" && <PronosticoDinamico />}
+          {p.id === "anomalias" && <AnomaliasMovimientos />}
+          {p.id === "riesgo" && <PrediccionClient embebido />}
         </motion.div>
       ))}
     </div>
