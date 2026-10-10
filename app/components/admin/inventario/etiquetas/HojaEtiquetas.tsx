@@ -5,7 +5,7 @@ import type { InsumoResponse } from "@/app/types/insumo";
 import EtiquetaInsumo from "./EtiquetaInsumo";
 import { TAMANOS, porHoja, type TamanoEtiqueta } from "./etiquetaQr";
 
-const CLASE_IMPRIMIENDO = "imprimiendo-etiquetas";
+const ID_ZONA = "zona-impresion-etiquetas";
 
 /** Repite cada insumo `copias` veces y reparte las etiquetas en hojas carta. */
 export function repartirEnHojas(insumos: InsumoResponse[], copias: number, tamano: TamanoEtiqueta) {
@@ -16,12 +16,12 @@ export function repartirEnHojas(insumos: InsumoResponse[], copias: number, taman
   return hojas;
 }
 
-/** Una hoja carta con su cuadrícula de etiquetas. */
+/** Una hoja carta con su cuadrícula de etiquetas (todo con estilos en línea). */
 export function Hoja({ etiquetas, tamano }: { etiquetas: InsumoResponse[]; tamano: TamanoEtiqueta }) {
   const t = TAMANOS[tamano];
   return (
     <div style={{
-      display: "grid", gridTemplateColumns: `repeat(${t.columnas},${t.ancho}mm)`,
+      display: "grid", gridTemplateColumns: `repeat(${t.columnas}, ${t.ancho}mm)`,
       gridAutoRows: `${t.alto}mm`, justifyContent: "center", alignContent: "start",
     }}>
       {etiquetas.map((insumo, i) => <EtiquetaInsumo key={`${insumo.id}-${i}`} insumo={insumo} tamano={tamano} />)}
@@ -30,9 +30,9 @@ export function Hoja({ etiquetas, tamano }: { etiquetas: InsumoResponse[]; taman
 }
 
 /**
- * Las hojas que se imprimen. Viven fuera de la app (portal en <body>) y solo se
- * muestran al imprimir: globals.css oculta todo lo demás mientras <body> tiene
- * la clase "imprimiendo-etiquetas".
+ * Las hojas listas para imprimir, ocultas. imprimirEtiquetas() copia su HTML
+ * a un iframe aparte y lo imprime: así solo salen las etiquetas, nunca la
+ * página, sin depender del CSS global.
  */
 export default function HojaEtiquetas({ insumos, copias, tamano }: {
   insumos: InsumoResponse[]; copias: number; tamano: TamanoEtiqueta;
@@ -41,7 +41,7 @@ export default function HojaEtiquetas({ insumos, copias, tamano }: {
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="zona-impresion" aria-hidden>
+    <div id={ID_ZONA} aria-hidden style={{ display: "none" }}>
       {repartirEnHojas(insumos, copias, tamano).map((etiquetas, i) => (
         <div key={i} className="hoja-impresion"><Hoja etiquetas={etiquetas} tamano={tamano} /></div>
       ))}
@@ -50,13 +50,43 @@ export default function HojaEtiquetas({ insumos, copias, tamano }: {
   );
 }
 
-/** Abre el diálogo de impresión del navegador solo con las etiquetas. */
-export function imprimirEtiquetas() {
-  const quitar = () => {
-    document.body.classList.remove(CLASE_IMPRIMIENDO);
-    window.removeEventListener("afterprint", quitar);
-  };
-  document.body.classList.add(CLASE_IMPRIMIENDO);
-  window.addEventListener("afterprint", quitar);
-  window.print();
+const ESTILOS_IMPRESION = `
+  @page { size: letter; margin: 10mm; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .hoja-impresion { break-after: page; }
+  .hoja-impresion:last-child { break-after: auto; }
+`;
+
+/** Imprime solo las hojas de etiquetas, desde un iframe invisible. */
+export async function imprimirEtiquetas() {
+  const zona = document.getElementById(ID_ZONA);
+  if (!zona) return;
+
+  const marco = document.createElement("iframe");
+  marco.setAttribute("aria-hidden", "true");
+  marco.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+  document.body.appendChild(marco);
+  const doc = marco.contentDocument;
+  const ventana = marco.contentWindow;
+  if (!doc || !ventana) return marco.remove();
+
+  // Las hojas de estilo de la app solo para traer la fuente Poppins (@font-face)
+  // y su variable; el diseño de las etiquetas va en línea.
+  const estilos = [...document.querySelectorAll('link[rel="stylesheet"], style')].map((e) => e.outerHTML).join("");
+  doc.open();
+  doc.write(`<!doctype html><html lang="es" class="${document.documentElement.className}"><head><meta charset="utf-8">`
+    + `<title>Etiquetas QR · CostuSoft</title>${estilos}<style>${ESTILOS_IMPRESION}</style></head>`
+    + `<body class="${document.body.className}">${zona.innerHTML}</body></html>`);
+  doc.close();
+
+  // Esperar estilos y fuentes para que no se imprima con la letra de respaldo.
+  await new Promise<void>((listo) => (doc.readyState === "complete" ? listo() : ventana.addEventListener("load", () => listo(), { once: true })));
+  await doc.fonts?.ready;
+
+  const quitar = () => setTimeout(() => marco.remove(), 500);
+  ventana.addEventListener("afterprint", quitar, { once: true });
+  ventana.focus();
+  ventana.print();
+  setTimeout(() => marco.isConnected && marco.remove(), 60_000); // por si afterprint no llega
 }

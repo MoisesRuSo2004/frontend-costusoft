@@ -43,19 +43,3 @@ body {
 .scrollbar-thin-x::-webkit-scrollbar-thumb:hover {
   background-color: #cbd5e1;
 }
-
-/* ── Impresión de etiquetas QR (ver components/admin/inventario/etiquetas) ── */
-.zona-impresion { display: none; }
-
-@media print {
-  @page { size: letter; margin: 10mm; }
-  body.imprimiendo-etiquetas > *:not(.zona-impresion) { display: none !important; }
-  body.imprimiendo-etiquetas { background: #fff !important; }
-  body.imprimiendo-etiquetas .zona-impresion {
-    display: block;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .hoja-impresion { break-after: page; }
-  .hoja-impresion:last-child { break-after: auto; }
-}
