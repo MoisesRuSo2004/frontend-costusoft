@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { AlertCircle, Check, Printer, QrCode, Search, X } from "lucide-react";
+import { AlertCircle, Check, CheckCheck, Printer, QrCode, Search, X } from "lucide-react";
 import { insumoService } from "@/app/services/insumo.service";
 import type { InsumoResponse } from "@/app/types/insumo";
 import HojaEtiquetas, { Hoja, imprimirEtiquetas, repartirEnHojas } from "./HojaEtiquetas";
@@ -70,6 +70,10 @@ export default function ImprimirEtiquetasModal({ onClose }: { onClose: () => voi
     if (nuevo.has(id)) nuevo.delete(id); else nuevo.add(id);
     return nuevo;
   });
+  // Todos los insumos activos, sin importar el filtro o la búsqueda.
+  const todosElegidos = insumos.length > 0 && elegidos.size === insumos.length;
+  const alternarTodos = () => setElegidos(todosElegidos ? new Set() : new Set(insumos.map((i) => i.id)));
+
   const alternarVisibles = () => setElegidos((actual) => {
     const nuevo = new Set(actual);
     visibles.forEach((i) => (todosVisibles ? nuevo.delete(i.id) : nuevo.add(i.id)));
@@ -107,11 +111,20 @@ export default function ImprimirEtiquetasModal({ onClose }: { onClose: () => voi
         <div className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[1fr_400px] lg:overflow-hidden">
           {/* Selección de insumos */}
           <div className="flex min-h-0 flex-col gap-3 p-6 lg:overflow-hidden">
-            <div className="relative">
-              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#9ca3af" }} />
-              <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar insumo..."
-                className="w-full rounded-2xl border py-2.5 pl-10 pr-4 text-sm outline-none"
-                style={{ borderColor: "#d0d5dd", color: "#101828", fontFamily: FUENTE }} />
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="relative flex-1">
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#9ca3af" }} />
+                <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar insumo..."
+                  className="w-full rounded-2xl border py-2.5 pl-10 pr-4 text-sm outline-none"
+                  style={{ borderColor: "#d0d5dd", color: "#101828", fontFamily: FUENTE }} />
+              </div>
+              <button onClick={alternarTodos} disabled={cargando || insumos.length === 0} aria-pressed={todosElegidos}
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl border px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50"
+                style={{ borderColor: AZUL, backgroundColor: todosElegidos ? "#fff" : AZUL, color: todosElegidos ? AZUL : "#fff", fontFamily: FUENTE }}>
+                {todosElegidos
+                  ? <><X size={15} /> Quitar todos</>
+                  : <><CheckCheck size={15} /> Seleccionar todos ({insumos.length})</>}
+              </button>
             </div>
 
             <div className="flex flex-wrap gap-1.5">
