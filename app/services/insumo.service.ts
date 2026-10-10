@@ -14,6 +14,16 @@ export const insumoService = {
     return apiFetch<PageData<InsumoResponse>>(`/api/insumos${q}`);
   },
 
+  /** Todos los insumos (el backend entrega como máximo 100 por página). */
+  async listarTodos(): Promise<InsumoResponse[]> {
+    const todos: InsumoResponse[] = [];
+    for (let page = 0; ; page++) {
+      const pagina = await this.listar({ page, size: 100 });
+      todos.push(...pagina.content);
+      if (page + 1 >= pagina.totalPages) return todos;
+    }
+  },
+
   /** GET /api/insumos/buscar?nombre=X - autocomplete */
   async buscar(nombre: string): Promise<InsumoOption[]> {
     const q = buildQuery({ nombre });

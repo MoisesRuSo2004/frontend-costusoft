@@ -6,11 +6,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, ArrowDownToLine, ArrowUpFromLine, Search, RefreshCw,
   Package, AlertCircle, X, SlidersHorizontal,
-  Trash2, Edit3, CheckCircle2, PowerOff, Power,
+  Trash2, Edit3, CheckCircle2, PowerOff, Power, QrCode,
 } from "lucide-react";
 import { useInsumos } from "@/app/hooks/useInsumos";
 import type { InsumoResponse } from "@/app/types/insumo";
 import Paginator from "@/app/components/shared/ui/Paginator";
+import EtiquetaQrModal from "./etiquetas/EtiquetaQrModal";
+import ImprimirEtiquetasModal from "./etiquetas/ImprimirEtiquetasModal";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -340,6 +342,8 @@ export default function InventarioClient() {
   const [editarInsumo, setEditarInsumo] = useState<InsumoResponse | null>(null);
   const [deleteInsumo, setDeleteInsumo] = useState<InsumoResponse | null>(null);
   const [inhabilitarInsumo, setInhabilitarInsumo] = useState<InsumoResponse | null>(null);
+  const [etiquetaInsumo, setEtiquetaInsumo] = useState<InsumoResponse | null>(null);
+  const [imprimirLote, setImprimirLote] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce search
@@ -388,6 +392,10 @@ export default function InventarioClient() {
               style={{ borderColor: "#f59e0b", color: "#b45309", fontFamily: "var(--font-poppins), sans-serif" }}>
               <ArrowUpFromLine size={15} /> Nueva Salida
             </Link>
+            <button onClick={() => setImprimirLote(true)} className="inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold transition"
+              style={{ borderColor: "#0b3d91", color: "#0b3d91", backgroundColor: "#fff", fontFamily: "var(--font-poppins), sans-serif" }}>
+              <QrCode size={15} /> Etiquetas QR
+            </button>
           </div>
         </div>
       </div>
@@ -530,6 +538,15 @@ export default function InventarioClient() {
                           <Edit3 size={13} />
                         </button>
                         {!inactivo && (
+                          <button onClick={() => setEtiquetaInsumo(insumo)} title="Etiqueta QR"
+                            className="flex h-8 w-8 items-center justify-center rounded-xl border transition"
+                            style={{ borderColor: "#e5e7eb", color: "#374151" }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = "#0b3d91"; e.currentTarget.style.color = "#0b3d91"; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#374151"; }}>
+                            <QrCode size={13} />
+                          </button>
+                        )}
+                        {!inactivo && (
                           <button onClick={() => setAjusteInsumo(insumo)} title="Ajustar stock"
                             className="flex h-8 w-8 items-center justify-center rounded-xl border transition"
                             style={{ borderColor: "#e5e7eb", color: "#374151" }}
@@ -639,6 +656,12 @@ export default function InventarioClient() {
               }
             }}
           />
+        )}
+        {etiquetaInsumo && (
+          <EtiquetaQrModal insumo={etiquetaInsumo} onClose={() => setEtiquetaInsumo(null)} />
+        )}
+        {imprimirLote && (
+          <ImprimirEtiquetasModal onClose={() => setImprimirLote(false)} />
         )}
         {inhabilitarInsumo && (
           <InhabilitarModal
