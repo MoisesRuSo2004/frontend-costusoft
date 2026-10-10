@@ -127,8 +127,8 @@ export default function PrediccionClient({ embebido = false }: { embebido?: bool
           )}
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Indicador de estado del servicio */}
-            <ServiceStatusBadge activo={servicioActivo} />
+            {/* Indicador de estado del servicio (embebido: lo muestra Minería de datos) */}
+            {!embebido && <ServiceStatusBadge activo={servicioActivo} />}
 
             {/* Botón reentrenar (solo ADMIN) */}
             {esAdmin && (

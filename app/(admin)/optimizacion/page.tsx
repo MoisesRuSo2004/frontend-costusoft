@@ -8,6 +8,8 @@ import {
   Package, ListChecks, Banknote,
 } from "lucide-react";
 import { useOptimizacion } from "@/app/hooks/useOptimizacion";
+import { useDespertarServicio } from "@/app/hooks/useDespertarServicio";
+import EstadoMicroservicio from "@/app/components/shared/ui/EstadoMicroservicio";
 import { optimizacionService } from "@/app/services/optimizacion.service";
 import { colegiosService } from "@/app/services/colegios.service";
 import type { ColegioResponse } from "@/app/types/colegio";
@@ -74,7 +76,9 @@ function badgeGenero(genero: string | null | undefined): { label: string; bg: st
 
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function OptimizacionPage() {
-  const { resultado, historial, loading, loadingHistorial, error, online, ejecutar, cargarHistorial, checkStatus } = useOptimizacion();
+  const { resultado, historial, loading, loadingHistorial, error, ejecutar, cargarHistorial } = useOptimizacion();
+  // En Render el motor se duerme sin uso: se despierta al entrar y con el botón.
+  const motor = useDespertarServicio(() => optimizacionService.status());
 
   const [incluirDemanda,  setIncluirDemanda]  = useState(true);
   const [vistaActiva,     setVistaActiva]     = useState<"resultado" | "historial">("resultado");
@@ -83,14 +87,13 @@ export default function OptimizacionPage() {
   const [loadingColegios, setLoadingColegios] = useState(false);
 
   useEffect(() => {
-    checkStatus();
     // Cargar todos los colegios para el selector
     setLoadingColegios(true);
     colegiosService.listar({ size: 100, sortBy: "nombre" })
       .then((p) => setColegios(p.content ?? []))
       .catch(() => setColegios([]))
       .finally(() => setLoadingColegios(false));
-  }, [checkStatus]);
+  }, []);
 
   // Recargar historial cuando cambie el colegio seleccionado
   useEffect(() => {
@@ -107,7 +110,7 @@ export default function OptimizacionPage() {
   };
 
   const colegioSeleccionado = colegios.find((c) => c.id === colegioId);
-  const puedeEjecutar = !!colegioId && !loading && online !== false;
+  const puedeEjecutar = !!colegioId && !loading && motor.estado === "activo";
   const [infoProbAbierta, setInfoProbAbierta] = useState(true);
 
   return (
@@ -127,10 +130,7 @@ export default function OptimizacionPage() {
             </p>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: 20, flexShrink: 0, background: online === true ? "#DCFCE7" : online === false ? "#FEE2E2" : "#F3F4F6", color: online === true ? "#166534" : online === false ? "#991B1B" : "#6B7280", fontSize: 13, fontWeight: 500 }}>
-          <span style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: online === true ? "#16A34A" : online === false ? "#DC2626" : "#9CA3AF" }} />
-          {online === true ? "Servicio activo" : online === false ? "Servicio inactivo" : "Verificando…"}
-        </div>
+        <EstadoMicroservicio nombre="Motor de optimización" estado={motor.estado} segundos={motor.segundos} mensaje={motor.mensaje} alReintentar={motor.reintentar} />
       </div>
 
       {/* ── Problema de optimización ── */}

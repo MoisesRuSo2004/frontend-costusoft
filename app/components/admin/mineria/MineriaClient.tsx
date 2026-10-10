@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import { Brain, Radar, ShieldAlert } from "lucide-react";
 import AnomaliasMovimientos from "./AnomaliasMovimientos";
 import PrediccionClient from "@/app/components/admin/prediccion/PrediccionClient";
+import EstadoMicroservicio, { AvisoDespertando } from "@/app/components/shared/ui/EstadoMicroservicio";
+import { useDespertarServicio } from "@/app/hooks/useDespertarServicio";
+import { prediccionService } from "@/app/services/prediccion.service";
 
 const FUENTE = "'Poppins', sans-serif";
 
@@ -18,6 +21,10 @@ const PESTANAS: { id: Pestana; etiqueta: string; detalle: string; icono: React.R
 /**
  * Minería de datos: el análisis de consumo de insumos con modelos de
  * aprendizaje automático, calculado por el microservicio Python.
+ *
+ * En Render el microservicio se duerme sin uso: las pestañas esperan a que
+ * despierte antes de pedir datos (el riesgo de todos los insumos es pesado y
+ * fallaría contra un servicio que todavía arranca).
  */
 export default function MineriaClient() {
   const [pestana, setPestana] = useState<Pestana>("riesgo");
@@ -25,6 +32,11 @@ export default function MineriaClient() {
   // se conserva lo que el usuario eligió y la tabla de riesgo (pesada) no se
   // carga hasta que alguien la abre.
   const [visitadas, setVisitadas] = useState<Set<Pestana>>(() => new Set(["riesgo"]));
+
+  const motor = useDespertarServicio(() => prediccionService.status());
+  // Una vez disponible, el contenido se queda aunque luego se verifique de nuevo.
+  const [listo, setListo] = useState(false);
+  if (motor.estado === "activo" && !listo) setListo(true);
 
   const abrir = (id: Pestana) => {
     setPestana(id);
@@ -36,15 +48,18 @@ export default function MineriaClient() {
       <header className="rounded-[28px] border px-6 py-5"
         style={{ borderColor: "#e4dcff", background: "linear-gradient(135deg, rgba(11,61,145,0.06) 0%, rgba(124,58,237,0.09) 100%)" }}>
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ backgroundColor: "rgba(124,58,237,0.12)" }}>
+          <div className="flex min-w-[260px] flex-1 items-center gap-4">
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl" style={{ backgroundColor: "rgba(124,58,237,0.12)" }}>
             <Brain size={24} style={{ color: "#7c3aed" }} />
           </div>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-xl font-semibold" style={{ color: "#101828", fontFamily: FUENTE }}>Minería de datos</h1>
             <p className="mt-0.5 text-sm" style={{ color: "#667085", fontFamily: FUENTE }}>
               Riesgo de agotamiento y anomalías a partir del historial de movimientos
             </p>
           </div>
+          </div>
+          <EstadoMicroservicio nombre="Motor de minería" estado={motor.estado} segundos={motor.segundos} mensaje={motor.mensaje} alReintentar={motor.reintentar} />
         </div>
 
         <nav className="mt-5 flex flex-wrap gap-2" role="tablist" aria-label="Secciones de minería de datos">
@@ -70,7 +85,11 @@ export default function MineriaClient() {
         </nav>
       </header>
 
-      {PESTANAS.filter((p) => visitadas.has(p.id)).map((p) => (
+      {!listo && (
+        <AvisoDespertando nombre="Motor de minería" estado={motor.estado} segundos={motor.segundos} mensaje={motor.mensaje} alReintentar={motor.reintentar} />
+      )}
+
+      {listo && PESTANAS.filter((p) => visitadas.has(p.id)).map((p) => (
         <motion.div key={p.id} role="tabpanel" hidden={pestana !== p.id}
           initial={false} animate={pestana === p.id ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
           transition={{ duration: 0.18 }}>
