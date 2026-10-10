@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * Tras unos minutos sin uso, Render duerme el servicio y el primer pedido
  * tarda 30–60 s en arrancarlo; a veces responde con error mientras arranca.
  * Este hook consulta el estado (vía backend) y, si no está activo, reintenta
- * cada pocos segundos hasta `limiteSegundos`, contando el tiempo transcurrido.
+ * con espera progresiva hasta `limiteSegundos`, contando el tiempo transcurrido.
  * Arranca solo al montar el componente; `reintentar()` vuelve a empezar.
  *
  * Solo se reintenta lo que se arregla esperando (red caída, 5xx mientras el
@@ -26,7 +26,10 @@ function mensajeSinReintento(err: unknown): string | null {
   return null;
 }
 
-const PAUSA_MS = 4_000;
+// Espera progresiva entre intentos (5 s, 7,5 s, 11 s… hasta 20 s): mientras
+// el servicio arranca, Render responde 429 si se le insiste demasiado seguido.
+const PAUSA_INICIAL_MS = 5_000;
+const PAUSA_MAXIMA_MS = 20_000;
 
 export function useDespertarServicio(
   consultarEstado: () => Promise<boolean>,
@@ -51,6 +54,7 @@ export function useDespertarServicio(
     const inicio = Date.now();
     const reloj = setInterval(() => vigente() && setSegundos(Math.round((Date.now() - inicio) / 1000)), 1000);
     let primera = true;
+    let pausa = PAUSA_INICIAL_MS;
 
     try {
       while (vigente()) {
@@ -80,7 +84,8 @@ export function useDespertarServicio(
           return;
         }
         setEstado("despertando");
-        await new Promise((r) => setTimeout(r, PAUSA_MS));
+        await new Promise((r) => setTimeout(r, pausa));
+        pausa = Math.min(PAUSA_MAXIMA_MS, pausa * 1.5);
       }
     } finally {
       clearInterval(reloj);

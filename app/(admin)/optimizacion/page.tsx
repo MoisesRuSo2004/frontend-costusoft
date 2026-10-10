@@ -95,10 +95,13 @@ export default function OptimizacionPage() {
       .finally(() => setLoadingColegios(false));
   }, []);
 
-  // Recargar historial cuando cambie el colegio seleccionado
+  // El historial lo guarda el motor de optimización: se pide cuando ya está
+  // despierto (si se pide antes, falla mientras Render lo arranca) y cada vez
+  // que cambia el colegio.
+  const motorActivo = motor.estado === "activo";
   useEffect(() => {
-    cargarHistorial(20, colegioId ?? undefined);
-  }, [cargarHistorial, colegioId]);
+    if (motorActivo) cargarHistorial(20, colegioId ?? undefined);
+  }, [cargarHistorial, colegioId, motorActivo]);
 
   const handleEjecutar = async () => {
     if (!colegioId) return;
