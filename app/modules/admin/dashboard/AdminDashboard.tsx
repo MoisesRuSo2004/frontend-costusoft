@@ -449,69 +449,6 @@ export default function AdminDashboard({ data }: { data: DashboardData }) {
         </div>
       )}
 
-      {/* ── Power BI Analytics ──────────────────────────────────────── */}
-      <div
-        className="rounded-3xl border overflow-hidden"
-        style={{
-          borderColor: "#eaecf0",
-          backgroundColor: "#ffffff",
-          boxShadow: "0 2px 20px rgba(15,23,42,0.05)",
-        }}
-      >
-        <div
-          className="px-6 py-4 border-b flex items-center gap-3"
-          style={{ borderColor: "#f2f4f7" }}
-        >
-          <div
-            className="h-2 w-2 rounded-full"
-            style={{ backgroundColor: "#49c21b" }}
-          />
-          <h2
-            className="text-sm font-semibold"
-            style={{
-              color: "#101828",
-              fontFamily: "var(--font-poppins), sans-serif",
-            }}
-          >
-            Analytics — Power BI
-          </h2>
-          <span
-            className="ml-auto text-xs px-2.5 py-1 rounded-full font-medium"
-            style={{
-              backgroundColor: "rgba(11,61,145,0.07)",
-              color: "#0b3d91",
-              fontFamily: "var(--font-poppins), sans-serif",
-            }}
-          >
-            Tiempo real
-          </span>
-        </div>
-        {/* Contenedor responsivo: mantiene aspect-ratio 600/373.5 */}
-        <div
-          style={{
-            position: "relative",
-            paddingBottom: "62.25%",
-            height: 0,
-            overflow: "hidden",
-          }}
-        >
-          <iframe
-            title="ConstuSoft Control 2"
-            src="https://app.powerbi.com/view?r=eyJrIjoiOTJmZTgxYTktYTU3OS00ZjNmLTgzOGYtODA1MWFmODQxYmY5IiwidCI6IjlkMTJiZjNmLWU0ZjYtNDdhYi05MTJmLTFhMmYwZmM0OGFhNCIsImMiOjR9"
-            frameBorder={0}
-            allowFullScreen
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              border: "none",
-            }}
-          />
-        </div>
-      </div>
-
       {/* ── KPIs primarios ───────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         {kpiPrimary.map((kpi) => (

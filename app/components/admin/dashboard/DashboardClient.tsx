@@ -145,68 +145,6 @@ export default function DashboardClient() {
         ))}
       </div>
 
-      {/* ── PowerBI iframe ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.35 }}
-        className="rounded-2xl overflow-hidden"
-        style={{
-          backgroundColor: "#fff",
-          boxShadow: "0 1px 12px rgba(0,0,0,0.07)",
-          border: "1px solid #f0f0f4",
-        }}
-      >
-        {/* Header del panel */}
-        <div
-          className="flex items-center gap-3 px-6 py-4"
-          style={{ borderBottom: "1px solid #f0f0f4" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg"
-            style={{ width: 32, height: 32, backgroundColor: "#0b3d9110" }}
-          >
-            <Activity size={16} style={{ color: "#0b3d91" }} />
-          </div>
-          <div>
-            <p
-              className="text-sm font-semibold"
-              style={{ color: "#111827", fontFamily: "'Poppins', sans-serif" }}
-            >
-              Analíticas — Power BI
-            </p>
-            <p className="text-xs" style={{ color: "#9ca3af" }}>
-              Dashboard de métricas operacionales
-            </p>
-          </div>
-        </div>
-
-        {/* iFrame */}
-        <div
-          style={{
-            position: "relative",
-            width: "100%",
-            paddingBottom: "52%",
-            height: 0,
-          }}
-        >
-          <iframe
-            title="Dashboard CostuSoft — Power BI"
-            src="https://app.powerbi.com/reportEmbed?reportId=aa91f679-4a0e-41e0-9de1-252cca321d02&autoAuth=true&ctid=9d12bf3f-e4f6-47ab-912f-1a2f0fc48aa4"
-            frameBorder={0}
-            allowFullScreen
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              border: "none",
-            }}
-          />
-        </div>
-      </motion.div>
-
       {/* ── Actividad reciente ── */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
